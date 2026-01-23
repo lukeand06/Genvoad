@@ -95,6 +95,35 @@
                     </div>
                 </div>
 
+                <!-- Meeting Details -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Initial Meeting Date (optional)</label>
+                        <input type="datetime-local" id="meetingDate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Zoom Link (optional)</label>
+                        <input type="url" id="zoomLink" placeholder="https://zoom.us/j/..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                </div>
+
+                <!-- File Attachments -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Attach Files (optional)</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition" id="file-drop-zone">
+                        <input type="file" id="file-input" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" class="hidden">
+                        <div>
+                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            <p class="text-sm text-gray-600">Drag files here or <span class="text-gray-900 font-medium">click to browse</span></p>
+                            <p class="text-xs text-gray-500 mt-1">PDF, Word, Excel, Images, ZIP up to 10MB each</p>
+                        </div>
+                    </div>
+                    <div id="file-list" class="mt-4 space-y-2"></div>
+                </div>
+
                 <!-- Skills -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Required Skills</label>
@@ -127,6 +156,63 @@
             throw new Error('Not authenticated');
         }
 
+        let selectedFiles = [];
+
+        // File upload handling
+        const fileDropZone = document.getElementById('file-drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        fileDropZone.addEventListener('click', () => fileInput.click());
+
+        fileDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileDropZone.classList.add('border-gray-900', 'bg-gray-50');
+        });
+
+        fileDropZone.addEventListener('dragleave', () => {
+            fileDropZone.classList.remove('border-gray-900', 'bg-gray-50');
+        });
+
+        fileDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileDropZone.classList.remove('border-gray-900', 'bg-gray-50');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        function handleFiles(files) {
+            for (const file of files) {
+                if (file.size > 10 * 1024 * 1024) {
+                    alert(`File ${file.name} is too large (max 10MB)`);
+                    continue;
+                }
+                if (!['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'image/jpeg', 'image/png', 'application/zip'].includes(file.type) && !file.name.match(/\.(pdf|doc|docx|xls|xlsx|jpg|jpeg|png|zip)$/i)) {
+                    alert(`File type not supported: ${file.name}`);
+                    continue;
+                }
+                selectedFiles.push(file);
+            }
+            displayFiles();
+        }
+
+        function displayFiles() {
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = selectedFiles.map((file, idx) => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span class="text-sm text-gray-700">📎 ${file.name}</span>
+                    <button type="button" onclick="removeFile(${idx})" class="text-red-600 hover:text-red-700 text-sm font-medium">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFile(idx) {
+            selectedFiles.splice(idx, 1);
+            displayFiles();
+        }
+
         function addRequirement() {
             const container = document.getElementById('requirements-container');
             const div = document.createElement('div');
@@ -149,6 +235,8 @@
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
             const skillsInput = document.getElementById('skills').value;
+            const meetingDate = document.getElementById('meetingDate').value;
+            const zoomLink = document.getElementById('zoomLink').value;
             
             const skills = skillsInput ? skillsInput.split(',').map(s => s.trim()).filter(s => s) : [];
             
@@ -164,12 +252,31 @@
                 budget: parseFloat(budget),
                 location,
                 skills,
-                requirements
+                requirements,
+                meetingDate: meetingDate || null,
+                zoomLink: zoomLink || null
             };
             
             if (startDate) projectData.startDate = startDate;
             if (endDate) projectData.endDate = endDate;
             
+            // If there are files, use FormData for multipart upload
+            if (selectedFiles.length > 0) {
+                const formData = new FormData();
+                for (const [key, value] of Object.entries(projectData)) {
+                    if (Array.isArray(value)) {
+                        value.forEach((item, idx) => formData.append(`${key}[${idx}]`, item));
+                    } else {
+                        formData.append(key, value);
+                    }
+                }
+                selectedFiles.forEach((file, idx) => {
+                    formData.append(`attachments`, file);
+                });
+                submitProjectWithFiles(formData);
+                return;
+            }
+
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
             btn.textContent = 'Creating...';
@@ -193,6 +300,35 @@
                 btn.textContent = 'Post Project';
             }
         });
+
+        async function submitProjectWithFiles(formData) {
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.textContent = 'Uploading...';
+
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_URL}/projects`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to create project');
+                }
+
+                window.location.href = `/project-detail.html?id=${data.project._id}`;
+            } catch (error) {
+                showError(error.message);
+                btn.disabled = false;
+                btn.textContent = 'Post Project';
+            }
+        }
     </script>
 </body>
 </html>

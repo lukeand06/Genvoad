@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
 require('dotenv').config();
 
 const User = require('./models/User');
@@ -11,6 +13,32 @@ const Message = require('./models/Message');
 const { sendVerificationEmail } = require('./utils/email');
 
 const app = express();
+
+// Configure file uploads
+const uploadDir = path.join(__dirname, 'uploads');
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /pdf|doc|docx|xls|xlsx|jpg|jpeg|png|zip/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('File type not allowed'));
+    }
+  }
+});
 
 // Middleware
 // Allow multiple origins for development
@@ -55,6 +83,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static('.'));
 }
 app.use('/public', express.static('public'));
+app.use('/uploads', express.static(uploadDir));
 
 // Connect to MongoDB
 if (process.env.MONGODB_URI) {
@@ -357,15 +386,36 @@ app.get('/api/users', authMiddleware, async (req, res) => {
 // ============ PROJECT ROUTES ============
 
 // Create project
-app.post('/api/projects', authMiddleware, async (req, res) => {
+app.post('/api/projects', authMiddleware, upload.array('attachments', 10), async (req, res) => {
   try {
-    const project = new Project({
+    const projectData = {
       ...req.body,
       owner: req.user._id
-    });
+    };
+
+    // Parse arrays from form data
+    if (typeof req.body.requirements === 'string') {
+      projectData.requirements = req.body.requirements.split(',').map(r => r.trim()).filter(r => r);
+    }
+    if (typeof req.body.skills === 'string') {
+      projectData.skills = req.body.skills.split(',').map(s => s.trim()).filter(s => s);
+    }
+
+    // Handle file uploads
+    if (req.files && req.files.length > 0) {
+      projectData.attachments = req.files.map(file => ({
+        filename: file.originalname,
+        url: `/uploads/${file.filename}`,
+        uploadedAt: new Date()
+      }));
+    }
+
+    const project = new Project(projectData);
     await project.save();
+    
     res.json({ success: true, project });
   } catch (error) {
+    console.error('Error creating project:', error);
     res.status(500).json({ error: 'Failed to create project' });
   }
 });

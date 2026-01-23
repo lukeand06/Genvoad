@@ -18,6 +18,15 @@ const ProjectSchema = new mongoose.Schema({
   // Requirements
   requirements: [{ type: String }],
   skills: [{ type: String }],
+
+  // Meeting & Attachments
+  zoomLink: { type: String, default: '' },
+  meetingDate: { type: Date },
+  attachments: [{
+    filename: String,
+    url: String,
+    uploadedAt: { type: Date, default: Date.now }
+  }],
   
   // Attachments
   images: [{ type: String }],

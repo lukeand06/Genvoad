@@ -282,6 +282,37 @@
                         </div>
                     </div>
                     
+                    <!-- Meeting & Resources Card -->
+                    <div class="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 class="font-semibold text-gray-900 mb-4">Meeting & Resources</h3>
+                        <div class="space-y-4">
+                            ${project.meetingDate ? `
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">📅 Scheduled Meeting</p>
+                                    <p class="font-medium text-gray-900">${new Date(project.meetingDate).toLocaleString()}</p>
+                                </div>
+                            ` : ''}
+                            ${project.zoomLink ? `
+                                <div>
+                                    <p class="text-sm text-gray-600 mb-1">🎥 Zoom Link</p>
+                                    <a href="${project.zoomLink}" target="_blank" class="text-blue-600 hover:text-blue-700 font-medium text-sm break-all">Join Meeting</a>
+                                </div>
+                            ` : ''}
+                            ${project.attachments && project.attachments.length > 0 ? `
+                                <div>
+                                    <p class="text-sm font-medium text-gray-900 mb-2">📎 Attachments (${project.attachments.length})</p>
+                                    <div class="space-y-1">
+                                        ${project.attachments.map(att => `
+                                            <a href="${att.url}" target="_blank" download class="block text-blue-600 hover:text-blue-700 text-sm truncate">
+                                                ${att.filename}
+                                            </a>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
                     <!-- Open Governance: Negotiation Phase Tracker -->
                     ${project.status === 'in_progress' || project.negotiationPhase !== 'not_started' ? `
                         <div class="bg-white rounded-lg border border-gray-200 p-6">
