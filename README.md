@@ -1,4 +1,4 @@
-# Genovad - Construction Services Marketplace
+# Genovad -  Services Marketplace
 
 A professional networking and project marketplace platform for the construction industry - like LinkedIn and Indeed, but specifically for construction services.
 
