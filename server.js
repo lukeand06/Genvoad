@@ -283,7 +283,7 @@ app.post('/api/auth/login', async (req, res) => {
     const { email, password } = req.body;
     
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user || user.deletedAt) return res.status(401).json({ error: 'Invalid credentials' });
     
     if (!user.emailVerified) {
       return res.status(403).json({ error: 'Please verify your email first' });
@@ -330,7 +330,7 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
 app.get('/api/users/:id', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password -verificationCode');
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user || user.deletedAt) return res.status(404).json({ error: 'User not found' });
     res.json({ user });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch user' });
@@ -340,10 +340,15 @@ app.get('/api/users/:id', authMiddleware, async (req, res) => {
 // Update profile
 app.put('/api/users/profile', authMiddleware, async (req, res) => {
   try {
-    const updates = req.body;
-    delete updates.password;
-    delete updates.email;
-    
+    const allowed = [
+      'firstName','lastName','bio','title','company','location','phone','yearsExperience',
+      'skills','services','city','state','registrarId','links','preferences'
+    ];
+    const updates = {};
+    allowed.forEach(key => {
+      if (req.body[key] !== undefined) updates[key] = req.body[key];
+    });
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { $set: updates },
@@ -356,11 +361,21 @@ app.put('/api/users/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// Delete (soft-delete) profile
+app.delete('/api/users/profile', authMiddleware, async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, { $set: { deletedAt: new Date() } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete profile' });
+  }
+});
+
 // Search users
 app.get('/api/users', authMiddleware, async (req, res) => {
   try {
     const { search, skills, services, city, registeredOnly } = req.query;
-    const query = { emailVerified: true };
+    const query = { emailVerified: true, deletedAt: { $exists: false } };
     
     if (search) {
       query.$or = [

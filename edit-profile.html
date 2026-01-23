@@ -86,9 +86,40 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">City</label>
+                        <input type="text" id="city" placeholder="City" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">State/Province</label>
+                        <input type="text" id="state" placeholder="State" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Registrar ID</label>
+                        <input type="text" id="registrarId" placeholder="License / Registrar ID" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
                     <input type="number" id="yearsExperience" min="0" max="99" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                </div>
+
+                <!-- Links -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                        <input type="url" id="website" placeholder="https://yourcompany.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
+                        <input type="url" id="linkedin" placeholder="https://linkedin.com/in/you" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">GitHub</label>
+                        <input type="url" id="github" placeholder="https://github.com/you" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
                 </div>
 
                 <!-- Skills -->
@@ -105,7 +136,62 @@
                     <p class="mt-1 text-xs text-gray-500">Separate services with commas</p>
                 </div>
 
+                <!-- Preferences -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-3 p-4 border border-gray-200 rounded-lg">
+                        <h3 class="text-sm font-semibold text-gray-900">Visibility & Messaging</h3>
+                        <label class="block text-sm text-gray-700">Profile Visibility
+                            <select id="profileVisibility" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                <option value="public">Public</option>
+                                <option value="private">Private</option>
+                            </select>
+                        </label>
+                        <label class="block text-sm text-gray-700">Allow Messages From
+                            <select id="allowMessagesFrom" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                <option value="all">Everyone</option>
+                                <option value="partners">Partners only</option>
+                            </select>
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox" id="smsOptIn" class="h-4 w-4 text-gray-900 border-gray-300 focus:ring-gray-900">
+                            SMS notifications
+                        </label>
+                    </div>
+                    <div class="space-y-3 p-4 border border-gray-200 rounded-lg">
+                        <h3 class="text-sm font-semibold text-gray-900">Notifications & Display</h3>
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox" id="notifyMessages" class="h-4 w-4 text-gray-900 border-gray-300 focus:ring-gray-900" checked>
+                            Message notifications
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox" id="notifyProjects" class="h-4 w-4 text-gray-900 border-gray-300 focus:ring-gray-900" checked>
+                            Project updates
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                            <input type="checkbox" id="notifyPartners" class="h-4 w-4 text-gray-900 border-gray-300 focus:ring-gray-900" checked>
+                            Partner requests
+                        </label>
+                        <label class="block text-sm text-gray-700">Theme
+                            <select id="theme" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                <option value="system">System</option>
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                            </select>
+                        </label>
+                        <label class="block text-sm text-gray-700">Language
+                            <select id="language" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                <option value="en">English</option>
+                                <option value="es">Spanish</option>
+                            </select>
+                        </label>
+                        <label class="block text-sm text-gray-700">Timezone
+                            <input type="text" id="timezone" placeholder="e.g., America/Los_Angeles" class="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                        </label>
+                    </div>
+                </div>
+
                 <div class="flex gap-4 pt-6 border-t border-gray-200">
+                    <button type="button" id="delete-btn" class="px-4 py-3 border border-red-200 text-red-700 rounded-lg font-medium hover:bg-red-50">Delete Profile</button>
                     <a href="/profile.html" class="flex-1 text-center px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">Cancel</a>
                     <button type="submit" id="save-btn" class="flex-1 px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Save Changes</button>
                 </div>
@@ -136,9 +222,25 @@
                 document.getElementById('company').value = profile.company || '';
                 document.getElementById('location').value = profile.location || '';
                 document.getElementById('phone').value = profile.phone || '';
+                document.getElementById('city').value = profile.city || '';
+                document.getElementById('state').value = profile.state || '';
+                document.getElementById('registrarId').value = profile.registrarId || '';
                 document.getElementById('yearsExperience').value = profile.yearsExperience || 0;
                 document.getElementById('skills').value = profile.skills ? profile.skills.join(', ') : '';
                 document.getElementById('services').value = profile.services ? profile.services.join(', ') : '';
+                document.getElementById('website').value = profile.links?.website || '';
+                document.getElementById('linkedin').value = profile.links?.linkedin || '';
+                document.getElementById('github').value = profile.links?.github || '';
+
+                document.getElementById('profileVisibility').value = profile.preferences?.profileVisibility || 'public';
+                document.getElementById('allowMessagesFrom').value = profile.preferences?.allowMessagesFrom || 'all';
+                document.getElementById('smsOptIn').checked = profile.preferences?.smsOptIn || false;
+                document.getElementById('notifyMessages').checked = profile.preferences?.emailNotifications?.messages !== false;
+                document.getElementById('notifyProjects').checked = profile.preferences?.emailNotifications?.projectUpdates !== false;
+                document.getElementById('notifyPartners').checked = profile.preferences?.emailNotifications?.partnerRequests !== false;
+                document.getElementById('theme').value = profile.preferences?.theme || 'system';
+                document.getElementById('language').value = profile.preferences?.language || 'en';
+                document.getElementById('timezone').value = profile.preferences?.timezone || 'America/Los_Angeles';
             } catch (error) {
                 console.error('Error loading profile:', error);
                 showError('Failed to load profile');
@@ -155,6 +257,9 @@
             const company = document.getElementById('company').value;
             const location = document.getElementById('location').value;
             const phone = document.getElementById('phone').value;
+            const city = document.getElementById('city').value;
+            const state = document.getElementById('state').value;
+            const registrarId = document.getElementById('registrarId').value;
             const yearsExperience = parseInt(document.getElementById('yearsExperience').value) || 0;
             
             const skillsInput = document.getElementById('skills').value;
@@ -162,6 +267,26 @@
             
             const servicesInput = document.getElementById('services').value;
             const services = servicesInput ? servicesInput.split(',').map(s => s.trim()).filter(s => s) : [];
+
+            const links = {
+                website: document.getElementById('website').value,
+                linkedin: document.getElementById('linkedin').value,
+                github: document.getElementById('github').value
+            };
+
+            const preferences = {
+                profileVisibility: document.getElementById('profileVisibility').value,
+                allowMessagesFrom: document.getElementById('allowMessagesFrom').value,
+                smsOptIn: document.getElementById('smsOptIn').checked,
+                emailNotifications: {
+                    projectUpdates: document.getElementById('notifyProjects').checked,
+                    partnerRequests: document.getElementById('notifyPartners').checked,
+                    messages: document.getElementById('notifyMessages').checked
+                },
+                theme: document.getElementById('theme').value,
+                language: document.getElementById('language').value,
+                timezone: document.getElementById('timezone').value
+            };
             
             const profileData = {
                 firstName,
@@ -171,9 +296,14 @@
                 company,
                 location,
                 phone,
+                city,
+                state,
+                registrarId,
                 yearsExperience,
                 skills,
-                services
+                services,
+                links,
+                preferences
             };
             
             const btn = document.getElementById('save-btn');
@@ -203,6 +333,18 @@
                 showError(error.message);
                 btn.disabled = false;
                 btn.textContent = 'Save Changes';
+            }
+        });
+
+        document.getElementById('delete-btn').addEventListener('click', async () => {
+            const confirmed = confirm('Delete your profile? This will hide your account.');
+            if (!confirmed) return;
+            try {
+                const res = await authFetch('/users/profile', { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete');
+                logout();
+            } catch (err) {
+                showError(err.message);
             }
         });
 

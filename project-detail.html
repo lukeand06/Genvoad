@@ -135,7 +135,8 @@
 
         function displayProject(project) {
             const isOwner = project.owner._id === user.id;
-            const userHasBid = project.bids?.some(bid => bid.user._id === user.id);
+            const myBid = project.bids?.find(bid => bid.user._id === user.id);
+            const userHasBid = !!myBid;
 
             document.getElementById('project-content').innerHTML = `
                 <!-- Main Content -->
@@ -156,6 +157,79 @@
                                 </div>
                             </div>
                         </div>
+
+                        ${userHasBid ? `
+                            <!-- My Bid Status -->
+                            <div class="mb-6 p-4 rounded-lg border-2 ${
+                                myBid.status === 'accepted' ? 'bg-green-50 border-green-300' :
+                                myBid.status === 'rejected' ? 'bg-red-50 border-red-300' :
+                                'bg-blue-50 border-blue-300'
+                            }">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h3 class="text-lg font-semibold ${
+                                        myBid.status === 'accepted' ? 'text-green-900' :
+                                        myBid.status === 'rejected' ? 'text-red-900' :
+                                        'text-blue-900'
+                                    }">Your Bid</h3>
+                                    <span class="px-3 py-1 text-sm font-medium rounded-full ${
+                                        myBid.status === 'accepted' ? 'bg-green-500 text-white' :
+                                        myBid.status === 'rejected' ? 'bg-red-500 text-white' :
+                                        'bg-blue-500 text-white'
+                                    }">${myBid.status === 'pending' ? 'Under Review' : myBid.status.charAt(0).toUpperCase() + myBid.status.slice(1)}</span>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4 mb-3">
+                                    <div>
+                                        <p class="text-xs ${
+                                            myBid.status === 'accepted' ? 'text-green-700' :
+                                            myBid.status === 'rejected' ? 'text-red-700' :
+                                            'text-blue-700'
+                                        } mb-1">Bid Amount</p>
+                                        <p class="text-xl font-bold ${
+                                            myBid.status === 'accepted' ? 'text-green-900' :
+                                            myBid.status === 'rejected' ? 'text-red-900' :
+                                            'text-blue-900'
+                                        }">${formatCurrency(myBid.amount)}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs ${
+                                            myBid.status === 'accepted' ? 'text-green-700' :
+                                            myBid.status === 'rejected' ? 'text-red-700' :
+                                            'text-blue-700'
+                                        } mb-1">Timeline</p>
+                                        <p class="text-sm font-medium ${
+                                            myBid.status === 'accepted' ? 'text-green-900' :
+                                            myBid.status === 'rejected' ? 'text-red-900' :
+                                            'text-blue-900'
+                                        }">${myBid.timeline}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs ${
+                                            myBid.status === 'accepted' ? 'text-green-700' :
+                                            myBid.status === 'rejected' ? 'text-red-700' :
+                                            'text-blue-700'
+                                        } mb-1">Submitted</p>
+                                        <p class="text-sm font-medium ${
+                                            myBid.status === 'accepted' ? 'text-green-900' :
+                                            myBid.status === 'rejected' ? 'text-red-900' :
+                                            'text-blue-900'
+                                        }">${formatDate(myBid.createdAt)}</p>
+                                    </div>
+                                </div>
+                                ${myBid.status === 'accepted' ? `
+                                    <div class="bg-green-100 border border-green-200 rounded px-3 py-2 text-sm text-green-800">
+                                        🎉 Congratulations! Your bid was accepted. The client will be in touch soon.
+                                    </div>
+                                ` : myBid.status === 'rejected' ? `
+                                    <div class="bg-red-100 border border-red-200 rounded px-3 py-2 text-sm text-red-800">
+                                        Your bid was not selected. Keep bidding on other projects!
+                                    </div>
+                                ` : `
+                                    <div class="bg-blue-100 border border-blue-200 rounded px-3 py-2 text-sm text-blue-800">
+                                        Your bid is under review. The client will notify you of their decision.
+                                    </div>
+                                `}
+                            </div>
+                        ` : ''}
 
                         <!-- Project Details -->
                         <div class="prose max-w-none mb-6">
@@ -183,8 +257,6 @@
 
                         ${!isOwner && project.status === 'open' && !userHasBid ? `
                             <button id="open-bid-modal" class="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 mt-6">Submit Bid</button>
-                        ` : userHasBid ? `
-                            <div class="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg mt-6">You've already submitted a bid for this project</div>
                         ` : ''}
                     </div>
 
