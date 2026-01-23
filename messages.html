@@ -61,7 +61,16 @@
                     <div class="p-4 border-b border-gray-200">
                         <h2 class="text-lg font-semibold text-gray-900">Messages</h2>
                     </div>
-                    <div id="conversations-list" class="overflow-y-auto" style="height: calc(100% - 65px);">
+                    <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-sm font-semibold text-gray-900">Partners</h3>
+                            <button id="reload-partners" class="text-xs text-gray-600 hover:text-gray-900">Refresh</button>
+                        </div>
+                        <div id="partners-list" class="flex flex-wrap gap-2 text-sm text-gray-700">
+                            <p class="text-xs text-gray-500">Loading...</p>
+                        </div>
+                    </div>
+                    <div id="conversations-list" class="overflow-y-auto" style="height: calc(100% - 150px);">
                         <div class="p-4 text-center text-gray-500">Loading conversations...</div>
                     </div>
                 </div>
@@ -139,6 +148,7 @@
         let currentChatUserId = null;
         let currentMessages = [];
         let messagesPollInterval = null;
+        let partners = [];
 
         // Check for user parameter in URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -161,6 +171,31 @@
             } catch (error) {
                 console.error('Error loading conversations:', error);
             }
+        }
+
+        async function loadPartners() {
+            try {
+                const res = await authFetch('/partners');
+                const data = await res.json();
+                partners = data.partners || [];
+                renderPartners();
+            } catch (e) {
+                console.error('Error loading partners', e);
+                document.getElementById('partners-list').innerHTML = '<p class="text-xs text-red-500">Failed to load partners</p>';
+            }
+        }
+
+        function renderPartners() {
+            const container = document.getElementById('partners-list');
+            if (!partners || partners.length === 0) {
+                container.innerHTML = '<p class="text-xs text-gray-500">No partners yet</p>';
+                return;
+            }
+            container.innerHTML = partners.map(p => `
+                <button class="px-3 py-1 bg-white border border-gray-200 rounded-full text-xs hover:border-gray-400" onclick="openChat('${p._id}')">
+                    ${p.firstName} ${p.lastName}
+                </button>
+            `).join('');
         }
 
         function displayConversations() {
@@ -348,6 +383,8 @@
             });
         });
 
+        document.getElementById('reload-partners').addEventListener('click', loadPartners);
+
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
             if (messagesPollInterval) {
@@ -355,7 +392,10 @@
             }
         });
 
-        loadConversations();
+        (async () => {
+            await loadPartners();
+            await loadConversations();
+        })();
     </script>
 </body>
 </html>

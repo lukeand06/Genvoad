@@ -359,19 +359,24 @@ app.put('/api/users/profile', authMiddleware, async (req, res) => {
 // Search users
 app.get('/api/users', authMiddleware, async (req, res) => {
   try {
-    const { search, skills, services } = req.query;
+    const { search, skills, services, city, registeredOnly } = req.query;
     const query = { emailVerified: true };
     
     if (search) {
       query.$or = [
         { firstName: { $regex: search, $options: 'i' } },
         { lastName: { $regex: search, $options: 'i' } },
-        { company: { $regex: search, $options: 'i' } }
+        { company: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } },
+        { city: { $regex: search, $options: 'i' } },
+        { state: { $regex: search, $options: 'i' } }
       ];
     }
     
     if (skills) query.skills = { $in: skills.split(',') };
     if (services) query.services = { $in: services.split(',') };
+    if (city) query.$or = (query.$or || []).concat({ location: { $regex: city, $options: 'i' } }, { city: { $regex: city, $options: 'i' } });
+    if (registeredOnly === 'true') query.registrarId = { $ne: '' };
     
     const users = await User.find(query)
       .select('-password -verificationCode')
@@ -380,6 +385,48 @@ app.get('/api/users', authMiddleware, async (req, res) => {
     res.json({ users });
   } catch (error) {
     res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+// ============ PARTNER ROUTES ============
+
+// List partners
+app.get('/api/partners', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate('partners', 'firstName lastName avatar company title location city state registrarId');
+    res.json({ partners: user.partners || [] });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch partners' });
+  }
+});
+
+// Add partner (mutual)
+app.post('/api/partners/:partnerId', authMiddleware, async (req, res) => {
+  try {
+    const partnerId = req.params.partnerId;
+    if (partnerId === req.user._id.toString()) return res.status(400).json({ error: 'Cannot partner with yourself' });
+    const partner = await User.findById(partnerId);
+    if (!partner) return res.status(404).json({ error: 'User not found' });
+    
+    // Add to current user
+    await User.findByIdAndUpdate(req.user._id, { $addToSet: { partners: partnerId } });
+    // Add to partner as mutual
+    await User.findByIdAndUpdate(partnerId, { $addToSet: { partners: req.user._id } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add partner' });
+  }
+});
+
+// Remove partner (mutual removal)
+app.delete('/api/partners/:partnerId', authMiddleware, async (req, res) => {
+  try {
+    const partnerId = req.params.partnerId;
+    await User.findByIdAndUpdate(req.user._id, { $pull: { partners: partnerId } });
+    await User.findByIdAndUpdate(partnerId, { $pull: { partners: req.user._id } });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove partner' });
   }
 });
 

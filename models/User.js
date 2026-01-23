@@ -17,9 +17,15 @@ const UserSchema = new mongoose.Schema({
   // Professional Info
   company: { type: String, default: '' },
   title: { type: String, default: '' },
+  registrarId: { type: String, default: '' },
+  city: { type: String, default: '' },
+  state: { type: String, default: '' },
   skills: [{ type: String }],
   services: [{ type: String }],
   yearsExperience: { type: Number, default: 0 },
+
+  // Social
+  partners: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   
   // Portfolio
   portfolio: [{

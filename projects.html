@@ -83,7 +83,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                     <select id="status-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                         <option value="">All Status</option>
-                        <option value="open">Open</option>
+                        <option value="open" selected>Open</option>
                         <option value="in_progress">In Progress</option>
                         <option value="completed">Completed</option>
                     </select>
@@ -124,7 +124,7 @@
                 const response = await authFetch('/projects');
                 const data = await response.json();
                 allProjects = data.projects;
-                displayProjects(allProjects);
+                filterProjects(); // respect default status selection
             } catch (error) {
                 console.error('Error loading projects:', error);
                 document.getElementById('projects-container').innerHTML = '<div class="text-center py-12 text-red-500">Failed to load projects</div>';

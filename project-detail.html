@@ -216,7 +216,7 @@
                                         <div class="flex items-center justify-between text-sm text-gray-500">
                                             <span>Submitted ${formatDate(bid.createdAt)}</span>
                                             ${isOwner && bid.status === 'pending' && project.status === 'open' ? `
-                                                <button onclick="acceptBid('${bid._id}')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Accept Bid</button>
+                                                <button onclick="acceptBid('${bid._id}', '${bid.user._id}', '${encodeURIComponent(project.title)}')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Accept Bid</button>
                                             ` : ''}
                                         </div>
                                     </div>
@@ -410,7 +410,7 @@
             }
         });
 
-        async function acceptBid(bidId) {
+        async function acceptBid(bidId, contractorId, encodedTitle) {
             if (!confirm('Are you sure you want to accept this bid? This will reject all other bids.')) {
                 return;
             }
@@ -424,8 +424,14 @@
                     throw new Error('Failed to accept bid');
                 }
                 
-                alert('Bid accepted successfully!');
-                loadProject(); // Reload project
+                alert('Bid accepted successfully! Redirecting to messages...');
+                const projectTitle = decodeURIComponent(encodedTitle || '');
+                const params = new URLSearchParams({
+                    user: contractorId,
+                    projectId,
+                    projectTitle
+                });
+                window.location.href = `/messages.html?${params.toString()}`;
             } catch (error) {
                 alert(error.message);
             }
