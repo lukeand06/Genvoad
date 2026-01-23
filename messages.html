@@ -88,15 +88,32 @@
                         </div>
                     </div>
 
+                    <!-- Negotiation Context -->
+                    <div id="conversation-context" class="hidden px-4 py-3 border-b border-gray-200 bg-blue-50">
+                        <p id="context-title" class="text-sm font-semibold text-blue-900"></p>
+                        <p class="text-xs text-blue-800 mt-1">Align on scope → timeline → budget → next steps to keep the negotiation clear.</p>
+                    </div>
+
                     <!-- Messages -->
                     <div id="messages-container" class="hidden flex-1 overflow-y-auto p-6 space-y-4">
                     </div>
 
                     <!-- Message Input -->
                     <div id="message-form-container" class="hidden p-4 border-t border-gray-200">
-                        <form id="message-form" class="flex gap-2">
-                            <input type="text" id="message-input" required placeholder="Type your message..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                            <button type="submit" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Send</button>
+                        <form id="message-form" class="flex gap-2 flex-col">
+                            <div id="negotiation-prompts" class="hidden flex flex-wrap gap-2">
+                                <button type="button" class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-lg hover:bg-gray-200" data-template="Can we confirm the exact scope and deliverables for this project?" data-type="proposal">Scope check</button>
+                                <button type="button" class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-lg hover:bg-gray-200" data-template="What milestones and dates work for you? I want to align timeline before committing." data-type="proposal">Timeline</button>
+                                <button type="button" class="px-3 py-1 bg-gray-100 text-gray-700 text-xs rounded-lg hover:bg-gray-200" data-template="Based on the scope, my budget range is ____. Does that fit your expectations?" data-type="proposal">Budget</button>
+                                <button type="button" class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-lg hover:bg-green-200" data-template="I agree to the terms discussed. Let's move forward." data-type="agreement">✓ Agreement</button>
+                                <button type="button" class="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-lg hover:bg-blue-200" data-template="I'd like to propose: [your counter terms here]" data-type="counter_proposal">Counter Offer</button>
+                            </div>
+                            <div class="flex gap-2">
+                                <input type="text" id="message-input" required placeholder="Type your message..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                                <input type="hidden" id="message-type" value="standard">
+                                <input type="hidden" id="message-project" value="">
+                                <button type="submit" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Send</button>
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -126,6 +143,9 @@
         // Check for user parameter in URL
         const urlParams = new URLSearchParams(window.location.search);
         const initialUserId = urlParams.get('user');
+        const initialProjectId = urlParams.get('projectId');
+        const initialProjectTitle = urlParams.get('projectTitle') ? decodeURIComponent(urlParams.get('projectTitle')) : null;
+        let draftedFromContext = false;
 
         async function loadConversations() {
             try {
@@ -186,6 +206,16 @@
                 document.getElementById('chat-user-avatar').innerHTML = getAvatarHTML(chatUser, 'w-12 h-12');
                 document.getElementById('chat-user-name').textContent = `${chatUser.firstName} ${chatUser.lastName}`;
                 document.getElementById('chat-user-company').textContent = chatUser.company || '';
+
+                // Surface negotiation context when arriving from a project card
+                if (initialProjectTitle) {
+                    const context = document.getElementById('conversation-context');
+                    document.getElementById('context-title').textContent = `Negotiating: ${initialProjectTitle}`;
+                    context.classList.remove('hidden');
+                    document.getElementById('negotiation-prompts').classList.remove('hidden');
+                } else {
+                    document.getElementById('negotiation-prompts').classList.remove('hidden');
+                }
                 
                 // Show chat UI
                 document.getElementById('no-conversation').classList.add('hidden');
@@ -200,6 +230,14 @@
                 messagesPollInterval = setInterval(loadMessages, 3000);
                 
                 displayConversations(); // Refresh conversation list
+
+                // Pre-fill a structured opener if we came from a project card and haven't inserted it yet
+                if (initialProjectTitle && !draftedFromContext) {
+                    const opener = `Hi ${chatUser.firstName}, I'm interested in "${initialProjectTitle}"${initialProjectId ? ` (project ID: ${initialProjectId})` : ''}. Can we align on scope, timeline, budget, and next steps?`;
+                    setDraft(opener);
+                    document.getElementById('message-project').value = initialProjectId || '';
+                    draftedFromContext = true;
+                }
             } catch (error) {
                 console.error('Error opening chat:', error);
             }
@@ -228,9 +266,17 @@
 
             container.innerHTML = currentMessages.map(msg => {
                 const isSent = msg.sender._id === user.id;
+                const typeLabel = {
+                    'proposal': '📨 Proposal',
+                    'counter_proposal': '🔄 Counter',
+                    'agreement': '✅ Agreement',
+                    'change_request': '📝 Change Request'
+                }[msg.type] || '';
+                
                 return `
                     <div class="flex ${isSent ? 'justify-end' : 'justify-start'}">
                         <div class="${isSent ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-2 max-w-md">
+                            ${typeLabel ? `<p class="text-xs opacity-75 mb-1">${typeLabel}</p>` : ''}
                             <p class="text-sm">${msg.content}</p>
                             <p class="text-xs ${isSent ? 'text-gray-300' : 'text-gray-500'} mt-1">${formatDate(msg.createdAt)}</p>
                         </div>
@@ -247,16 +293,25 @@
             
             const input = document.getElementById('message-input');
             const content = input.value.trim();
+            const type = document.getElementById('message-type').value;
+            const project = document.getElementById('message-project').value;
             
             if (!content || !currentChatUserId) return;
             
             try {
+                const payload = {
+                    recipient: currentChatUserId,
+                    content,
+                    type: type || 'standard'
+                };
+                
+                if (project) {
+                    payload.project = project;
+                }
+                
                 const response = await authFetch('/messages', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        recipient: currentChatUserId,
-                        content
-                    })
+                    body: JSON.stringify(payload)
                 });
                 
                 if (!response.ok) {
@@ -264,12 +319,33 @@
                 }
                 
                 input.value = '';
+                document.getElementById('message-type').value = 'standard';
                 await loadMessages();
                 await loadConversations();
             } catch (error) {
                 console.error('Error sending message:', error);
                 alert('Failed to send message');
             }
+        });
+
+        function setDraft(text) {
+            const input = document.getElementById('message-input');
+            // If user already typed, append instead of override for add-on prompts
+            input.value = text;
+            input.focus();
+            input.setSelectionRange(input.value.length, input.value.length);
+        }
+
+        document.querySelectorAll('[data-template]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = document.getElementById('message-input');
+                const template = btn.getAttribute('data-template');
+                const type = btn.getAttribute('data-type') || 'standard';
+                
+                setDraft(template);
+                document.getElementById('message-type').value = type;
+                input.focus();
+            });
         });
 
         // Cleanup on page unload

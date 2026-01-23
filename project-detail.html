@@ -99,6 +99,7 @@
     </div>
 
     <script src="/public/js/auth.js"></script>
+    <script src="/public/js/governance.js"></script>
     <script>
         if (!requireAuth()) {
             throw new Error('Not authenticated');
@@ -223,6 +224,29 @@
                             </div>
                         </div>
                     ` : ''}
+                    
+                    <!-- Open Governance: Tabs for In-Progress Projects -->
+                    ${project.status === 'in_progress' && (isOwner || project.acceptedContractor?._id === user.id) ? `
+                        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                            <div class="border-b border-gray-200">
+                                <nav class="flex">
+                                    <button onclick="showGovernanceTab('milestones')" id="tab-milestones" class="governance-tab px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900">
+                                        Milestones
+                                    </button>
+                                    <button onclick="showGovernanceTab('changes')" id="tab-changes" class="governance-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">
+                                        Change Orders
+                                    </button>
+                                    <button onclick="showGovernanceTab('activity')" id="tab-activity" class="governance-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">
+                                        Activity Log
+                                    </button>
+                                </nav>
+                            </div>
+                            
+                            <div id="governance-content" class="p-6">
+                                <!-- Content loaded by JavaScript -->
+                            </div>
+                        </div>
+                    ` : ''}
                 </div>
 
                 <!-- Sidebar -->
@@ -257,6 +281,34 @@
                             ` : ''}
                         </div>
                     </div>
+                    
+                    <!-- Open Governance: Negotiation Phase Tracker -->
+                    ${project.status === 'in_progress' || project.negotiationPhase !== 'not_started' ? `
+                        <div class="bg-white rounded-lg border border-gray-200 p-6">
+                            <h3 class="font-semibold text-gray-900 mb-4">Negotiation Progress</h3>
+                            <div class="space-y-3">
+                                ${renderNegotiationPhase(project.negotiationPhase || 'not_started')}
+                                <div class="mt-4 space-y-2">
+                                    <div class="flex items-center text-xs ${project.negotiationPhase === 'scope_discussion' || project.negotiationPhase === 'timeline_alignment' || project.negotiationPhase === 'budget_agreement' || project.negotiationPhase === 'finalized' ? 'text-green-600' : 'text-gray-400'}">
+                                        <span class="mr-2">${project.negotiationPhase === 'scope_discussion' || project.negotiationPhase === 'timeline_alignment' || project.negotiationPhase === 'budget_agreement' || project.negotiationPhase === 'finalized' ? '✓' : '○'}</span>
+                                        Scope Aligned
+                                    </div>
+                                    <div class="flex items-center text-xs ${project.negotiationPhase === 'timeline_alignment' || project.negotiationPhase === 'budget_agreement' || project.negotiationPhase === 'finalized' ? 'text-green-600' : 'text-gray-400'}">
+                                        <span class="mr-2">${project.negotiationPhase === 'timeline_alignment' || project.negotiationPhase === 'budget_agreement' || project.negotiationPhase === 'finalized' ? '✓' : '○'}</span>
+                                        Timeline Confirmed
+                                    </div>
+                                    <div class="flex items-center text-xs ${project.negotiationPhase === 'budget_agreement' || project.negotiationPhase === 'finalized' ? 'text-green-600' : 'text-gray-400'}">
+                                        <span class="mr-2">${project.negotiationPhase === 'budget_agreement' || project.negotiationPhase === 'finalized' ? '✓' : '○'}</span>
+                                        Budget Agreed
+                                    </div>
+                                    <div class="flex items-center text-xs ${project.negotiationPhase === 'finalized' ? 'text-green-600' : 'text-gray-400'}">
+                                        <span class="mr-2">${project.negotiationPhase === 'finalized' ? '✓' : '○'}</span>
+                                        Contract Finalized
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ` : ''}
 
                     <!-- Client Info Card -->
                     <div class="bg-white rounded-lg border border-gray-200 p-6">
@@ -349,6 +401,152 @@
         }
 
         loadProject();
+        
+        // Open Governance Tab Management
+        let currentGovernanceTab = 'milestones';
+        
+        async function showGovernanceTab(tab) {
+            currentGovernanceTab = tab;
+            
+            // Update tab styling
+            document.querySelectorAll('.governance-tab').forEach(t => {
+                t.classList.remove('border-gray-900', 'text-gray-900');
+                t.classList.add('border-transparent', 'text-gray-600');
+            });
+            document.getElementById(`tab-${tab}`).classList.remove('border-transparent', 'text-gray-600');
+            document.getElementById(`tab-${tab}`).classList.add('border-gray-900', 'text-gray-900');
+            
+            const content = document.getElementById('governance-content');
+            
+            if (tab === 'milestones') {
+                await loadMilestones(content);
+            } else if (tab === 'changes') {
+                await loadChangeOrders(content);
+            } else if (tab === 'activity') {
+                await loadActivityLog(content);
+            }
+        }
+        
+        async function loadMilestones(container) {
+            const isOwner = currentProject.owner._id === user.id;
+            const isContractor = currentProject.acceptedContractor?._id === user.id;
+            
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Project Milestones</h3>
+                        ${isOwner || isContractor ? `
+                            <button onclick="showAddMilestoneModal()" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">
+                                + Add Milestone
+                            </button>
+                        ` : ''}
+                    </div>
+                    
+                    ${currentProject.milestones && currentProject.milestones.length > 0 ? 
+                        currentProject.milestones.map(m => renderMilestone(m, projectId, isContractor, isOwner)).join('') :
+                        '<p class="text-center text-gray-500 py-8">No milestones defined yet. Add milestones to track progress and payments.</p>'
+                    }
+                </div>
+            `;
+        }
+        
+        async function loadChangeOrders(container) {
+            const isOwner = currentProject.owner._id === user.id;
+            const isContractor = currentProject.acceptedContractor?._id === user.id;
+            
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Change Orders</h3>
+                        ${isOwner || isContractor ? `
+                            <button onclick="showAddChangeOrderModal()" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">
+                                + Request Change
+                            </button>
+                        ` : ''}
+                    </div>
+                    
+                    ${currentProject.changeOrders && currentProject.changeOrders.length > 0 ?
+                        currentProject.changeOrders.map(c => renderChangeOrder(c, projectId, (isOwner || isContractor), user.id)).join('') :
+                        '<p class="text-center text-gray-500 py-8">No change orders yet. Use change orders to formally request scope, budget, or timeline changes.</p>'
+                    }
+                </div>
+            `;
+        }
+        
+        async function loadActivityLog(container) {
+            try {
+                const response = await authFetch(`/projects/${projectId}/activity`);
+                const data = await response.json();
+                
+                container.innerHTML = `
+                    <div class="space-y-0">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4 px-4">Complete Activity History</h3>
+                        <p class="text-sm text-gray-600 mb-6 px-4">Transparent log of all project decisions and updates for accountability.</p>
+                        ${data.activityLog && data.activityLog.length > 0 ?
+                            data.activityLog.map(entry => renderActivityLogEntry(entry)).join('') :
+                            '<p class="text-center text-gray-500 py-8">No activity yet</p>'
+                        }
+                    </div>
+                `;
+            } catch (error) {
+                container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load activity log</p>';
+            }
+        }
+        
+        function showAddMilestoneModal() {
+            const modal = prompt('Milestone Title:');
+            if (!modal) return;
+            
+            const description = prompt('Description (optional):');
+            const amount = prompt('Payment Amount ($):');
+            const dueDate = prompt('Due Date (YYYY-MM-DD):');
+            
+            authFetch(`/projects/${projectId}/milestones`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    title: modal,
+                    description,
+                    amount: amount ? parseFloat(amount) : 0,
+                    dueDate: dueDate || null
+                })
+            }).then(() => {
+                alert('Milestone added!');
+                location.reload();
+            }).catch(err => {
+                alert('Failed to add milestone');
+            });
+        }
+        
+        function showAddChangeOrderModal() {
+            const title = prompt('Change Order Title:');
+            if (!title) return;
+            
+            const description = prompt('Detailed Description:');
+            const budgetImpact = prompt('Budget Impact ($, use + or -):');
+            const timelineImpact = prompt('Timeline Impact (e.g., +2 weeks):');
+            
+            authFetch(`/projects/${projectId}/change-orders`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    title,
+                    description,
+                    budgetImpact: budgetImpact ? parseFloat(budgetImpact) : 0,
+                    timelineImpact
+                })
+            }).then(() => {
+                alert('Change order submitted!');
+                location.reload();
+            }).catch(err => {
+                alert('Failed to submit change order');
+            });
+        }
+        
+        // Initialize governance tab if project is in progress
+        window.addEventListener('load', () => {
+            if (currentProject && currentProject.status === 'in_progress') {
+                showGovernanceTab('milestones');
+            }
+        });
     </script>
 </body>
 </html>

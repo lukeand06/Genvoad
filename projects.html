@@ -208,6 +208,9 @@
                         ${project.status === 'open' && project.owner._id !== user.id ? `
                             <a href="/project-detail.html?id=${project._id}#bid" class="flex-1 text-center px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Submit Bid</a>
                         ` : ''}
+                        ${project.owner._id !== user.id ? `
+                            <a href="/messages.html?user=${project.owner._id}&projectId=${project._id}&projectTitle=${encodeURIComponent(project.title)}" class="flex-1 text-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Message Client</a>
+                        ` : ''}
                     </div>
                 </div>
             `).join('');

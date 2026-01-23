@@ -89,11 +89,15 @@ const authMiddleware = async (req, res, next) => {
 // Signup
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, company, role } = req.body;
     
     // Validation
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !email || !password || !company || !role) {
       return res.status(400).json({ error: 'All fields required' });
+    }
+    const normalizedRole = ['owner', 'vendor'].includes(role) ? role : null;
+    if (!normalizedRole) {
+      return res.status(400).json({ error: 'Invalid role' });
     }
     
     // Check existing
@@ -106,6 +110,8 @@ app.post('/api/auth/signup', async (req, res) => {
         existing.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
         existing.firstName = firstName || existing.firstName;
         existing.lastName = lastName || existing.lastName;
+        existing.company = company || existing.company;
+        existing.role = normalizedRole || existing.role;
         existing.password = await bcrypt.hash(password, 10);
         await existing.save();
         try {
@@ -136,6 +142,8 @@ app.post('/api/auth/signup', async (req, res) => {
       lastName,
       email: email.toLowerCase(),
       password: hashedPassword,
+      company,
+      role: normalizedRole,
       verificationCode,
       verificationExpires,
       emailVerified: false
@@ -229,7 +237,9 @@ app.post('/api/auth/verify', async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        avatar: user.avatar
+        avatar: user.avatar,
+        company: user.company,
+        role: user.role
       }
     });
   } catch (error) {
@@ -270,7 +280,8 @@ app.post('/api/auth/login', async (req, res) => {
         bio: user.bio,
         location: user.location,
         company: user.company,
-        title: user.title
+        title: user.title,
+        role: user.role
       }
     });
   } catch (error) {
@@ -437,7 +448,18 @@ app.post('/api/projects/:projectId/bids/:bidId/accept', authMiddleware, async (r
     });
     
     project.acceptedBid = bid._id;
+    project.acceptedContractor = bid.user;
     project.status = 'in_progress';
+    project.negotiationPhase = 'finalized';
+    
+    // Open Governance: Log activity
+    project.activityLog.push({
+      actor: req.user._id,
+      action: 'bid_accepted',
+      details: `Accepted bid from contractor for ${formatCurrency(bid.amount)}`,
+      timestamp: new Date()
+    });
+    
     await project.save();
     
     res.json({ success: true, message: 'Bid accepted' });
@@ -454,9 +476,27 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
     const message = new Message({
       sender: req.user._id,
       recipient: req.body.recipient,
-      content: req.body.content
+      content: req.body.content,
+      type: req.body.type || 'standard',
+      project: req.body.project,
+      structuredData: req.body.structuredData
     });
     await message.save();
+    
+    // Log governance activity if message is linked to a project
+    if (req.body.project && ['proposal', 'counter_proposal', 'agreement'].includes(message.type)) {
+      const project = await Project.findById(req.body.project);
+      if (project) {
+        project.activityLog.push({
+          actor: req.user._id,
+          action: `message_${message.type}`,
+          details: `Sent ${message.type.replace('_', ' ')} message`,
+          timestamp: new Date()
+        });
+        await project.save();
+      }
+    }
+    
     res.json({ success: true, message });
   } catch (error) {
     res.status(500).json({ error: 'Failed to send message' });
@@ -521,6 +561,247 @@ app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
     res.json({ messages });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// ============ OPEN GOVERNANCE ROUTES ============
+
+// Update negotiation phase
+app.put('/api/projects/:id/negotiation-phase', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    const isOwner = project.owner.toString() === req.user._id.toString();
+    const isContractor = project.acceptedContractor?.toString() === req.user._id.toString();
+    
+    if (!isOwner && !isContractor) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    project.negotiationPhase = req.body.phase;
+    project.activityLog.push({
+      actor: req.user._id,
+      action: 'negotiation_phase_update',
+      details: `Updated negotiation phase to: ${req.body.phase}`,
+      timestamp: new Date()
+    });
+    
+    await project.save();
+    res.json({ success: true, project });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update negotiation phase' });
+  }
+});
+
+// Add milestone
+app.post('/api/projects/:id/milestones', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    const isOwner = project.owner.toString() === req.user._id.toString();
+    const isContractor = project.acceptedContractor?.toString() === req.user._id.toString();
+    
+    if (!isOwner && !isContractor) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    project.milestones.push(req.body);
+    project.activityLog.push({
+      actor: req.user._id,
+      action: 'milestone_added',
+      details: `Added milestone: ${req.body.title}`,
+      timestamp: new Date()
+    });
+    
+    await project.save();
+    res.json({ success: true, project });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to add milestone' });
+  }
+});
+
+// Complete milestone (contractor marks complete)
+app.post('/api/projects/:projectId/milestones/:milestoneId/complete', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    const isContractor = project.acceptedContractor?.toString() === req.user._id.toString();
+    if (!isContractor) {
+      return res.status(403).json({ error: 'Only the contractor can mark milestones complete' });
+    }
+    
+    const milestone = project.milestones.id(req.params.milestoneId);
+    if (!milestone) return res.status(404).json({ error: 'Milestone not found' });
+    
+    milestone.status = 'completed';
+    milestone.completedAt = new Date();
+    milestone.completedBy = req.user._id;
+    milestone.notes = req.body.notes;
+    milestone.deliverables = req.body.deliverables || [];
+    
+    project.activityLog.push({
+      actor: req.user._id,
+      action: 'milestone_completed',
+      details: `Marked milestone "${milestone.title}" as completed`,
+      timestamp: new Date()
+    });
+    
+    await project.save();
+    res.json({ success: true, project });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to complete milestone' });
+  }
+});
+
+// Approve milestone (owner approves)
+app.post('/api/projects/:projectId/milestones/:milestoneId/approve', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    const isOwner = project.owner.toString() === req.user._id.toString();
+    if (!isOwner) {
+      return res.status(403).json({ error: 'Only the project owner can approve milestones' });
+    }
+    
+    const milestone = project.milestones.id(req.params.milestoneId);
+    if (!milestone) return res.status(404).json({ error: 'Milestone not found' });
+    
+    if (milestone.status !== 'completed') {
+      return res.status(400).json({ error: 'Milestone must be completed before approval' });
+    }
+    
+    milestone.status = 'approved';
+    milestone.approvedAt = new Date();
+    milestone.approvedBy = req.user._id;
+    
+    project.activityLog.push({
+      actor: req.user._id,
+      action: 'milestone_approved',
+      details: `Approved milestone "${milestone.title}"`,
+      timestamp: new Date()
+    });
+    
+    await project.save();
+    res.json({ success: true, project });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to approve milestone' });
+  }
+});
+
+// Submit change order
+app.post('/api/projects/:id/change-orders', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    const isOwner = project.owner.toString() === req.user._id.toString();
+    const isContractor = project.acceptedContractor?.toString() === req.user._id.toString();
+    
+    if (!isOwner && !isContractor) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    const changeOrder = {
+      requestedBy: req.user._id,
+      title: req.body.title,
+      description: req.body.description,
+      budgetImpact: req.body.budgetImpact || 0,
+      timelineImpact: req.body.timelineImpact,
+      status: 'pending',
+      responses: [],
+      createdAt: new Date()
+    };
+    
+    project.changeOrders.push(changeOrder);
+    project.activityLog.push({
+      actor: req.user._id,
+      action: 'change_order_requested',
+      details: `Requested change order: ${req.body.title}`,
+      timestamp: new Date()
+    });
+    
+    await project.save();
+    res.json({ success: true, project });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to submit change order' });
+  }
+});
+
+// Respond to change order
+app.post('/api/projects/:projectId/change-orders/:changeOrderId/respond', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    const isOwner = project.owner.toString() === req.user._id.toString();
+    const isContractor = project.acceptedContractor?.toString() === req.user._id.toString();
+    
+    if (!isOwner && !isContractor) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    const changeOrder = project.changeOrders.id(req.params.changeOrderId);
+    if (!changeOrder) return res.status(404).json({ error: 'Change order not found' });
+    
+    if (changeOrder.requestedBy.toString() === req.user._id.toString()) {
+      return res.status(400).json({ error: 'Cannot respond to your own change order' });
+    }
+    
+    changeOrder.responses.push({
+      user: req.user._id,
+      response: req.body.response,
+      decision: req.body.decision,
+      createdAt: new Date()
+    });
+    
+    if (req.body.decision === 'approve') {
+      changeOrder.status = 'approved';
+      changeOrder.resolvedAt = new Date();
+    } else if (req.body.decision === 'reject') {
+      changeOrder.status = 'rejected';
+      changeOrder.resolvedAt = new Date();
+    } else if (req.body.decision === 'counter') {
+      changeOrder.status = 'negotiating';
+    }
+    
+    project.activityLog.push({
+      actor: req.user._id,
+      action: `change_order_${req.body.decision}`,
+      details: `${req.body.decision === 'approve' ? 'Approved' : req.body.decision === 'reject' ? 'Rejected' : 'Countered'} change order: ${changeOrder.title}`,
+      timestamp: new Date()
+    });
+    
+    await project.save();
+    res.json({ success: true, project });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to respond to change order' });
+  }
+});
+
+// Get project activity log
+app.get('/api/projects/:id/activity', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id)
+      .populate('activityLog.actor', 'firstName lastName avatar company')
+      .select('activityLog owner acceptedContractor');
+    
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    // Only owner and contractor can see activity log
+    const isOwner = project.owner.toString() === req.user._id.toString();
+    const isContractor = project.acceptedContractor?.toString() === req.user._id.toString();
+    
+    if (!isOwner && !isContractor) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    res.json({ activityLog: project.activityLog });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch activity log' });
   }
 });
 
