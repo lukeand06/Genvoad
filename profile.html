@@ -41,7 +41,7 @@
                         </button>
                         <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
                             <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
-                            <a href="/edit-profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Edit Profile</a>
+                            <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
                             <hr class="my-1">
                             <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
                         </div>
@@ -108,7 +108,7 @@
                                 </div>
                             </div>
                             ${isOwnProfile ? `
-                                <a href="/edit-profile.html" class="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-medium shadow hover:bg-gray-50">Edit Profile</a>
+                                <a href="/settings.html" class="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-medium shadow hover:bg-gray-50">Edit Profile</a>
                             ` : `
                                 <div class="flex gap-2">
                                     <a href="/messages.html?user=${profile._id}" class="px-4 py-2 bg-white text-gray-900 rounded-lg text-sm font-medium shadow hover:bg-gray-50">Message</a>
