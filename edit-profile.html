@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Genovad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+                            <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                            <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-xl font-semibold text-gray-900">Genovad</span>
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/profile.html" class="text-gray-600 hover:text-gray-900 text-sm font-medium">Cancel</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Edit Profile</h1>
+            <p class="text-gray-600 mt-1">Update your information to showcase your expertise</p>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-8">
+            <div id="success-message" class="hidden mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded"></div>
+            <div id="error-message" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"></div>
+            
+            <form id="profile-form" class="space-y-6">
+                <!-- Basic Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                        <input type="text" id="firstName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                        <input type="text" id="lastName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                    <textarea id="bio" rows="4" placeholder="Tell others about yourself, your experience, and what makes you unique..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent"></textarea>
+                </div>
+
+                <!-- Professional Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
+                        <input type="text" id="title" placeholder="e.g., General Contractor" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Company</label>
+                        <input type="text" id="company" placeholder="Your company name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                </div>
+
+                <!-- Contact Info -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                        <input type="text" id="location" placeholder="City, State" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input type="tel" id="phone" placeholder="+1 (555) 123-4567" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
+                    <input type="number" id="yearsExperience" min="0" max="99" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                </div>
+
+                <!-- Skills -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Skills</label>
+                    <input type="text" id="skills" placeholder="e.g., Carpentry, Electrical, Plumbing (comma-separated)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    <p class="mt-1 text-xs text-gray-500">Separate skills with commas</p>
+                </div>
+
+                <!-- Services -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Services Offered</label>
+                    <input type="text" id="services" placeholder="e.g., Residential Construction, Commercial Renovation (comma-separated)" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    <p class="mt-1 text-xs text-gray-500">Separate services with commas</p>
+                </div>
+
+                <div class="flex gap-4 pt-6 border-t border-gray-200">
+                    <a href="/profile.html" class="flex-1 text-center px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">Cancel</a>
+                    <button type="submit" id="save-btn" class="flex-1 px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        if (!requireAuth()) {
+            throw new Error('Not authenticated');
+        }
+
+        const user = getCurrentUser();
+
+        // Load current profile data
+        async function loadProfile() {
+            try {
+                const response = await authFetch(`/users/${user.id}`);
+                const data = await response.json();
+                const profile = data.user;
+
+                // Populate form
+                document.getElementById('firstName').value = profile.firstName || '';
+                document.getElementById('lastName').value = profile.lastName || '';
+                document.getElementById('bio').value = profile.bio || '';
+                document.getElementById('title').value = profile.title || '';
+                document.getElementById('company').value = profile.company || '';
+                document.getElementById('location').value = profile.location || '';
+                document.getElementById('phone').value = profile.phone || '';
+                document.getElementById('yearsExperience').value = profile.yearsExperience || 0;
+                document.getElementById('skills').value = profile.skills ? profile.skills.join(', ') : '';
+                document.getElementById('services').value = profile.services ? profile.services.join(', ') : '';
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                showError('Failed to load profile');
+            }
+        }
+
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const bio = document.getElementById('bio').value;
+            const title = document.getElementById('title').value;
+            const company = document.getElementById('company').value;
+            const location = document.getElementById('location').value;
+            const phone = document.getElementById('phone').value;
+            const yearsExperience = parseInt(document.getElementById('yearsExperience').value) || 0;
+            
+            const skillsInput = document.getElementById('skills').value;
+            const skills = skillsInput ? skillsInput.split(',').map(s => s.trim()).filter(s => s) : [];
+            
+            const servicesInput = document.getElementById('services').value;
+            const services = servicesInput ? servicesInput.split(',').map(s => s.trim()).filter(s => s) : [];
+            
+            const profileData = {
+                firstName,
+                lastName,
+                bio,
+                title,
+                company,
+                location,
+                phone,
+                yearsExperience,
+                skills,
+                services
+            };
+            
+            const btn = document.getElementById('save-btn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            
+            try {
+                const response = await authFetch('/users/profile', {
+                    method: 'PUT',
+                    body: JSON.stringify(profileData)
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to update profile');
+                }
+                
+                // Update stored user data
+                setCurrentUser(data.user);
+                
+                showSuccess('Profile updated successfully!');
+                setTimeout(() => {
+                    window.location.href = '/profile.html';
+                }, 1500);
+            } catch (error) {
+                showError(error.message);
+                btn.disabled = false;
+                btn.textContent = 'Save Changes';
+            }
+        });
+
+        loadProfile();
+    </script>
+</body>
+</html>

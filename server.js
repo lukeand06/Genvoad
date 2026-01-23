@@ -1,0 +1,557 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
+
+const User = require('./models/User');
+const Project = require('./models/Project');
+const Message = require('./models/Message');
+const { sendVerificationEmail } = require('./utils/email');
+
+const app = express();
+
+// Middleware
+// Allow multiple origins for development
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:5000',
+  'http://127.0.0.1:5000',
+  'http://localhost:8000',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+app.use(cors({ 
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1 || process.env.NODE_ENV === 'development') {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true 
+}));
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve static files
+// In production, serve HTML files from root
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static('.', {
+    index: false, // Don't auto-serve index.html for API routes
+    setHeaders: (res, path) => {
+      if (path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache');
+      }
+    }
+  }));
+} else {
+  app.use(express.static('.'));
+}
+app.use('/public', express.static('public'));
+
+// Connect to MongoDB
+if (process.env.MONGODB_URI) {
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('✓ Connected to MongoDB'))
+    .catch(err => {
+      console.error('MongoDB connection error:', err.message);
+      console.warn('⚠ Running without database - some features will not work');
+    });
+} else {
+  console.warn('⚠ MONGODB_URI not set - database features disabled');
+}
+
+// Auth Middleware
+const authMiddleware = async (req, res, next) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ error: 'No token provided' });
+    
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.userId).select('-password');
+    if (!req.user) return res.status(401).json({ error: 'User not found' });
+    
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+};
+
+// ============ AUTH ROUTES ============
+
+// Signup
+app.post('/api/auth/signup', async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+    
+    // Validation
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ error: 'All fields required' });
+    }
+    
+    // Check existing
+    const existing = await User.findOne({ email: email.toLowerCase() });
+    if (existing) {
+      if (!existing.emailVerified) {
+        // Refresh verification so users don't get stuck
+        const refreshedCode = Math.random().toString().slice(2, 8).padStart(6, '0');
+        existing.verificationCode = refreshedCode;
+        existing.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        existing.firstName = firstName || existing.firstName;
+        existing.lastName = lastName || existing.lastName;
+        existing.password = await bcrypt.hash(password, 10);
+        await existing.save();
+        try {
+          await sendVerificationEmail(email, existing.firstName, refreshedCode);
+        } catch (emailError) {
+          console.error('Email send error:', emailError);
+        }
+        return res.json({
+          success: true,
+          message: 'Account exists but was not verified. We sent a new verification code.',
+          userId: existing._id,
+          resent: true
+        });
+      }
+      return res.status(400).json({ error: 'Email already registered' });
+    }
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Generate verification code
+    const verificationCode = Math.random().toString().slice(2, 8).padStart(6, '0');
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    
+    // Create user
+    const user = new User({
+      firstName,
+      lastName,
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      verificationCode,
+      verificationExpires,
+      emailVerified: false
+    });
+    
+    await user.save();
+    
+    // Send verification email
+    let emailResult = { success: false };
+    try {
+      emailResult = await sendVerificationEmail(email, firstName, verificationCode);
+    } catch (emailError) {
+      console.error('Email send error:', emailError.message || emailError);
+      // Don't fail signup if email fails
+    }
+    
+    res.json({ 
+      success: true, 
+      message: 'Account created! Check your email for verification code.',
+      userId: user._id,
+      emailSent: emailResult.success === true,
+      // Only surface the code if email was not sent (sandbox/dev aid)
+      code: emailResult.success ? undefined : emailResult.code
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ error: 'Signup failed' });
+  }
+});
+
+// Resend verification code
+app.post('/api/auth/resend', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email required' });
+
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.emailVerified) return res.status(400).json({ error: 'Email already verified' });
+
+    const verificationCode = Math.random().toString().slice(2, 8).padStart(6, '0');
+    user.verificationCode = verificationCode;
+    user.verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
+
+    try {
+      await sendVerificationEmail(email, user.firstName, verificationCode);
+    } catch (emailError) {
+      console.error('Email send error:', emailError);
+    }
+
+    res.json({ success: true, message: 'Verification code resent' });
+  } catch (error) {
+    console.error('Resend verification error:', error);
+    res.status(500).json({ error: 'Failed to resend verification' });
+  }
+});
+
+// Verify Email
+app.post('/api/auth/verify', async (req, res) => {
+  try {
+    const { email, code } = req.body;
+    
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    if (user.emailVerified) {
+      return res.status(400).json({ error: 'Email already verified' });
+    }
+    
+    if (user.verificationCode !== code) {
+      return res.status(400).json({ error: 'Invalid verification code' });
+    }
+    
+    if (new Date() > user.verificationExpires) {
+      return res.status(400).json({ error: 'Verification code expired' });
+    }
+    
+    user.emailVerified = true;
+    user.verificationCode = undefined;
+    user.verificationExpires = undefined;
+    await user.save();
+    
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        avatar: user.avatar
+      }
+    });
+  } catch (error) {
+    console.error('Verify error:', error);
+    res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+// Login
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    
+    if (!user.emailVerified) {
+      return res.status(403).json({ error: 'Please verify your email first' });
+    }
+    
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
+    
+    user.lastActive = new Date();
+    await user.save();
+    
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        avatar: user.avatar,
+        bio: user.bio,
+        location: user.location,
+        company: user.company,
+        title: user.title
+      }
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Get current user
+app.get('/api/auth/me', authMiddleware, (req, res) => {
+  res.json({ user: req.user });
+});
+
+// ============ USER ROUTES ============
+
+// Get user profile
+app.get('/api/users/:id', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password -verificationCode');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ user });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user' });
+  }
+});
+
+// Update profile
+app.put('/api/users/profile', authMiddleware, async (req, res) => {
+  try {
+    const updates = req.body;
+    delete updates.password;
+    delete updates.email;
+    
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: updates },
+      { new: true }
+    ).select('-password');
+    
+    res.json({ success: true, user });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
+// Search users
+app.get('/api/users', authMiddleware, async (req, res) => {
+  try {
+    const { search, skills, services } = req.query;
+    const query = { emailVerified: true };
+    
+    if (search) {
+      query.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { company: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    if (skills) query.skills = { $in: skills.split(',') };
+    if (services) query.services = { $in: services.split(',') };
+    
+    const users = await User.find(query)
+      .select('-password -verificationCode')
+      .limit(50);
+    
+    res.json({ users });
+  } catch (error) {
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+// ============ PROJECT ROUTES ============
+
+// Create project
+app.post('/api/projects', authMiddleware, async (req, res) => {
+  try {
+    const project = new Project({
+      ...req.body,
+      owner: req.user._id
+    });
+    await project.save();
+    res.json({ success: true, project });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create project' });
+  }
+});
+
+// Get projects
+app.get('/api/projects', authMiddleware, async (req, res) => {
+  try {
+    const { status, category, owner } = req.query;
+    const query = {};
+    
+    if (status) query.status = status;
+    if (category) query.category = category;
+    if (owner) query.owner = owner;
+    
+    const projects = await Project.find(query)
+      .populate('owner', 'firstName lastName avatar company')
+      .sort('-createdAt')
+      .limit(50);
+    
+    res.json({ projects });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch projects' });
+  }
+});
+
+// Get single project
+app.get('/api/projects/:id', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id)
+      .populate('owner', 'firstName lastName avatar company location')
+      .populate('bids.user', 'firstName lastName avatar company rating');
+    
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    res.json({ project });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch project' });
+  }
+});
+
+// Submit bid
+app.post('/api/projects/:id/bids', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    // Check if already bid
+    const existingBid = project.bids.find(b => b.user.toString() === req.user._id.toString());
+    if (existingBid) return res.status(400).json({ error: 'Already submitted bid' });
+    
+    project.bids.push({
+      user: req.user._id,
+      amount: req.body.amount,
+      proposal: req.body.proposal,
+      timeline: req.body.timeline
+    });
+    
+    await project.save();
+    res.json({ success: true, message: 'Bid submitted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to submit bid' });
+  }
+});
+
+// Accept bid
+app.post('/api/projects/:projectId/bids/:bidId/accept', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+    
+    const bid = project.bids.id(req.params.bidId);
+    if (!bid) return res.status(404).json({ error: 'Bid not found' });
+    
+    // Update bid statuses
+    project.bids.forEach(b => {
+      b.status = b._id.toString() === req.params.bidId ? 'accepted' : 'rejected';
+    });
+    
+    project.acceptedBid = bid._id;
+    project.status = 'in_progress';
+    await project.save();
+    
+    res.json({ success: true, message: 'Bid accepted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to accept bid' });
+  }
+});
+
+// ============ MESSAGE ROUTES ============
+
+// Send message
+app.post('/api/messages', authMiddleware, async (req, res) => {
+  try {
+    const message = new Message({
+      sender: req.user._id,
+      recipient: req.body.recipient,
+      content: req.body.content
+    });
+    await message.save();
+    res.json({ success: true, message });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// Get conversations
+app.get('/api/messages/conversations', authMiddleware, async (req, res) => {
+  try {
+    const messages = await Message.find({
+      $or: [{ sender: req.user._id }, { recipient: req.user._id }]
+    })
+    .populate('sender', 'firstName lastName avatar')
+    .populate('recipient', 'firstName lastName avatar')
+    .sort('-createdAt');
+    
+    // Group by conversation
+    const conversations = {};
+    messages.forEach(msg => {
+      const otherUserId = msg.sender._id.toString() === req.user._id.toString() 
+        ? msg.recipient._id.toString() 
+        : msg.sender._id.toString();
+      
+      if (!conversations[otherUserId]) {
+        conversations[otherUserId] = {
+          user: msg.sender._id.toString() === req.user._id.toString() ? msg.recipient : msg.sender,
+          lastMessage: msg,
+          unread: 0
+        };
+      }
+      
+      if (!msg.read && msg.recipient._id.toString() === req.user._id.toString()) {
+        conversations[otherUserId].unread++;
+      }
+    });
+    
+    res.json({ conversations: Object.values(conversations) });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch conversations' });
+  }
+});
+
+// Get messages with user
+app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
+  try {
+    const messages = await Message.find({
+      $or: [
+        { sender: req.user._id, recipient: req.params.userId },
+        { sender: req.params.userId, recipient: req.user._id }
+      ]
+    })
+    .populate('sender', 'firstName lastName avatar')
+    .populate('recipient', 'firstName lastName avatar')
+    .sort('createdAt');
+    
+    // Mark as read
+    await Message.updateMany(
+      { sender: req.params.userId, recipient: req.user._id, read: false },
+      { $set: { read: true } }
+    );
+    
+    res.json({ messages });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// Email test (development aid)
+app.post('/api/auth/email-test', async (req, res) => {
+  try {
+    const { to } = req.body;
+    if (!to) return res.status(400).json({ error: 'Provide `to` email in body' });
+
+    const code = Math.random().toString().slice(2, 8).padStart(6, '0');
+    const result = await sendVerificationEmail(to, 'Tester', code);
+    res.json({ success: true, sent: result.success, code: result.code });
+  } catch (error) {
+    console.error('Email test error:', error.message || error);
+    res.status(500).json({ error: 'Email test failed' });
+  }
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`\n🚀 Genovad API running on port ${PORT}`);
+  console.log(`📧 Email: ${process.env.RESEND_API_KEY ? 'Resend Configured' : (process.env.SMTP_HOST ? 'SMTP Configured' : 'Console logging mode')}`);
+  console.log(`🗄️  MongoDB: ${process.env.MONGODB_URI ? 'Configured' : 'Not configured'}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}\n`);
+});

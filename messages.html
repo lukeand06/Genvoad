@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Genovad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        .chat-height { height: calc(100vh - 280px); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+                            <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                            <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-xl font-semibold text-gray-900">Genovad</span>
+                    </a>
+                    
+                    <div class="hidden md:flex space-x-1">
+                        <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
+                        <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Projects</a>
+                        <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Messages</a>
+                        <a href="/browse.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/create-project.html" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <div class="relative" id="user-menu">
+                        <button id="user-menu-btn">
+                            <div id="user-avatar"></div>
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                            <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
+                            <a href="/edit-profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Edit Profile</a>
+                            <hr class="my-1">
+                            <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden" style="height: calc(100vh - 140px);">
+            <div class="grid grid-cols-12 h-full">
+                <!-- Conversations List -->
+                <div class="col-span-4 border-r border-gray-200">
+                    <div class="p-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Messages</h2>
+                    </div>
+                    <div id="conversations-list" class="overflow-y-auto" style="height: calc(100% - 65px);">
+                        <div class="p-4 text-center text-gray-500">Loading conversations...</div>
+                    </div>
+                </div>
+
+                <!-- Chat Area -->
+                <div class="col-span-8 flex flex-col">
+                    <div id="no-conversation" class="flex-1 flex items-center justify-center text-gray-500">
+                        <div class="text-center">
+                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                            </svg>
+                            <p>Select a conversation to start messaging</p>
+                        </div>
+                    </div>
+
+                    <!-- Chat Header -->
+                    <div id="chat-header" class="hidden p-4 border-b border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <div id="chat-user-avatar"></div>
+                            <div>
+                                <h3 id="chat-user-name" class="font-semibold text-gray-900"></h3>
+                                <p id="chat-user-company" class="text-sm text-gray-600"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Messages -->
+                    <div id="messages-container" class="hidden flex-1 overflow-y-auto p-6 space-y-4">
+                    </div>
+
+                    <!-- Message Input -->
+                    <div id="message-form-container" class="hidden p-4 border-t border-gray-200">
+                        <form id="message-form" class="flex gap-2">
+                            <input type="text" id="message-input" required placeholder="Type your message..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                            <button type="submit" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Send</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        if (!requireAuth()) {
+            throw new Error('Not authenticated');
+        }
+
+        const user = getCurrentUser();
+        document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+        
+        document.getElementById('user-menu-btn').addEventListener('click', () => {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
+        let conversations = [];
+        let currentChatUserId = null;
+        let currentMessages = [];
+        let messagesPollInterval = null;
+
+        // Check for user parameter in URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialUserId = urlParams.get('user');
+
+        async function loadConversations() {
+            try {
+                const response = await authFetch('/messages/conversations');
+                const data = await response.json();
+                conversations = data.conversations;
+                displayConversations();
+                
+                // If there's a user param, open that conversation
+                if (initialUserId && !currentChatUserId) {
+                    openChat(initialUserId);
+                }
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+            }
+        }
+
+        function displayConversations() {
+            const container = document.getElementById('conversations-list');
+            
+            if (conversations.length === 0) {
+                container.innerHTML = '<div class="p-4 text-center text-gray-500">No conversations yet</div>';
+                return;
+            }
+
+            container.innerHTML = conversations.map(conv => `
+                <button onclick="openChat('${conv.user._id}')" class="w-full p-4 hover:bg-gray-50 border-b border-gray-100 text-left ${currentChatUserId === conv.user._id ? 'bg-gray-50' : ''}">
+                    <div class="flex items-center gap-3">
+                        ${getAvatarHTML(conv.user, 'w-12 h-12')}
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="font-medium text-gray-900 truncate">${conv.user.firstName} ${conv.user.lastName}</p>
+                                ${conv.unread > 0 ? `<span class="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full">${conv.unread}</span>` : ''}
+                            </div>
+                            ${conv.user.company ? `<p class="text-xs text-gray-500">${conv.user.company}</p>` : ''}
+                            <p class="text-sm text-gray-600 truncate mt-1">${conv.lastMessage.content}</p>
+                            <p class="text-xs text-gray-400 mt-1">${formatDate(conv.lastMessage.createdAt)}</p>
+                        </div>
+                    </div>
+                </button>
+            `).join('');
+        }
+
+        async function openChat(userId) {
+            currentChatUserId = userId;
+            
+            // Stop previous polling
+            if (messagesPollInterval) {
+                clearInterval(messagesPollInterval);
+            }
+            
+            // Load user info
+            try {
+                const userResponse = await authFetch(`/users/${userId}`);
+                const userData = await userResponse.json();
+                const chatUser = userData.user;
+                
+                document.getElementById('chat-user-avatar').innerHTML = getAvatarHTML(chatUser, 'w-12 h-12');
+                document.getElementById('chat-user-name').textContent = `${chatUser.firstName} ${chatUser.lastName}`;
+                document.getElementById('chat-user-company').textContent = chatUser.company || '';
+                
+                // Show chat UI
+                document.getElementById('no-conversation').classList.add('hidden');
+                document.getElementById('chat-header').classList.remove('hidden');
+                document.getElementById('messages-container').classList.remove('hidden');
+                document.getElementById('message-form-container').classList.remove('hidden');
+                
+                // Load messages
+                await loadMessages();
+                
+                // Poll for new messages every 3 seconds
+                messagesPollInterval = setInterval(loadMessages, 3000);
+                
+                displayConversations(); // Refresh conversation list
+            } catch (error) {
+                console.error('Error opening chat:', error);
+            }
+        }
+
+        async function loadMessages() {
+            if (!currentChatUserId) return;
+            
+            try {
+                const response = await authFetch(`/messages/${currentChatUserId}`);
+                const data = await response.json();
+                currentMessages = data.messages;
+                displayMessages();
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        function displayMessages() {
+            const container = document.getElementById('messages-container');
+            
+            if (currentMessages.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500">No messages yet. Start the conversation!</div>';
+                return;
+            }
+
+            container.innerHTML = currentMessages.map(msg => {
+                const isSent = msg.sender._id === user.id;
+                return `
+                    <div class="flex ${isSent ? 'justify-end' : 'justify-start'}">
+                        <div class="${isSent ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-2 max-w-md">
+                            <p class="text-sm">${msg.content}</p>
+                            <p class="text-xs ${isSent ? 'text-gray-300' : 'text-gray-500'} mt-1">${formatDate(msg.createdAt)}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        document.getElementById('message-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const input = document.getElementById('message-input');
+            const content = input.value.trim();
+            
+            if (!content || !currentChatUserId) return;
+            
+            try {
+                const response = await authFetch('/messages', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        recipient: currentChatUserId,
+                        content
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to send message');
+                }
+                
+                input.value = '';
+                await loadMessages();
+                await loadConversations();
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Failed to send message');
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (messagesPollInterval) {
+                clearInterval(messagesPollInterval);
+            }
+        });
+
+        loadConversations();
+    </script>
+</body>
+</html>

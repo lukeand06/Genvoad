@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Genovad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <a href="index.html" class="inline-flex items-center space-x-2">
+                    <svg class="w-10 h-10" viewBox="0 0 40 40" fill="none">
+                        <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                        <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                    <span class="text-2xl font-bold text-gray-900">Genovad</span>
+                </a>
+                <h2 class="mt-6 text-3xl font-bold text-gray-900">Create your account</h2>
+                <p class="mt-2 text-sm text-gray-600">Join the construction services marketplace</p>
+            </div>
+
+            <!-- Signup Form -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+                <div id="error-message" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"></div>
+                <div id="success-message" class="hidden mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded"></div>
+                
+                <!-- Step 1: Basic Info -->
+                <form id="signup-form" class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <input type="text" id="firstName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <input type="text" id="lastName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="password" required minlength="6" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                        <p class="mt-1 text-xs text-gray-500">At least 6 characters</p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                        <input type="password" id="confirmPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                    
+                    <button type="submit" id="signup-btn" class="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition">
+                        Create Account
+                    </button>
+                </form>
+
+                <!-- Step 2: Verification (hidden initially) -->
+                <div id="verification-form" class="hidden space-y-4">
+                    <div class="text-center mb-4">
+                        <div class="text-green-500 text-4xl mb-2">✓</div>
+                        <h3 class="font-semibold text-lg">Check your email!</h3>
+                        <p class="text-sm text-gray-600 mt-2">We've sent a verification code to <span id="verify-email" class="font-medium"></span></p>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Verification Code</label>
+                        <input type="text" id="verificationCode" maxlength="6" placeholder="000000" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-center text-2xl font-mono tracking-widest focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    </div>
+                    
+                    <button id="verify-btn" class="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition">
+                        Verify Email
+                    </button>
+                </div>
+
+                <div class="mt-6 text-center text-sm">
+                    <span class="text-gray-600">Already have an account?</span>
+                    <a href="login.html" class="text-gray-900 font-medium hover:underline ml-1">Sign in</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        redirectIfAuth();
+
+        let userEmail = '';
+
+        document.getElementById('signup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                showError('Passwords do not match');
+                return;
+            }
+            
+            const btn = document.getElementById('signup-btn');
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ firstName, lastName, email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Signup failed');
+                }
+                
+                userEmail = email;
+                document.getElementById('verify-email').textContent = email;
+                document.getElementById('signup-form').classList.add('hidden');
+                document.getElementById('verification-form').classList.remove('hidden');
+                showSuccess('Account created! Check your email for verification code.');
+            } catch (error) {
+                showError(error.message);
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+
+        document.getElementById('verify-btn').addEventListener('click', async () => {
+            const code = document.getElementById('verificationCode').value;
+            
+            if (code.length !== 6) {
+                showError('Please enter a 6-digit code');
+                return;
+            }
+            
+            const btn = document.getElementById('verify-btn');
+            btn.disabled = true;
+            btn.textContent = 'Verifying...';
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail, code })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Verification failed');
+                }
+                
+                setToken(data.token);
+                setCurrentUser(data.user);
+                window.location.href = '/dashboard.html';
+            } catch (error) {
+                showError(error.message);
+                btn.disabled = false;
+                btn.textContent = 'Verify Email';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+// Internal OTP system with pluggable email providers
+// Prefers API provider (Resend) when configured; falls back to SMTP; then console logging in dev
+const nodemailer = require('nodemailer');
+let resend = null;
+try {
+  // Lazy load; will be used only if RESEND_API_KEY is present
+  resend = require('resend');
+} catch (_) {}
+
+// Create transporter (falls back to console logging if no SMTP configured)
+let transporter = null;
+if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+  transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT || 587,
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+  console.log('✓ Email transporter configured');
+} else {
+  console.log('⚠️  No SMTP configured - verification codes will be logged to console');
+}
+
+async function sendVerificationEmail(email, firstName, code) {
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; }
+    .header { padding: 40px 40px 30px; text-align: center; background: #1a1a1a; }
+    .logo { font-size: 28px; font-weight: 600; color: white; margin: 0; }
+    .content { padding: 40px; }
+    .title { font-size: 24px; font-weight: 600; color: #1a1a1a; margin: 0 0 16px; }
+    .text { font-size: 16px; color: #666; line-height: 1.6; margin: 0 0 24px; }
+    .code-box { background: #f5f5f5; border: 2px solid #e0e0e0; border-radius: 8px; padding: 24px; text-align: center; margin: 32px 0; }
+    .code { font-size: 42px; font-weight: 700; letter-spacing: 8px; color: #1a1a1a; font-family: monospace; }
+    .footer { padding: 24px 40px; background: #f9f9f9; text-align: center; color: #999; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 class="logo">Genovad</h1>
+    </div>
+    <div class="content">
+      <h2 class="title">Welcome to Genovad, ${firstName}!</h2>
+      <p class="text">Thank you for joining our construction services marketplace. To get started, please verify your email address using the code below:</p>
+      <div class="code-box">
+        <div class="code">${code}</div>
+      </div>
+      <p class="text">This code will expire in 24 hours. If you didn't create this account, please ignore this email.</p>
+    </div>
+    <div class="footer">
+      <p>&copy; 2026 Genovad. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+
+  // Prefer API provider (Resend) when configured
+  if (process.env.RESEND_API_KEY && resend) {
+    try {
+      const { Resend } = resend;
+      const client = new Resend(process.env.RESEND_API_KEY);
+      await client.emails.send({
+        from: process.env.RESEND_FROM || 'noreply@genovad.com',
+        to: email,
+        subject: 'Verify Your Genovad Account',
+        html: htmlContent,
+        text: `Your Genovad verification code is: ${code}`
+      });
+      console.log(`✓ Verification email (Resend) sent to ${email}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Resend send error:', error.message || error);
+      console.log(`⚠️  EMAIL FAILED (Resend) - Verification code for ${email}: ${code}`);
+      // Fall through to SMTP/console
+    }
+  }
+
+  // If SMTP is configured, send email
+  if (transporter) {
+    const mailOptions = {
+      from: `Genovad <noreply@genovad.com>`,
+      to: email,
+      subject: 'Verify Your Genovad Account',
+      html: htmlContent,
+      text: `Your Genovad verification code is: ${code}`
+    };
+
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log(`✓ Verification email sent to ${email}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Email send error:', error.message);
+      console.log(`⚠️  EMAIL FAILED - Verification code for ${email}: ${code}`);
+      return { success: false, code };
+    }
+  } else {
+    // Development mode - log code to console
+    console.log(`\n${'='.repeat(60)}`);
+    console.log(`📧 VERIFICATION CODE for ${email}`);
+    console.log(`   Code: ${code}`);
+    console.log(`   Name: ${firstName}`);
+    console.log(`${'='.repeat(60)}\n`);
+    return { success: true, devMode: true, code };
+  }
+}
+
+module.exports = { sendVerificationEmail };

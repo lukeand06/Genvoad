@@ -1,0 +1,136 @@
+// Authentication utilities
+const API_URL = 'http://localhost:5000/api';
+
+// Get token from localStorage
+function getToken() {
+  return localStorage.getItem('token');
+}
+
+// Set token in localStorage
+function setToken(token) {
+  localStorage.setItem('token', token);
+}
+
+// Remove token
+function logout() {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  window.location.href = '/login.html';
+}
+
+// Get current user
+function getCurrentUser() {
+  const userStr = localStorage.getItem('user');
+  return userStr ? JSON.parse(userStr) : null;
+}
+
+// Save current user
+function setCurrentUser(user) {
+  localStorage.setItem('user', JSON.stringify(user));
+}
+
+// Check if authenticated
+function isAuthenticated() {
+  return !!getToken();
+}
+
+// Redirect if not authenticated
+function requireAuth() {
+  if (!isAuthenticated()) {
+    window.location.href = '/login.html';
+    return false;
+  }
+  return true;
+}
+
+// Redirect if authenticated (for login/signup pages)
+function redirectIfAuth() {
+  if (isAuthenticated()) {
+    window.location.href = '/dashboard.html';
+    return true;
+  }
+  return false;
+}
+
+// API helper with auth
+async function authFetch(url, options = {}) {
+  const token = getToken();
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  const response = await fetch(`${API_URL}${url}`, {
+    ...options,
+    headers
+  });
+  
+  if (response.status === 401) {
+    logout();
+    throw new Error('Unauthorized');
+  }
+  
+  return response;
+}
+
+// Show error message
+function showError(message, elementId = 'error-message') {
+  const errorDiv = document.getElementById(elementId);
+  if (errorDiv) {
+    errorDiv.textContent = message;
+    errorDiv.classList.remove('hidden');
+    setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+  }
+}
+
+// Show success message
+function showSuccess(message, elementId = 'success-message') {
+  const successDiv = document.getElementById(elementId);
+  if (successDiv) {
+    successDiv.textContent = message;
+    successDiv.classList.remove('hidden');
+    setTimeout(() => successDiv.classList.add('hidden'), 5000);
+  }
+}
+
+// Format date
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now - date;
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+  if (days < 30) return `${Math.floor(days / 7)} weeks ago`;
+  if (days < 365) return `${Math.floor(days / 30)} months ago`;
+  return date.toLocaleDateString();
+}
+
+// Format currency
+function formatCurrency(amount) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0
+  }).format(amount);
+}
+
+// Get initials from name
+function getInitials(firstName, lastName) {
+  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+}
+
+// Generate avatar URL or initials
+function getAvatarHTML(user, size = 'w-10 h-10') {
+  if (user.avatar) {
+    return `<img src="${user.avatar}" alt="${user.firstName}" class="${size} rounded-full object-cover">`;
+  }
+  const initials = getInitials(user.firstName, user.lastName);
+  return `<div class="${size} rounded-full bg-gray-700 text-white flex items-center justify-center font-medium">${initials}</div>`;
+}

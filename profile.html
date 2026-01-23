@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - Genovad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+                            <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                            <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-xl font-semibold text-gray-900">Genovad</span>
+                    </a>
+                    
+                    <div class="hidden md:flex space-x-1">
+                        <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
+                        <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Projects</a>
+                        <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+                        <a href="/browse.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/create-project.html" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <div class="relative" id="user-menu">
+                        <button id="user-menu-btn">
+                            <div id="user-avatar"></div>
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                            <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
+                            <a href="/edit-profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Edit Profile</a>
+                            <hr class="my-1">
+                            <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="profile-content" class="space-y-6">
+            <div class="text-center py-12">
+                <p class="text-gray-500">Loading profile...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        if (!requireAuth()) {
+            throw new Error('Not authenticated');
+        }
+
+        const currentUser = getCurrentUser();
+        document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
+        
+        document.getElementById('user-menu-btn').addEventListener('click', () => {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const profileUserId = urlParams.get('id') || currentUser.id;
+        const isOwnProfile = profileUserId === currentUser.id;
+
+        async function loadProfile() {
+            try {
+                const response = await authFetch(`/users/${profileUserId}`);
+                const data = await response.json();
+                displayProfile(data.user);
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                document.getElementById('profile-content').innerHTML = '<div class="text-center py-12 text-red-500">Failed to load profile</div>';
+            }
+        }
+
+        function displayProfile(profile) {
+            const container = document.getElementById('profile-content');
+            
+            container.innerHTML = `
+                <!-- Profile Header -->
+                <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="h-32 bg-gradient-to-r from-gray-800 to-gray-700"></div>
+                    <div class="px-8 pb-8">
+                        <div class="flex items-end justify-between -mt-16 mb-6">
+                            <div class="flex items-end gap-4">
+                                ${getAvatarHTML(profile, 'w-32 h-32 border-4 border-white')}
+                                <div class="mb-2">
+                                    <h1 class="text-3xl font-bold text-gray-900">${profile.firstName} ${profile.lastName}</h1>
+                                    ${profile.title ? `<p class="text-lg text-gray-600">${profile.title}</p>` : ''}
+                                    ${profile.company ? `<p class="text-gray-600">${profile.company}</p>` : ''}
+                                </div>
+                            </div>
+                            ${isOwnProfile ? `
+                                <a href="/edit-profile.html" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Edit Profile</a>
+                            ` : `
+                                <div class="flex gap-2">
+                                    <a href="/messages.html?user=${profile._id}" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Message</a>
+                                </div>
+                            `}
+                        </div>
+
+                        <!-- Stats -->
+                        <div class="grid grid-cols-4 gap-4 mb-6">
+                            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                <p class="text-2xl font-bold text-gray-900">${profile.projectsCompleted || 0}</p>
+                                <p class="text-sm text-gray-600">Projects</p>
+                            </div>
+                            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                <p class="text-2xl font-bold text-gray-900">${profile.rating ? profile.rating.toFixed(1) : '0.0'}</p>
+                                <p class="text-sm text-gray-600">Rating</p>
+                            </div>
+                            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                <p class="text-2xl font-bold text-gray-900">${profile.reviewCount || 0}</p>
+                                <p class="text-sm text-gray-600">Reviews</p>
+                            </div>
+                            <div class="text-center p-4 bg-gray-50 rounded-lg">
+                                <p class="text-2xl font-bold text-gray-900">${profile.yearsExperience || 0}</p>
+                                <p class="text-sm text-gray-600">Years Exp</p>
+                            </div>
+                        </div>
+
+                        <!-- Contact Info -->
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            ${profile.location ? `
+                                <div class="flex items-center gap-2 text-gray-600">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    <span>${profile.location}</span>
+                                </div>
+                            ` : ''}
+                            ${profile.email ? `
+                                <div class="flex items-center gap-2 text-gray-600">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                    </svg>
+                                    <span>${profile.email}</span>
+                                </div>
+                            ` : ''}
+                            ${profile.phone ? `
+                                <div class="flex items-center gap-2 text-gray-600">
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                                    </svg>
+                                    <span>${profile.phone}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- About -->
+                ${profile.bio ? `
+                    <div class="bg-white rounded-lg border border-gray-200 p-8">
+                        <h2 class="text-xl font-bold text-gray-900 mb-4">About</h2>
+                        <p class="text-gray-700">${profile.bio}</p>
+                    </div>
+                ` : ''}
+
+                <!-- Skills & Services -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    ${profile.skills && profile.skills.length > 0 ? `
+                        <div class="bg-white rounded-lg border border-gray-200 p-8">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Skills</h2>
+                            <div class="flex flex-wrap gap-2">
+                                ${profile.skills.map(skill => `<span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">${skill}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${profile.services && profile.services.length > 0 ? `
+                        <div class="bg-white rounded-lg border border-gray-200 p-8">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Services</h2>
+                            <div class="flex flex-wrap gap-2">
+                                ${profile.services.map(service => `<span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">${service}</span>`).join('')}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Portfolio -->
+                ${profile.portfolio && profile.portfolio.length > 0 ? `
+                    <div class="bg-white rounded-lg border border-gray-200 p-8">
+                        <h2 class="text-xl font-bold text-gray-900 mb-6">Portfolio</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            ${profile.portfolio.map(item => `
+                                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                                    ${item.image ? `<img src="${item.image}" alt="${item.title}" class="w-full h-48 object-cover">` : '<div class="w-full h-48 bg-gray-100"></div>'}
+                                    <div class="p-4">
+                                        <h3 class="font-semibold text-gray-900 mb-1">${item.title}</h3>
+                                        ${item.description ? `<p class="text-sm text-gray-600 mb-2">${item.description}</p>` : ''}
+                                        ${item.date ? `<p class="text-xs text-gray-500">${formatDate(item.date)}</p>` : ''}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            `;
+        }
+
+        loadProfile();
+    </script>
+</body>
+</html>

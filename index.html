@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genovad - Construction Services Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        .hero-gradient { background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); }
+    </style>
+</head>
+<body class="bg-white">
+    <!-- Navigation -->
+    <nav class="border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+                        <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                        <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                    </svg>
+                    <span class="text-xl font-semibold text-gray-900">Genovad</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="login.html" class="text-gray-600 hover:text-gray-900 text-sm font-medium">Sign In</a>
+                    <a href="signup.html" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-gradient text-white py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto">
+                <h1 class="text-5xl font-bold mb-6">Connect. Build. Grow.</h1>
+                <p class="text-xl text-gray-300 mb-8">The professional network for construction services. Find projects, connect with contractors, and build your business.</p>
+                <div class="flex justify-center gap-4">
+                    <a href="signup.html" class="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100">Join Genovad</a>
+                    <a href="#features" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-900">Learn More</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-gray-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Everything you need to succeed</h2>
+                <p class="text-gray-600">Streamline your construction business with powerful tools</p>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-xl border border-gray-100">
+                    <div class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Find Projects</h3>
+                    <p class="text-gray-600">Browse construction projects matching your skills and location</p>
+                </div>
+                
+                <div class="bg-white p-8 rounded-xl border border-gray-100">
+                    <div class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Connect with Pros</h3>
+                    <p class="text-gray-600">Message and collaborate with verified contractors instantly</p>
+                </div>
+                
+                <div class="bg-white p-8 rounded-xl border border-gray-100">
+                    <div class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Build Your Profile</h3>
+                    <p class="text-gray-600">Showcase your work, skills, and reviews to attract clients</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-20">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">Ready to get started?</h2>
+            <p class="text-gray-600 mb-8">Join thousands of construction professionals on Genovad</p>
+            <a href="signup.html" class="inline-block bg-gray-900 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800">Create Free Account</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-100 py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-gray-600 text-sm">
+            <p>&copy; 2026 Genovad. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
