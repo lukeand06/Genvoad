@@ -55,6 +55,7 @@
                             </div>
                             <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
                             <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
+                            <button id="feedback-btn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Send Feedback</button>
                             <hr class="my-1">
                             <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
                         </div>
@@ -72,6 +73,51 @@
             </div>
             <p class="text-lg font-semibold text-gray-900">Switching roles...</p>
             <p class="text-sm text-gray-600 mt-1">Loading your new dashboard</p>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedback-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-md w-full">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-900">Send us feedback</h2>
+                <button id="close-feedback-modal" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="feedback-form" class="p-6 space-y-4">
+                <!-- Feedback Type -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-900 mb-2">Type</label>
+                    <select id="feedback-type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                        <option value="bug">Bug Report</option>
+                        <option value="feature">Feature Request</option>
+                        <option value="improvement">Improvement</option>
+                        <option value="general">General Feedback</option>
+                    </select>
+                </div>
+
+                <!-- Subject -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-900 mb-2">Subject</label>
+                    <input type="text" id="feedback-subject" placeholder="Brief description..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                </div>
+
+                <!-- Message -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-900 mb-2">Message</label>
+                    <textarea id="feedback-message" placeholder="Tell us what you think..." rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" required></textarea>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex gap-2 pt-4">
+                    <button type="button" id="cancel-feedback" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Send Feedback</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -281,6 +327,52 @@
         
         // Update current role display
         document.getElementById('current-role').textContent = getActiveRole();
+        
+        // Feedback Modal Handlers
+        document.getElementById('feedback-btn').addEventListener('click', () => {
+            document.getElementById('feedback-modal').classList.remove('hidden');
+            document.getElementById('user-dropdown').classList.add('hidden');
+        });
+
+        document.getElementById('close-feedback-modal').addEventListener('click', () => {
+            document.getElementById('feedback-modal').classList.add('hidden');
+        });
+
+        document.getElementById('cancel-feedback').addEventListener('click', () => {
+            document.getElementById('feedback-modal').classList.add('hidden');
+        });
+
+        document.getElementById('feedback-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const type = document.getElementById('feedback-type').value;
+            const subject = document.getElementById('feedback-subject').value;
+            const message = document.getElementById('feedback-message').value;
+
+            try {
+                const res = await authFetch('/api/feedback/submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        type,
+                        subject,
+                        message
+                    })
+                });
+
+                if (!res.ok) throw new Error('Failed to send feedback');
+
+                // Close modal and reset form
+                document.getElementById('feedback-modal').classList.add('hidden');
+                document.getElementById('feedback-form').reset();
+                
+                // Show success message
+                showSuccess('Thank you for your feedback! We\'ve received your message.');
+            } catch (err) {
+                console.error('Error submitting feedback:', err);
+                showError('Failed to send feedback. Please try again.');
+            }
+        });
         
         // Initialize role switcher
         function initializeRoleSwitcher() {

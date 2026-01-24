@@ -68,4 +68,27 @@ async function sendVerificationEmail(email, firstName, code) {
   }
 }
 
-module.exports = { sendVerificationEmail };
+async function sendEmail(to, subject, htmlContent, fromEmail = null) {
+  if (!process.env.RESEND_API_KEY || !resend) {
+    console.error(`❌ Resend not configured - Cannot send email to ${to}`);
+    throw new Error('Email service not configured. Please set RESEND_API_KEY.');
+  }
+
+  try {
+    const { Resend } = resend;
+    const client = new Resend(process.env.RESEND_API_KEY);
+    await client.emails.send({
+      from: process.env.RESEND_FROM || 'noreply@genovad.com',
+      to: to,
+      subject: subject,
+      html: htmlContent
+    });
+    console.log(`✓ Email sent to ${to}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Resend error:', error.message || error);
+    throw new Error('Failed to send email');
+  }
+}
+
+module.exports = { sendVerificationEmail, sendEmail };

@@ -13,7 +13,7 @@ const User = require('./models/User');
 const Project = require('./models/Project');
 const Message = require('./models/Message');
 const Review = require('./models/Review');
-const { sendVerificationEmail } = require('./utils/email');
+const { sendVerificationEmail, sendEmail } = require('./utils/email');
 
 const app = express();
 
@@ -1852,6 +1852,88 @@ app.get('/api/recommendations', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Recommendations error:', error);
     res.status(500).json({ error: 'Failed to fetch recommendations', message: error.message });
+  }
+});
+
+// Feedback endpoint
+app.post('/api/feedback/submit', authMiddleware, async (req, res) => {
+  try {
+    const { type, subject, message } = req.body;
+    const user = req.user;
+
+    if (!type || !subject || !message) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Send email to Genovad support
+    const feedbackHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+          .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; }
+          .header { padding: 40px 40px 30px; text-align: center; background: #1a1a1a; }
+          .logo { font-size: 28px; font-weight: 600; color: white; margin: 0; }
+          .content { padding: 40px; }
+          .field { margin: 0 0 24px; }
+          .field-label { font-size: 12px; font-weight: 600; color: #999; text-transform: uppercase; margin: 0 0 8px; }
+          .field-value { font-size: 16px; color: #1a1a1a; margin: 0; }
+          .message-box { background: #f9f9f9; border-left: 4px solid #60a5fa; padding: 16px; border-radius: 4px; }
+          .footer { padding: 24px 40px; background: #f9f9f9; text-align: center; color: #999; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 class="logo">Genovad</h1>
+          </div>
+          <div class="content">
+            <h2 style="margin: 0 0 24px; color: #1a1a1a;">New Feedback Submission</h2>
+            
+            <div class="field">
+              <div class="field-label">Type</div>
+              <div class="field-value">${type}</div>
+            </div>
+            
+            <div class="field">
+              <div class="field-label">Subject</div>
+              <div class="field-value">${subject}</div>
+            </div>
+            
+            <div class="field">
+              <div class="field-label">From</div>
+              <div class="field-value">${user.firstName} ${user.lastName} (${user.email})</div>
+            </div>
+            
+            <div class="field">
+              <div class="field-label">Message</div>
+              <div class="message-box" style="white-space: pre-wrap; word-wrap: break-word;">${message}</div>
+            </div>
+          </div>
+          <div class="footer">
+            <p>&copy; 2026 Genovad. All rights reserved.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    try {
+      await sendEmail(
+        process.env.SUPPORT_EMAIL || 'support@genovad.com',
+        `[${type.toUpperCase()}] ${subject} - from ${user.firstName} ${user.lastName}`,
+        feedbackHTML
+      );
+    } catch (emailError) {
+      console.error('Feedback email error:', emailError);
+      // Don't fail the request if email fails
+    }
+
+    res.json({ success: true, message: 'Feedback submitted successfully' });
+  } catch (error) {
+    console.error('Feedback submission error:', error);
+    res.status(500).json({ error: 'Failed to submit feedback', message: error.message });
   }
 });
 
