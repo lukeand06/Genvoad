@@ -1120,6 +1120,50 @@ app.get('/api/projects/:id/activity', authMiddleware, async (req, res) => {
   }
 });
 
+// Get feed (projects from partners and recommended users)
+app.get('/api/feed', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('partners skills location');
+    
+    // Get projects from partners and recent projects
+    const feedProjects = await Project.find({
+      owner: { $ne: req.user._id },
+      status: 'open'
+    })
+      .populate('owner', 'firstName lastName avatar company location bio skills')
+      .sort({ createdAt: -1 })
+      .limit(20);
+    
+    res.json({ feed: feedProjects });
+  } catch (error) {
+    console.error('Feed error:', error);
+    res.status(500).json({ error: 'Failed to fetch feed' });
+  }
+});
+
+// Get recommended users based on profile matching
+app.get('/api/recommendations', authMiddleware, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user._id).select('skills location partners');
+    
+    // Find users with matching skills or location
+    const recommendations = await User.find({
+      _id: { $ne: req.user._id, $nin: currentUser.partners || [] },
+      $or: [
+        { skills: { $in: currentUser.skills || [] } },
+        { location: currentUser.location }
+      ]
+    })
+      .select('firstName lastName avatar company location bio skills rating reviewCount projectsCompleted')
+      .limit(5);
+    
+    res.json({ recommendations });
+  } catch (error) {
+    console.error('Recommendations error:', error);
+    res.status(500).json({ error: 'Failed to fetch recommendations' });
+  }
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 

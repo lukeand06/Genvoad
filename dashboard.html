@@ -67,7 +67,7 @@
 
         <!-- Stats Grid -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <button onclick="openModal('active-projects-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600">Active Projects</p>
@@ -79,9 +79,9 @@
                         </svg>
                     </div>
                 </div>
-            </div>
+            </button>
 
-            <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <button onclick="openModal('new-bids-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600">New Bids</p>
@@ -93,9 +93,9 @@
                         </svg>
                     </div>
                 </div>
-            </div>
+            </button>
 
-            <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <button onclick="openModal('messages-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600">Messages</p>
@@ -107,9 +107,9 @@
                         </svg>
                     </div>
                 </div>
-            </div>
+            </button>
 
-            <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <button onclick="openModal('completed-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-sm text-gray-600">Completed</p>
@@ -121,51 +121,128 @@
                         </svg>
                     </div>
                 </div>
-            </div>
+            </button>
         </div>
 
         <!-- Two Column Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Recent Projects -->
+            <!-- Activity Feed (LinkedIn-style) -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-lg border border-gray-200">
+                <div class="bg-white rounded-lg border border-gray-200 mb-6">
                     <div class="p-6 border-b border-gray-200">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-semibold text-gray-900">Recent Projects</h2>
-                            <a href="/projects.html" class="text-sm text-gray-600 hover:text-gray-900">View all →</a>
+                            <h2 class="text-lg font-semibold text-gray-900">Your Feed</h2>
+                            <button onclick="loadFeed()" class="text-sm text-gray-600 hover:text-gray-900">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                            </button>
                         </div>
                     </div>
-                    <div id="recent-projects" class="divide-y divide-gray-200">
-                        <!-- Projects will be loaded here -->
+                    <div id="activity-feed" class="divide-y divide-gray-200">
+                        <!-- Feed will be loaded here -->
                         <div class="p-6 text-center text-gray-500">
-                            <p>Loading projects...</p>
+                            <p>Loading feed...</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Activity Feed -->
+            <!-- Sidebar -->
             <div class="lg:col-span-1">
-                <div class="bg-white rounded-lg border border-gray-200">
+                <!-- Recommended for You -->
+                <div class="bg-white rounded-lg border border-gray-200 mb-6">
                     <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-900">Recent Activity</h2>
+                        <h2 class="text-lg font-semibold text-gray-900">Recommended for You</h2>
                     </div>
-                    <div id="activity-feed" class="p-6 space-y-4">
-                        <div class="text-sm text-gray-500">No recent activity</div>
+                    <div id="recommendations" class="divide-y divide-gray-200">
+                        <!-- Recommendations will be loaded here -->
+                        <div class="p-6 text-center text-gray-500">
+                            <p class="text-sm">Loading recommendations...</p>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="bg-white rounded-lg border border-gray-200 mt-6">
+                <div class="bg-white rounded-lg border border-gray-200">
                     <div class="p-6">
                         <h3 class="font-semibold text-gray-900 mb-4">Quick Actions</h3>
                         <div class="space-y-2">
                             <a href="/create-project.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">+ Post a Project</a>
                             <a href="/browse.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">🔍 Find Contractors</a>
-                            <a href="/edit-profile.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">⚙️ Update Profile</a>
+                            <a href="/profile.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">⚙️ Update Profile</a>
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- Active Projects Modal -->
+    <div id="active-projects-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+                <h2 class="text-xl font-semibold text-gray-900">Active Projects</h2>
+                <button onclick="closeModal('active-projects-modal')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="active-projects-content" class="p-6">
+                <p class="text-gray-500">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Bids Modal -->
+    <div id="new-bids-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+                <h2 class="text-xl font-semibold text-gray-900">New Bids</h2>
+                <button onclick="closeModal('new-bids-modal')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="new-bids-content" class="p-6">
+                <p class="text-gray-500">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Messages Modal -->
+    <div id="messages-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+                <h2 class="text-xl font-semibold text-gray-900">Recent Messages</h2>
+                <button onclick="closeModal('messages-modal')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="messages-content" class="p-6">
+                <p class="text-gray-500">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Projects Modal -->
+    <div id="completed-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+                <h2 class="text-xl font-semibold text-gray-900">Completed Projects</h2>
+                <button onclick="closeModal('completed-modal')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="completed-content" class="p-6">
+                <p class="text-gray-500">Loading...</p>
             </div>
         </div>
     </div>
@@ -187,19 +264,45 @@
 
         document.getElementById('logout-btn').addEventListener('click', logout);
 
+        // Store project data for modals
+        let userProjects = [];
+        let messagesData = [];
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+            // Load modal content based on which modal
+            if (modalId === 'active-projects-modal') loadActiveProjectsModal();
+            if (modalId === 'new-bids-modal') loadNewBidsModal();
+            if (modalId === 'messages-modal') loadMessagesModal();
+            if (modalId === 'completed-modal') loadCompletedModal();
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Close modals on background click
+        document.querySelectorAll('[id$="-modal"]').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal(modal.id);
+            });
+        });
+
         // Load dashboard data
         async function loadDashboard() {
             try {
                 // Load user's projects
-                const projectsRes = await authFetch(`/projects?owner=${user.id}`);
+                const projectsRes = await authFetch(`/api/projects?owner=${user.id}`);
                 const projectsData = await projectsRes.json();
+                userProjects = projectsData.projects || [];
                 
                 // Calculate stats
-                const activeProjects = projectsData.projects.filter(p => p.status === 'open' || p.status === 'in_progress');
-                const completedProjects = projectsData.projects.filter(p => p.status === 'completed');
+                const activeProjects = userProjects.filter(p => p.status === 'open' || p.status === 'in_progress');
+                const completedProjects = userProjects.filter(p => p.status === 'completed');
                 
                 let totalBids = 0;
-                projectsData.projects.forEach(p => {
+                userProjects.forEach(p => {
                     totalBids += p.bids?.length || 0;
                 });
 
@@ -208,55 +311,320 @@
                 document.getElementById('completed-projects').textContent = completedProjects.length;
 
                 // Load messages count
-                const messagesRes = await authFetch('/messages/conversations');
-                const messagesData = await messagesRes.json();
-                let unreadCount = 0;
-                messagesData.conversations.forEach(c => {
-                    unreadCount += c.unread || 0;
-                });
-                document.getElementById('unread-messages').textContent = unreadCount;
-
-                // Display recent projects
-                displayRecentProjects(projectsData.projects.slice(0, 5));
+                try {
+                    const messagesRes = await authFetch('/api/messages/conversations');
+                    const data = await messagesRes.json();
+                    messagesData = data.conversations || [];
+                    let unreadCount = 0;
+                    messagesData.forEach(c => {
+                        unreadCount += c.unread || 0;
+                    });
+                    document.getElementById('unread-messages').textContent = unreadCount;
+                } catch (err) {
+                    console.error('Messages error:', err);
+                    document.getElementById('unread-messages').textContent = '0';
+                }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
             }
         }
 
-        function displayRecentProjects(projects) {
-            const container = document.getElementById('recent-projects');
+        // Load activity feed (LinkedIn-style)
+        async function loadFeed() {
+            try {
+                const feedRes = await authFetch('/api/feed');
+                const feedData = await feedRes.json();
+                displayFeed(feedData.feed || []);
+            } catch (error) {
+                console.error('Error loading feed:', error);
+                document.getElementById('activity-feed').innerHTML = '<div class="p-6 text-center text-gray-500"><p>Failed to load feed</p></div>';
+            }
+        }
+
+        function displayFeed(feedItems) {
+            const container = document.getElementById('activity-feed');
             
-            if (projects.length === 0) {
-                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p>No projects yet</p><a href="/create-project.html" class="text-gray-900 font-medium hover:underline">Create your first project</a></div>';
+            if (feedItems.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p>No activity yet. Follow more people to see their projects!</p></div>';
                 return;
             }
 
-            container.innerHTML = projects.map(project => `
-                <a href="/project-detail.html?id=${project._id}" class="block p-6 hover:bg-gray-50 transition">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <h3 class="font-semibold text-gray-900 mb-1">${project.title}</h3>
-                            <p class="text-sm text-gray-600 mb-2">${project.description.substring(0, 100)}...</p>
-                            <div class="flex items-center gap-4 text-xs text-gray-500">
-                                <span>${formatCurrency(project.budget)}</span>
+            container.innerHTML = feedItems.map(project => {
+                const owner = project.owner || {};
+                const timeAgo = getTimeAgo(new Date(project.createdAt));
+                
+                return `
+                    <div class="p-6 hover:bg-gray-50 transition">
+                        <!-- User Header -->
+                        <div class="flex items-start gap-3 mb-4">
+                            <a href="/profile.html?id=${owner._id}">
+                                ${getAvatarHTML(owner, 'w-12 h-12')}
+                            </a>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2">
+                                    <a href="/profile.html?id=${owner._id}" class="font-semibold text-gray-900 hover:underline">
+                                        ${owner.company || owner.firstName + ' ' + owner.lastName}
+                                    </a>
+                                    ${owner.company ? `<span class="text-sm text-gray-500">• ${owner.firstName} ${owner.lastName}</span>` : ''}
+                                </div>
+                                <p class="text-sm text-gray-500">${owner.location || 'Unknown location'} • ${timeAgo}</p>
+                            </div>
+                        </div>
+
+                        <!-- Project Post -->
+                        <div class="mb-3">
+                            <a href="/project-detail.html?id=${project._id}" class="block">
+                                <h3 class="font-semibold text-gray-900 mb-2 hover:text-blue-600">${project.title}</h3>
+                                <p class="text-sm text-gray-600 mb-3 line-clamp-3">${project.description}</p>
+                            </a>
+                            
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                ${project.skills ? project.skills.slice(0, 3).map(skill => 
+                                    `<span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">${skill}</span>`
+                                ).join('') : ''}
+                            </div>
+
+                            <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                                <span class="font-medium text-gray-900">${formatCurrency(project.budget)}</span>
                                 <span>•</span>
                                 <span>${project.location}</span>
                                 <span>•</span>
                                 <span>${project.bids?.length || 0} bids</span>
                             </div>
                         </div>
-                        <span class="px-3 py-1 text-xs font-medium rounded-full ${
-                            project.status === 'open' ? 'bg-green-50 text-green-700' :
-                            project.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
-                            project.status === 'completed' ? 'bg-gray-100 text-gray-700' :
-                            'bg-red-50 text-red-700'
-                        }">${project.status.replace('_', ' ')}</span>
+
+                        <!-- Actions -->
+                        <div class="flex items-center gap-3 pt-3 border-t border-gray-200">
+                            <a href="/project-detail.html?id=${project._id}" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                View Details
+                            </a>
+                            <a href="/messages.html?user=${owner._id}" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg transition">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                                </svg>
+                                Message
+                            </a>
+                        </div>
                     </div>
-                </a>
+                `;
+            }).join('');
+        }
+
+        // Load recommendations
+        async function loadRecommendations() {
+            try {
+                const recRes = await authFetch('/api/recommendations');
+                const recData = await recRes.json();
+                displayRecommendations(recData.recommendations || []);
+            } catch (error) {
+                console.error('Error loading recommendations:', error);
+                document.getElementById('recommendations').innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No recommendations available</p></div>';
+            }
+        }
+
+        function displayRecommendations(recommendations) {
+            const container = document.getElementById('recommendations');
+            
+            if (recommendations.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No recommendations available yet</p></div>';
+                return;
+            }
+
+            container.innerHTML = recommendations.map(rec => `
+                <div class="p-4 hover:bg-gray-50 transition">
+                    <div class="flex items-start gap-3 mb-3">
+                        <a href="/profile.html?id=${rec._id}">
+                            ${getAvatarHTML(rec, 'w-10 h-10')}
+                        </a>
+                        <div class="flex-1 min-w-0">
+                            <a href="/profile.html?id=${rec._id}" class="font-medium text-gray-900 hover:underline block truncate">
+                                ${rec.company || rec.firstName + ' ' + rec.lastName}
+                            </a>
+                            <p class="text-xs text-gray-500 truncate">${rec.location || 'Unknown location'}</p>
+                            ${rec.bio ? `<p class="text-xs text-gray-600 mt-1 line-clamp-2">${rec.bio}</p>` : ''}
+                        </div>
+                    </div>
+                    
+                    ${rec.skills && rec.skills.length > 0 ? `
+                        <div class="flex flex-wrap gap-1 mb-3">
+                            ${rec.skills.slice(0, 2).map(skill => 
+                                `<span class="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded">${skill}</span>`
+                            ).join('')}
+                            ${rec.skills.length > 2 ? `<span class="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded">+${rec.skills.length - 2}</span>` : ''}
+                        </div>
+                    ` : ''}
+                    
+                    <a href="/profile.html?id=${rec._id}" class="block w-full text-center px-3 py-2 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50">
+                        View Profile
+                    </a>
+                </div>
             `).join('');
         }
 
-        loadDashboard();
+        // Modal content loaders
+        function loadActiveProjectsModal() {
+            const activeProjects = userProjects.filter(p => p.status === 'open' || p.status === 'in_progress');
+            const content = document.getElementById('active-projects-content');
+            
+            if (activeProjects.length === 0) {
+                content.innerHTML = '<p class="text-gray-500 text-center">No active projects</p>';
+                return;
+            }
+
+            content.innerHTML = '<div class="space-y-4">' + activeProjects.map(project => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <a href="/project-detail.html?id=${project._id}" class="font-semibold text-gray-900 hover:text-blue-600">${project.title}</a>
+                            <p class="text-sm text-gray-600 mt-1">${project.description.substring(0, 150)}...</p>
+                        </div>
+                        <span class="px-3 py-1 text-xs font-medium rounded-full ${
+                            project.status === 'open' ? 'bg-green-50 text-green-700' : 'bg-blue-50 text-blue-700'
+                        }">${project.status.replace('_', ' ')}</span>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                        <span>${formatCurrency(project.budget)}</span>
+                        <span>•</span>
+                        <span>${project.location}</span>
+                        <span>•</span>
+                        <span>${project.bids?.length || 0} bids</span>
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <a href="/project-detail.html?id=${project._id}" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">View Details</a>
+                    </div>
+                </div>
+            `).join('') + '</div>';
+        }
+
+        function loadNewBidsModal() {
+            const content = document.getElementById('new-bids-content');
+            const projectsWithBids = userProjects.filter(p => p.bids && p.bids.length > 0);
+            
+            if (projectsWithBids.length === 0) {
+                content.innerHTML = '<p class="text-gray-500 text-center">No bids yet</p>';
+                return;
+            }
+
+            content.innerHTML = '<div class="space-y-6">' + projectsWithBids.map(project => {
+                const bids = project.bids || [];
+                return `
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-gray-900 mb-2">${project.title}</h3>
+                        <p class="text-sm text-gray-600 mb-3">${bids.length} bid${bids.length !== 1 ? 's' : ''}</p>
+                        <div class="space-y-3">
+                            ${bids.slice(0, 3).map(bid => {
+                                const bidder = bid.user || {};
+                                return `
+                                    <div class="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 rounded">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <div class="flex items-center gap-2">
+                                                ${bidder.firstName ? getAvatarHTML(bidder, 'w-8 h-8') : ''}
+                                                <div>
+                                                    <p class="font-medium text-sm text-gray-900">${bidder.company || (bidder.firstName ? bidder.firstName + ' ' + bidder.lastName : 'Unknown')}</p>
+                                                    ${bidder.rating ? `<p class="text-xs text-gray-500">★ ${bidder.rating.toFixed(1)}</p>` : ''}
+                                                </div>
+                                            </div>
+                                            <span class="font-semibold text-gray-900">${formatCurrency(bid.amount)}</span>
+                                        </div>
+                                        <p class="text-sm text-gray-600 line-clamp-2">${bid.proposal || 'No proposal provided'}</p>
+                                    </div>
+                                `;
+                            }).join('')}
+                            ${bids.length > 3 ? `<p class="text-sm text-gray-500 text-center">+${bids.length - 3} more</p>` : ''}
+                        </div>
+                        <a href="/project-detail.html?id=${project._id}" class="block mt-3 text-center px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">View All Bids</a>
+                    </div>
+                `;
+            }).join('') + '</div>';
+        }
+
+        function loadMessagesModal() {
+            const content = document.getElementById('messages-content');
+            
+            if (messagesData.length === 0) {
+                content.innerHTML = '<p class="text-gray-500 text-center">No messages</p>';
+                return;
+            }
+
+            content.innerHTML = '<div class="space-y-3">' + messagesData.slice(0, 10).map(conv => {
+                const other = conv.otherUser || {};
+                return `
+                    <a href="/messages.html?user=${other._id}" class="block border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                        <div class="flex items-start gap-3">
+                            ${getAvatarHTML(other, 'w-12 h-12')}
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between mb-1">
+                                    <p class="font-medium text-gray-900">${other.company || (other.firstName ? other.firstName + ' ' + other.lastName : 'Unknown')}</p>
+                                    ${conv.unread ? `<span class="px-2 py-1 bg-blue-500 text-white text-xs rounded-full">${conv.unread}</span>` : ''}
+                                </div>
+                                <p class="text-sm text-gray-600 truncate">${conv.lastMessage || 'No messages'}</p>
+                                <p class="text-xs text-gray-500 mt-1">${conv.lastMessageTime ? getTimeAgo(new Date(conv.lastMessageTime)) : ''}</p>
+                            </div>
+                        </div>
+                    </a>
+                `;
+            }).join('') + '</div>';
+        }
+
+        function loadCompletedModal() {
+            const completedProjects = userProjects.filter(p => p.status === 'completed');
+            const content = document.getElementById('completed-content');
+            
+            if (completedProjects.length === 0) {
+                content.innerHTML = '<p class="text-gray-500 text-center">No completed projects yet</p>';
+                return;
+            }
+
+            content.innerHTML = '<div class="space-y-4">' + completedProjects.map(project => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <a href="/project-detail.html?id=${project._id}" class="font-semibold text-gray-900 hover:text-blue-600">${project.title}</a>
+                            <p class="text-sm text-gray-600 mt-1">${project.description.substring(0, 150)}...</p>
+                        </div>
+                        <span class="px-3 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700">Completed</span>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                        <span>${formatCurrency(project.budget)}</span>
+                        <span>•</span>
+                        <span>${project.location}</span>
+                    </div>
+                    <a href="/project-detail.html?id=${project._id}" class="inline-block px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">View Details</a>
+                </div>
+            `).join('') + '</div>';
+        }
+
+        // Helper function for time ago
+        function getTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            const intervals = {
+                year: 31536000,
+                month: 2592000,
+                week: 604800,
+                day: 86400,
+                hour: 3600,
+                minute: 60
+            };
+
+            for (const [name, secondsInInterval] of Object.entries(intervals)) {
+                const interval = Math.floor(seconds / secondsInInterval);
+                if (interval >= 1) {
+                    return `${interval} ${name}${interval > 1 ? 's' : ''} ago`;
+                }
+            }
+            return 'just now';
+        }
+
+        // Initialize dashboard
+        (async () => {
+            await loadDashboard();
+            await loadFeed();
+            await loadRecommendations();
+        })();
     </script>
 </body>
 </html>
