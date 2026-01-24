@@ -157,16 +157,16 @@
 
             <!-- Sidebar -->
             <div class="lg:col-span-1">
-                <!-- Relevant Projects -->
+                <!-- Bid Opportunities -->
                 <div class="bg-white rounded-lg border border-gray-200 mb-6">
                     <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-900">Projects for You</h2>
+                        <h2 class="text-lg font-semibold text-gray-900">Bid Opportunities</h2>
                         <p class="text-xs text-gray-500 mt-1">Based on your skills and location</p>
                     </div>
                     <div id="recommendations" class="divide-y divide-gray-200">
                         <!-- Relevant projects will be loaded here -->
                         <div class="p-6 text-center text-gray-500">
-                            <p class="text-sm">Loading projects...</p>
+                            <p class="text-sm">Loading opportunities...</p>
                         </div>
                     </div>
                 </div>
@@ -573,7 +573,7 @@
                 console.error('Error loading projects:', error);
                 container.innerHTML = `
                     <div class="p-6 text-center">
-                        <p class="text-sm text-gray-600 mb-2">Unable to load projects</p>
+                        <p class="text-sm text-gray-600 mb-2">Unable to load opportunities</p>
                         <button onclick="loadRecommendations()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
                             Try Again
                         </button>
@@ -586,7 +586,7 @@
             const container = document.getElementById('recommendations');
             
             if (projects.length === 0) {
-                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No projects available right now</p><a href="/browse.html" class="text-blue-600 hover:underline text-xs mt-2 block">Browse all</a></div>';
+                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No opportunities available right now</p><a href="/browse.html" class="text-blue-600 hover:underline text-xs mt-2 block">Browse all</a></div>';
                 return;
             }
 
@@ -594,7 +594,7 @@
             const relevantProjects = projects.filter(p => p.owner._id !== currentUser.id).slice(0, 5);
 
             if (relevantProjects.length === 0) {
-                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No new projects match your profile</p><a href="/browse.html" class="text-blue-600 hover:underline text-xs mt-2 block">Browse all</a></div>';
+                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No opportunities match your profile</p><a href="/browse.html" class="text-blue-600 hover:underline text-xs mt-2 block">Browse all</a></div>';
                 return;
             }
 

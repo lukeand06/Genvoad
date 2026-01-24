@@ -34,20 +34,10 @@
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
                 <div id="error-message" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"></div>
 
-                <div class="space-y-3 mb-6" id="social-buttons">
-                    <div id="google-signin" class="w-full"></div>
-                    <button id="microsoft-signin" class="w-full border border-gray-300 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
-                        <span>Continue with Microsoft</span>
-                    </button>
-                    <button id="apple-signin" class="w-full border border-gray-900 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-900 hover:text-white transition flex items-center justify-center gap-2">
-                        <span>Sign in with Apple</span>
-                    </button>
-                </div>
-
-                <div class="flex items-center my-6">
-                    <div class="flex-1 h-px bg-gray-200"></div>
-                    <span class="px-3 text-xs text-gray-500 uppercase tracking-[0.2em]">or</span>
-                    <div class="flex-1 h-px bg-gray-200"></div>
+                <!-- Role toggle at top -->
+                <div class="mb-6 grid grid-cols-2 gap-3" id="role-toggle">
+                    <button data-role="owner" class="role-pill px-4 py-3 rounded-lg border border-gray-900 bg-gray-900 text-white font-semibold transition">Project Owner</button>
+                    <button data-role="vendor" class="role-pill px-4 py-3 rounded-lg border border-gray-200 text-gray-700 font-semibold hover:border-gray-900 hover:bg-gray-50 transition">Vendor / Service Provider</button>
                 </div>
                 
                 <form id="login-form" class="space-y-4">
@@ -66,6 +56,23 @@
                     </button>
                 </form>
 
+                <div class="flex items-center my-6">
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                    <span class="px-3 text-xs text-gray-500 uppercase tracking-[0.2em]">or</span>
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                </div>
+
+                <!-- Social buttons at bottom -->
+                <div class="space-y-3" id="social-buttons">
+                    <div id="google-signin" class="w-full"></div>
+                    <button id="microsoft-signin" class="w-full border border-gray-300 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
+                        <span>Continue with Microsoft</span>
+                    </button>
+                    <button id="apple-signin" class="w-full border border-gray-900 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-900 hover:text-white transition flex items-center justify-center gap-2">
+                        <span>Sign in with Apple</span>
+                    </button>
+                </div>
+
                 <div class="mt-6 text-center text-sm">
                     <span class="text-gray-600">Don't have an account?</span>
                     <a href="signup.html" class="text-gray-900 font-medium hover:underline ml-1">Sign up</a>
@@ -74,29 +81,9 @@
         </div>
     </div>
 
-    <!-- Role Selection Modal -->
-    <div id="role-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Choose Your Role</h3>
-                <p class="text-sm text-gray-600 mt-1">Select how you want to use Genovad</p>
-            </div>
-            <div class="p-6 space-y-3">
-                <button id="role-owner-btn" class="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-gray-900 hover:bg-gray-50 transition text-left">
-                    <h4 class="font-semibold text-gray-900">Project Owner</h4>
-                    <p class="text-sm text-gray-600 mt-1">Post projects and hire vendors to complete your work</p>
-                </button>
-                <button id="role-vendor-btn" class="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-gray-900 hover:bg-gray-50 transition text-left">
-                    <h4 class="font-semibold text-gray-900">Vendor/Service Provider</h4>
-                    <p class="text-sm text-gray-600 mt-1">Browse projects and bid to offer your services</p>
-                </button>
-            </div>
-        </div>
-    </div>
-
     <script src="/public/js/auth.js"></script>
     <script>
-        let pendingLogin = null; // Store login data while waiting for role selection
+        let selectedRole = 'owner';
 
         window.addEventListener('load', () => {
             redirectIfAuth();
@@ -110,27 +97,19 @@
                 btn.classList.add('opacity-60', 'cursor-not-allowed');
             };
 
-            const showRoleModal = (loginData) => {
-                pendingLogin = loginData;
-                document.getElementById('role-modal').classList.remove('hidden');
-            };
-
-            const selectRole = (role) => {
-                if (!pendingLogin) return;
-                
-                // Store the selected role
-                setActiveRole(role);
-                setToken(pendingLogin.token);
-                setCurrentUser(pendingLogin.user);
-                
-                // Close modal and redirect
-                document.getElementById('role-modal').classList.add('hidden');
-                window.location.href = '/dashboard.html';
-            };
-
-            // Role button handlers
-            document.getElementById('role-owner-btn').addEventListener('click', () => selectRole('owner'));
-            document.getElementById('role-vendor-btn').addEventListener('click', () => selectRole('vendor'));
+            // Role toggle handlers (no modal; direct selection)
+            const rolePills = document.querySelectorAll('.role-pill');
+            rolePills.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const role = btn.dataset.role;
+                    selectedRole = role;
+                    rolePills.forEach(b => b.classList.remove('bg-gray-900','text-white','border-gray-900'));
+                    rolePills.forEach(b => b.classList.add('border-gray-200','text-gray-700'));
+                    btn.classList.add('bg-gray-900','text-white','border-gray-900');
+                    btn.classList.remove('border-gray-200','text-gray-700');
+                });
+            });
 
             const handleSocial = async (provider, token, buttonEl) => {
                 if (!token) {
@@ -145,12 +124,19 @@
                 }
 
                 try {
-                    // First, we need to get the role from user input - show role modal
-                    // For social auth, we can still use role modal
-                    const roleModal = document.getElementById('role-modal');
-                    
-                    // Show role selection first
-                    showRoleModal({ token, provider, idToken: token });
+                    const res = await fetch(`${API_URL}/auth/social`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ provider, idToken: token, role: selectedRole })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Social login failed');
+
+                    setToken(data.token);
+                    setCurrentUser(data.user);
+                    setActiveRole(data.user.activeRole || data.user.role || selectedRole);
+                    window.location.href = '/dashboard.html';
                 } catch (err) {
                     showError(err.message || 'Social login failed');
                 } finally {
@@ -284,9 +270,19 @@
                     if (!response.ok) {
                         throw new Error(data.error || 'Login failed');
                     }
-                    
-                    // Show role selection modal with login data
-                    showRoleModal(data);
+
+                    // Set token so we can call switch-role
+                    setToken(data.token);
+                    const roleRes = await authFetch('/api/auth/switch-role', {
+                        method: 'POST',
+                        body: JSON.stringify({ role: selectedRole })
+                    });
+                    const roleData = await roleRes.json();
+                    if (!roleRes.ok) throw new Error(roleData.error || 'Failed to switch role');
+
+                    setCurrentUser(roleData.user);
+                    setActiveRole(roleData.user.activeRole || selectedRole);
+                    window.location.href = '/dashboard.html';
                 } catch (error) {
                     showError(error.message);
                     btn.disabled = false;
