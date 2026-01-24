@@ -1,0 +1,74 @@
+const mongoose = require('mongoose');
+
+const notificationSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true
+  },
+  type: {
+    type: String,
+    enum: [
+      'partnership_request',
+      'partnership_accepted',
+      'partnership_declined',
+      'bid_received',
+      'bid_accepted',
+      'bid_declined',
+      'new_message',
+      'project_update',
+      'review_received',
+      'system'
+    ],
+    required: true
+  },
+  read: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  category: {
+    type: String,
+    enum: ['partnerships', 'projects', 'messages', 'system'],
+    required: true
+  },
+  // Flexible data object for different notification types
+  data: {
+    // Partnership notifications
+    userId: mongoose.Schema.Types.ObjectId,
+    userName: String,
+    userCompany: String,
+    userEmail: String,
+    
+    // Project/Bid notifications
+    projectId: mongoose.Schema.Types.ObjectId,
+    projectTitle: String,
+    
+    // Message notifications
+    messageId: mongoose.Schema.Types.ObjectId,
+    messagePreview: String,
+    
+    // General
+    title: String,
+    message: String,
+    actionUrl: String,
+    amount: Number,
+    bidderName: String,
+    bidAmount: Number
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    index: true
+  },
+  expiresAt: {
+    type: Date,
+    default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+  }
+});
+
+// Automatically delete expired notifications
+notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+module.exports = mongoose.model('Notification', notificationSchema);

@@ -13,6 +13,7 @@ const User = require('./models/User');
 const Project = require('./models/Project');
 const Message = require('./models/Message');
 const Review = require('./models/Review');
+const Notification = require('./models/Notification');
 const { sendVerificationEmail, sendEmail } = require('./utils/email');
 
 const app = express();
@@ -1936,6 +1937,160 @@ app.post('/api/feedback/submit', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Failed to submit feedback', message: error.message });
   }
 });
+
+// Notification Endpoints
+// Get all notifications for a user
+app.get('/api/notifications', authMiddleware, async (req, res) => {
+  try {
+    const { filter, limit = 50, skip = 0 } = req.query;
+    const userId = req.user.id;
+
+    let query = { userId };
+    
+    // Filter by read status
+    if (filter === 'unread') {
+      query.read = false;
+    } else if (filter === 'read') {
+      query.read = true;
+    }
+
+    const notifications = await Notification.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .lean();
+
+    const unreadCount = await Notification.countDocuments({ userId, read: false });
+
+    res.json({
+      notifications,
+      unreadCount,
+      total: await Notification.countDocuments(query)
+    });
+  } catch (error) {
+    console.error('Notifications fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+// Get notifications by category
+app.get('/api/notifications/category/:category', authMiddleware, async (req, res) => {
+  try {
+    const { category } = req.params;
+    const { limit = 50, skip = 0 } = req.query;
+    const userId = req.user.id;
+
+    const validCategories = ['partnerships', 'projects', 'messages', 'system'];
+    if (!validCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid category' });
+    }
+
+    const notifications = await Notification.find({ userId, category })
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .lean();
+
+    res.json({ notifications });
+  } catch (error) {
+    console.error('Notifications category fetch error:', error);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
+  }
+});
+
+// Mark notification as read
+app.patch('/api/notifications/:id/read', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const notification = await Notification.findOneAndUpdate(
+      { _id: id, userId },
+      { read: true },
+      { new: true }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    res.json(notification);
+  } catch (error) {
+    console.error('Mark read error:', error);
+    res.status(500).json({ error: 'Failed to update notification' });
+  }
+});
+
+// Mark all notifications as read
+app.patch('/api/notifications/read-all', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await Notification.updateMany(
+      { userId, read: false },
+      { read: true }
+    );
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Mark all read error:', error);
+    res.status(500).json({ error: 'Failed to update notifications' });
+  }
+});
+
+// Delete notification
+app.delete('/api/notifications/:id', authMiddleware, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const notification = await Notification.findOneAndDelete(
+      { _id: id, userId }
+    );
+
+    if (!notification) {
+      return res.status(404).json({ error: 'Notification not found' });
+    }
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete notification error:', error);
+    res.status(500).json({ error: 'Failed to delete notification' });
+  }
+});
+
+// Clear all notifications
+app.delete('/api/notifications', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    await Notification.deleteMany({ userId });
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Clear notifications error:', error);
+    res.status(500).json({ error: 'Failed to clear notifications' });
+  }
+});
+
+// Internal helper function to create notifications
+async function createNotification(userId, type, category, data) {
+  try {
+    const notification = new Notification({
+      userId,
+      type,
+      category,
+      data
+    });
+    await notification.save();
+    return notification;
+  } catch (error) {
+    console.error('Error creating notification:', error);
+  }
+}
+
+// Make createNotification available to other routes
+app.locals.createNotification = createNotification;
 
 // Health check
 app.get('/api/health', (req, res) => {

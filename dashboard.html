@@ -902,11 +902,79 @@
             return 'just now';
         }
 
+        // Load recent notifications
+        async function loadRecentNotifications() {
+            const container = document.getElementById('recent-notifications');
+            try {
+                const response = await authFetch('/api/notifications?limit=5');
+                if (!response.ok) throw new Error('Failed to load notifications');
+                
+                const data = await response.json();
+                const notifications = data.notifications || [];
+                
+                if (notifications.length === 0) {
+                    container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No new notifications</p></div>';
+                    return;
+                }
+
+                container.innerHTML = notifications.map(notif => {
+                    let icon, title, desc = '';
+                    
+                    switch(notif.type) {
+                        case 'partnership_request':
+                            icon = '👥';
+                            title = `Partnership request from ${notif.data?.userName || 'Someone'}`;
+                            desc = notif.data?.userCompany || '';
+                            break;
+                        case 'bid_received':
+                            icon = '💰';
+                            title = `New bid for ${notif.data?.projectTitle || 'your project'}`;
+                            desc = `${formatCurrency(notif.data?.amount || 0)}`;
+                            break;
+                        case 'bid_accepted':
+                            icon = '✅';
+                            title = `Your bid accepted for ${notif.data?.projectTitle || 'a project'}`;
+                            desc = `Amount: ${formatCurrency(notif.data?.amount || 0)}`;
+                            break;
+                        case 'new_message':
+                            icon = '💬';
+                            title = `New message from ${notif.data?.userName || 'Someone'}`;
+                            desc = notif.data?.preview?.substring(0, 50) || '';
+                            break;
+                        default:
+                            icon = '🔔';
+                            title = 'New notification';
+                            desc = '';
+                    }
+                    
+                    const bgClass = notif.read ? 'bg-white' : 'bg-blue-50';
+                    const timeAgo = getTimeAgo(new Date(notif.createdAt));
+                    
+                    return `
+                        <div class="${bgClass} p-4 hover:bg-gray-50 transition border-b border-gray-100 last:border-b-0">
+                            <div class="flex gap-3">
+                                <span class="text-xl">${icon}</span>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-gray-900">${title}</p>
+                                    ${desc ? `<p class="text-xs text-gray-600 truncate">${desc}</p>` : ''}
+                                    <p class="text-xs text-gray-500 mt-1">${timeAgo}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                container.innerHTML = '<div class="p-6 text-center text-red-500"><p class="text-sm">Failed to load notifications</p></div>';
+            }
+        }
+
         // Initialize dashboard
         (async () => {
             await loadDashboard();
             await loadFeed();
             await loadRecommendations();
+            await loadRecentNotifications();
         })();
     </script>
 </body>

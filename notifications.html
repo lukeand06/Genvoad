@@ -113,81 +113,29 @@
         let allNotifications = [];
         let currentFilter = 'all';
 
-        // Mock notifications - replace with actual API calls
+        // Load notifications from API
         async function loadNotifications() {
             try {
-                // For now, generate mock notifications
-                // TODO: Replace with actual API endpoint
-                allNotifications = await generateMockNotifications();
+                const response = await authFetch('/api/notifications');
+                const data = await response.json();
+                
+                if (!response.ok) throw new Error(data.error || 'Failed to load notifications');
+                
+                // Convert API response format to display format
+                allNotifications = data.notifications.map(notif => ({
+                    id: notif._id,
+                    type: notif.type,
+                    read: notif.read,
+                    timestamp: new Date(notif.createdAt),
+                    data: notif.data
+                }));
+                
                 displayNotifications(allNotifications);
                 updateBadge();
             } catch (error) {
                 console.error('Error loading notifications:', error);
                 document.getElementById('notifications-container').innerHTML = '<div class="text-center py-12 text-red-500">Failed to load notifications</div>';
             }
-        }
-
-        async function generateMockNotifications() {
-            // This will be replaced with actual backend data
-            return [
-                {
-                    id: 1,
-                    type: 'partnership_request',
-                    read: false,
-                    timestamp: new Date(Date.now() - 1000 * 60 * 30),
-                    data: {
-                        userId: '123',
-                        userName: 'John Smith',
-                        userAvatar: '',
-                        userCompany: 'Smith Construction'
-                    }
-                },
-                {
-                    id: 2,
-                    type: 'bid_accepted',
-                    read: false,
-                    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2),
-                    data: {
-                        projectId: 'proj123',
-                        projectTitle: 'Kitchen Renovation',
-                        amount: 12500
-                    }
-                },
-                {
-                    id: 3,
-                    type: 'new_message',
-                    read: true,
-                    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5),
-                    data: {
-                        userId: '456',
-                        userName: 'Jane Doe',
-                        preview: 'Hi, I\'d like to discuss the project timeline...'
-                    }
-                },
-                {
-                    id: 4,
-                    type: 'bid_received',
-                    read: true,
-                    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24),
-                    data: {
-                        projectId: 'proj456',
-                        projectTitle: 'Bathroom Remodel',
-                        bidderName: 'Mike Johnson',
-                        amount: 8500
-                    }
-                },
-                {
-                    id: 5,
-                    type: 'partnership_accepted',
-                    read: true,
-                    timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48),
-                    data: {
-                        userId: '789',
-                        userName: 'Sarah Wilson',
-                        userCompany: 'Wilson Electrical'
-                    }
-                }
-            ];
         }
 
         function displayNotifications(notifications) {
@@ -318,17 +266,27 @@
 
         function markAsRead(notificationId) {
             const notif = allNotifications.find(n => n.id === notificationId);
-            if (notif) {
+            if (notif && !notif.read) {
                 notif.read = true;
+                
+                // Call API to mark as read
+                authFetch(`/api/notifications/${notificationId}/read`, { method: 'PATCH' })
+                    .catch(err => console.error('Failed to mark as read:', err));
+                
                 filterNotifications(currentFilter);
                 updateBadge();
             }
         }
 
-        document.getElementById('mark-all-read').addEventListener('click', () => {
-            allNotifications.forEach(n => n.read = true);
-            filterNotifications(currentFilter);
-            updateBadge();
+        document.getElementById('mark-all-read').addEventListener('click', async () => {
+            try {
+                await authFetch('/api/notifications/read-all', { method: 'PATCH' });
+                allNotifications.forEach(n => n.read = true);
+                filterNotifications(currentFilter);
+                updateBadge();
+            } catch (err) {
+                console.error('Failed to mark all as read:', err);
+            }
         });
 
         async function acceptPartnership(userId, notificationId) {
