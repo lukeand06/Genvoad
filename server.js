@@ -858,8 +858,22 @@ app.delete('/api/partners/:partnerId', authMiddleware, async (req, res) => {
 // Create project
 app.post('/api/projects', authMiddleware, upload.array('attachments', 10), async (req, res) => {
   try {
+    // Validate required fields
+    const { title, description, category, budget, location } = req.body;
+    
+    if (!title || !description || !category || !budget || !location) {
+      return res.status(400).json({ error: 'Missing required fields: title, description, category, budget, location' });
+    }
+
+    // Validate budget is a number
+    const budgetNum = parseFloat(budget);
+    if (isNaN(budgetNum) || budgetNum <= 0) {
+      return res.status(400).json({ error: 'Budget must be a positive number' });
+    }
+
     const projectData = {
       ...req.body,
+      budget: budgetNum,
       owner: req.user._id
     };
 

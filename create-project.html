@@ -164,6 +164,21 @@
 
         let selectedFiles = [];
 
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            if (errorDiv) {
+                errorDiv.textContent = message;
+                errorDiv.classList.remove('hidden');
+                setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+            } else {
+                alert(message);
+            }
+        }
+
+        function showSuccess(message) {
+            alert(message);
+        }
+
         // File upload handling
         const fileDropZone = document.getElementById('file-drop-zone');
         const fileInput = document.getElementById('file-input');
@@ -233,16 +248,48 @@
         document.getElementById('project-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const title = document.getElementById('title').value;
-            const description = document.getElementById('description').value;
+            // Clear any previous errors
+            const errorDiv = document.getElementById('error-message');
+            if (errorDiv) errorDiv.classList.add('hidden');
+            
+            const title = document.getElementById('title').value.trim();
+            const description = document.getElementById('description').value.trim();
             const category = document.getElementById('category').value;
-            const budget = document.getElementById('budget').value;
-            const location = document.getElementById('location').value;
+            const budget = document.getElementById('budget').value.trim();
+            const location = document.getElementById('location').value.trim();
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
             const skillsInput = document.getElementById('skills').value;
             const meetingDate = document.getElementById('meetingDate').value;
             const zoomLink = document.getElementById('zoomLink').value;
+            
+            // Validate required fields
+            if (!title) {
+                showError('Project title is required');
+                return;
+            }
+            if (!description) {
+                showError('Project description is required');
+                return;
+            }
+            if (!category) {
+                showError('Please select a category');
+                return;
+            }
+            if (!budget) {
+                showError('Budget is required');
+                return;
+            }
+            if (!location) {
+                showError('Location is required');
+                return;
+            }
+            
+            const budgetNum = parseFloat(budget);
+            if (isNaN(budgetNum) || budgetNum <= 0) {
+                showError('Budget must be a valid positive number');
+                return;
+            }
             
             const skills = skillsInput ? skillsInput.split(',').map(s => s.trim()).filter(s => s) : [];
             
@@ -255,7 +302,7 @@
                 title,
                 description,
                 category,
-                budget: parseFloat(budget),
+                budget: budgetNum,
                 location,
                 skills,
                 requirements,
@@ -272,11 +319,11 @@
                 for (const [key, value] of Object.entries(projectData)) {
                     if (Array.isArray(value)) {
                         value.forEach((item, idx) => formData.append(`${key}[${idx}]`, item));
-                    } else {
+                    } else if (value !== null) {
                         formData.append(key, value);
                     }
                 }
-                selectedFiles.forEach((file, idx) => {
+                selectedFiles.forEach((file) => {
                     formData.append(`attachments`, file);
                 });
                 submitProjectWithFiles(formData);
@@ -288,7 +335,7 @@
             btn.textContent = 'Creating...';
             
             try {
-                const response = await authFetch('/projects', {
+                const response = await authFetch('/api/projects', {
                     method: 'POST',
                     body: JSON.stringify(projectData)
                 });
@@ -299,7 +346,10 @@
                     throw new Error(data.error || 'Failed to create project');
                 }
                 
-                window.location.href = `/project-detail.html?id=${data.project._id}`;
+                showSuccess('Project created successfully!');
+                setTimeout(() => {
+                    window.location.href = `/project-detail.html?id=${data.project._id}`;
+                }, 500);
             } catch (error) {
                 showError(error.message);
                 btn.disabled = false;
@@ -314,7 +364,7 @@
 
             try {
                 const token = getToken();
-                const response = await fetch(`${API_URL}/projects`, {
+                const response = await fetch('/api/projects', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -328,7 +378,10 @@
                     throw new Error(data.error || 'Failed to create project');
                 }
 
-                window.location.href = `/project-detail.html?id=${data.project._id}`;
+                showSuccess('Project created successfully!');
+                setTimeout(() => {
+                    window.location.href = `/project-detail.html?id=${data.project._id}`;
+                }, 500);
             } catch (error) {
                 showError(error.message);
                 btn.disabled = false;
