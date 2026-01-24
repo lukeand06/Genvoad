@@ -74,8 +74,30 @@
         </div>
     </div>
 
+    <!-- Role Selection Modal -->
+    <div id="role-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Choose Your Role</h3>
+                <p class="text-sm text-gray-600 mt-1">Select how you want to use Genovad</p>
+            </div>
+            <div class="p-6 space-y-3">
+                <button id="role-owner-btn" class="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-gray-900 hover:bg-gray-50 transition text-left">
+                    <h4 class="font-semibold text-gray-900">Project Owner</h4>
+                    <p class="text-sm text-gray-600 mt-1">Post projects and hire vendors to complete your work</p>
+                </button>
+                <button id="role-vendor-btn" class="w-full p-4 border-2 border-gray-200 rounded-lg hover:border-gray-900 hover:bg-gray-50 transition text-left">
+                    <h4 class="font-semibold text-gray-900">Vendor/Service Provider</h4>
+                    <p class="text-sm text-gray-600 mt-1">Browse projects and bid to offer your services</p>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="/public/js/auth.js"></script>
     <script>
+        let pendingLogin = null; // Store login data while waiting for role selection
+
         window.addEventListener('load', () => {
             redirectIfAuth();
 
@@ -87,6 +109,28 @@
                 btn.textContent = text;
                 btn.classList.add('opacity-60', 'cursor-not-allowed');
             };
+
+            const showRoleModal = (loginData) => {
+                pendingLogin = loginData;
+                document.getElementById('role-modal').classList.remove('hidden');
+            };
+
+            const selectRole = (role) => {
+                if (!pendingLogin) return;
+                
+                // Store the selected role
+                setActiveRole(role);
+                setToken(pendingLogin.token);
+                setCurrentUser(pendingLogin.user);
+                
+                // Close modal and redirect
+                document.getElementById('role-modal').classList.add('hidden');
+                window.location.href = '/dashboard.html';
+            };
+
+            // Role button handlers
+            document.getElementById('role-owner-btn').addEventListener('click', () => selectRole('owner'));
+            document.getElementById('role-vendor-btn').addEventListener('click', () => selectRole('vendor'));
 
             const handleSocial = async (provider, token, buttonEl) => {
                 if (!token) {
@@ -101,20 +145,12 @@
                 }
 
                 try {
-                    const response = await fetch(`${API_URL}/auth/social`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ provider, idToken: token })
-                    });
-
-                    const data = await response.json();
-                    if (!response.ok) {
-                        throw new Error(data.error || 'Social login failed');
-                    }
-
-                    setToken(data.token);
-                    setCurrentUser(data.user);
-                    window.location.href = '/dashboard.html';
+                    // First, we need to get the role from user input - show role modal
+                    // For social auth, we can still use role modal
+                    const roleModal = document.getElementById('role-modal');
+                    
+                    // Show role selection first
+                    showRoleModal({ token, provider, idToken: token });
                 } catch (err) {
                     showError(err.message || 'Social login failed');
                 } finally {
@@ -249,9 +285,8 @@
                         throw new Error(data.error || 'Login failed');
                     }
                     
-                    setToken(data.token);
-                    setCurrentUser(data.user);
-                    window.location.href = '/dashboard.html';
+                    // Show role selection modal with login data
+                    showRoleModal(data);
                 } catch (error) {
                     showError(error.message);
                     btn.disabled = false;

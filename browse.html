@@ -70,7 +70,7 @@
         <div class="bg-white rounded-lg border border-gray-200 mb-6">
             <nav class="flex border-b border-gray-200">
                 <button id="tab-partners" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900">My Partners</button>
-                <button id="tab-featured" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Featured Services</button>
+                <button id="tab-featured" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Find Companies</button>
                 <button id="tab-projects" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Partners' Projects</button>
             </nav>
         </div>
@@ -78,7 +78,7 @@
         <!-- Search -->
         <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
             <div class="flex gap-4">
-                <input type="text" id="search-input" placeholder="Search partners or services..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                <input type="text" id="search-input" placeholder="Search partners or companies..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                 <button id="search-btn" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Search</button>
             </div>
         </div>
@@ -156,8 +156,8 @@
                 featuredServices = (data.users || []).filter(u => u.role === 'vendor' || (u.skills && u.skills.length > 0)).slice(0, 12);
                 displayFeaturedServices();
             } catch (error) {
-                console.error('Error loading featured services:', error);
-                document.getElementById('network-content').innerHTML = `<div class="col-span-full text-center py-12 text-red-500">${error.message || 'Failed to load services'}</div>`;
+                console.error('Error loading companies:', error);
+                document.getElementById('network-content').innerHTML = `<div class="col-span-full text-center py-12 text-red-500">${error.message || 'Failed to load companies'}</div>`;
             }
         }
 
@@ -242,13 +242,21 @@
         }
 
         function displayFeaturedServices() {
+            const search = (document.getElementById('search-input').value || '').toLowerCase();
+            const filtered = featuredServices.filter(service => {
+                const name = `${service.firstName} ${service.lastName}`.toLowerCase();
+                const company = (service.company || '').toLowerCase();
+                const skills = (service.skills || []).join(' ').toLowerCase();
+                return !search || name.includes(search) || company.includes(search) || skills.includes(search);
+            });
+
             const container = document.getElementById('network-content');
-            if (featuredServices.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No featured services available.</p></div>';
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No companies found.</p></div>';
                 return;
             }
 
-            container.innerHTML = featuredServices.map(service => `
+            container.innerHTML = filtered.map(service => `
                 <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex-1">
@@ -387,6 +395,12 @@
         }
 
         document.getElementById('search-btn').addEventListener('click', () => {
+            if (currentTab === 'partners') displayPartners();
+            else if (currentTab === 'featured') displayFeaturedServices();
+            else displayPartnerProjects();
+        });
+
+        document.getElementById('search-input').addEventListener('input', () => {
             if (currentTab === 'partners') displayPartners();
             else if (currentTab === 'featured') displayFeaturedServices();
             else displayPartnerProjects();

@@ -271,6 +271,8 @@ app.post('/api/auth/signup', async (req, res) => {
       authProvider: 'password',
       company,
       role: normalizedRole,
+      roles: [normalizedRole],
+      activeRole: normalizedRole,
       verificationCode,
       verificationExpires,
       emailVerified: false
@@ -367,6 +369,8 @@ app.post('/api/auth/verify', async (req, res) => {
         avatar: user.avatar,
         company: user.company,
         role: user.role,
+        activeRole: user.activeRole,
+        roles: user.roles,
         authProvider: user.authProvider
       }
     });
@@ -392,6 +396,15 @@ app.post('/api/auth/login', async (req, res) => {
     if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
     
     user.lastActive = new Date();
+    
+    // Ensure multi-role fields are set (for backward compatibility)
+    if (!user.roles || user.roles.length === 0) {
+      user.roles = [user.role || 'owner'];
+    }
+    if (!user.activeRole) {
+      user.activeRole = user.role || 'owner';
+    }
+    
     await user.save();
     
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -410,6 +423,8 @@ app.post('/api/auth/login', async (req, res) => {
         company: user.company,
         title: user.title,
         role: user.role,
+        activeRole: user.activeRole,
+        roles: user.roles,
         authProvider: user.authProvider
       }
     });
@@ -424,12 +439,8 @@ app.post('/api/auth/social', async (req, res) => {
   try {
     const { provider, idToken, role } = req.body;
 
-    if (!provider || !idToken || !role) {
-      return res.status(400).json({ error: 'Provider, token, and role are required' });
-    }
-
-    if (!['owner', 'vendor'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role selection' });
+    if (!provider || !idToken) {
+      return res.status(400).json({ error: 'Provider and token are required' });
     }
 
     if (!providerEnabled(provider)) {
@@ -456,26 +467,40 @@ app.post('/api/auth/social', async (req, res) => {
       return res.status(403).json({ error: 'Account is disabled' });
     }
 
-    if (user && user.role !== role) {
-      return res.status(403).json({ error: `This email is registered as a ${user.role}. Switch to that sign-in.` });
-    }
-
     if (user) {
+      // Existing user - just update their provider info
       user.firstName = user.firstName || firstName;
       user.lastName = user.lastName || lastName;
       user.authProvider = provider;
       user.providerId = decoded.sub || user.providerId;
       user.emailVerified = true;
       user.lastActive = new Date();
+      
+      // Ensure multi-role fields are set (for backward compatibility)
+      if (!user.roles || user.roles.length === 0) {
+        user.roles = [user.role || 'owner'];
+      }
+      if (!user.activeRole) {
+        user.activeRole = user.role || 'owner';
+      }
+      
       await user.save();
     } else {
+      // New user - create with initial role
+      const initialRole = role || 'owner';
+      if (!['owner', 'vendor'].includes(initialRole)) {
+        return res.status(400).json({ error: 'Invalid role selection' });
+      }
+
       const placeholderPassword = await generatePlaceholderPassword();
       user = new User({
         firstName,
         lastName,
         email,
         password: placeholderPassword,
-        role,
+        roles: [initialRole],
+        activeRole: initialRole,
+        role: initialRole,
         authProvider: provider,
         providerId: decoded.sub || '',
         company: decoded.hd ? `${decoded.hd} workspace` : 'Self-registered',
@@ -500,6 +525,8 @@ app.post('/api/auth/social', async (req, res) => {
         company: user.company,
         title: user.title,
         role: user.role,
+        activeRole: user.activeRole,
+        roles: user.roles,
         authProvider: user.authProvider
       }
     });
@@ -512,6 +539,49 @@ app.post('/api/auth/social', async (req, res) => {
 // Get current user
 app.get('/api/auth/me', authMiddleware, (req, res) => {
   res.json({ user: req.user });
+});
+
+// Switch active role
+app.post('/api/auth/switch-role', authMiddleware, async (req, res) => {
+  try {
+    const { role } = req.body;
+    
+    if (!role || !['owner', 'vendor'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    
+    const user = req.user;
+    if (!user.roles.includes(role)) {
+      // Allow switching to the new role (user can now have multiple roles)
+      user.roles.push(role);
+    }
+    
+    user.activeRole = role;
+    user.role = role; // Keep legacy field in sync
+    await user.save();
+    
+    res.json({
+      success: true,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        avatar: user.avatar,
+        bio: user.bio,
+        location: user.location,
+        company: user.company,
+        title: user.title,
+        role: user.role,
+        activeRole: user.activeRole,
+        roles: user.roles,
+        authProvider: user.authProvider
+      }
+    });
+  } catch (error) {
+    console.error('Switch role error:', error);
+    res.status(500).json({ error: 'Failed to switch role' });
+  }
 });
 
 // ============ USER ROUTES ============

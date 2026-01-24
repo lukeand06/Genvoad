@@ -6,6 +6,18 @@ const UserSchema = new mongoose.Schema({
   lastName: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
+  // Multi-role support: activeRole is the current working role, roles tracks all roles user can use
+  roles: { 
+    type: [{ type: String, enum: ['owner', 'vendor'] }], 
+    default: ['owner'],
+    validate: {
+      validator: function(v) {
+        return v && v.length > 0 && new Set(v).size === v.length; // unique & non-empty
+      }
+    }
+  },
+  activeRole: { type: String, enum: ['owner', 'vendor'], default: 'owner' },
+  // Legacy field - maintained for backward compatibility
   role: { type: String, enum: ['owner', 'vendor'], default: 'owner' },
   authProvider: { type: String, enum: ['password', 'google', 'microsoft', 'apple'], default: 'password' },
   providerId: { type: String, default: '' },

@@ -45,7 +45,14 @@
                         <button id="user-menu-btn" class="flex items-center space-x-2">
                             <div id="user-avatar"></div>
                         </button>
-                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                            <div class="px-4 py-3 border-b border-gray-100">
+                                <p class="text-xs text-gray-500 uppercase tracking-wide">Current Role</p>
+                                <p class="text-sm font-semibold text-gray-900 capitalize mt-1" id="current-role">Owner</p>
+                            </div>
+                            <div id="role-switcher" class="px-2 py-2 border-b border-gray-100">
+                                <!-- Role buttons will be inserted here -->
+                            </div>
                             <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
                             <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
                             <hr class="my-1">
@@ -150,15 +157,16 @@
 
             <!-- Sidebar -->
             <div class="lg:col-span-1">
-                <!-- Recommended for You -->
+                <!-- Relevant Projects -->
                 <div class="bg-white rounded-lg border border-gray-200 mb-6">
                     <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-900">Recommended for You</h2>
+                        <h2 class="text-lg font-semibold text-gray-900">Projects for You</h2>
+                        <p class="text-xs text-gray-500 mt-1">Based on your skills and location</p>
                     </div>
                     <div id="recommendations" class="divide-y divide-gray-200">
-                        <!-- Recommendations will be loaded here -->
+                        <!-- Relevant projects will be loaded here -->
                         <div class="p-6 text-center text-gray-500">
-                            <p class="text-sm">Loading recommendations...</p>
+                            <p class="text-sm">Loading projects...</p>
                         </div>
                     </div>
                 </div>
@@ -257,8 +265,84 @@
         document.getElementById('user-name').textContent = user.firstName;
         document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
         
+        // Update current role display
+        document.getElementById('current-role').textContent = getActiveRole();
+        
+        // Initialize role switcher
+        function initializeRoleSwitcher() {
+            const availableRoles = getAvailableRoles();
+            const currentRole = getActiveRole();
+            const roleSwitcher = document.getElementById('role-switcher');
+            
+            // Clear existing buttons
+            roleSwitcher.innerHTML = '';
+            
+            // Create buttons for each available role
+            availableRoles.forEach(role => {
+                const button = document.createElement('button');
+                const isActive = role === currentRole;
+                button.className = `w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition ${
+                    isActive 
+                        ? 'bg-gray-900 text-white' 
+                        : 'text-gray-700 hover:bg-gray-100'
+                }`;
+                button.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="capitalize">${role === 'vendor' ? 'Service Provider' : 'Project Owner'}</span>
+                        ${isActive ? '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : ''}
+                    </div>
+                `;
+                
+                button.addEventListener('click', async () => {
+                    if (role === currentRole) return;
+                    
+                    try {
+                        button.disabled = true;
+                        button.textContent = 'Switching...';
+                        
+                        await switchRole(role);
+                        
+                        // Update UI
+                        document.getElementById('current-role').textContent = getActiveRole();
+                        initializeRoleSwitcher();
+                        
+                        // Update CTA button
+                        const ctaBtn = document.getElementById('cta-button');
+                        const subtitle = document.getElementById('dashboard-subtitle');
+                        
+                        if (role === 'vendor') {
+                            ctaBtn.textContent = 'Find Work';
+                            ctaBtn.href = '/browse.html';
+                            subtitle.textContent = 'Track your bids and discover new opportunities';
+                        } else {
+                            ctaBtn.textContent = 'Post Project';
+                            ctaBtn.href = '/create-project.html';
+                            subtitle.textContent = "Here's what's happening with your projects";
+                        }
+                        
+                        // Reload dashboard data
+                        loadDashboard();
+                    } catch (error) {
+                        showError(error.message);
+                        button.disabled = false;
+                        initializeRoleSwitcher();
+                    }
+                });
+                
+                roleSwitcher.appendChild(button);
+            });
+        }
+        
+        initializeRoleSwitcher();
+        
+        // Listen for role changes from other tabs/windows
+        window.addEventListener('roleChanged', (e) => {
+            document.getElementById('current-role').textContent = getActiveRole();
+            initializeRoleSwitcher();
+        });
+        
         // Role-based UI customization
-        const isVendor = user.role === 'vendor';
+        const isVendor = getActiveRole() === 'vendor';
         const ctaBtn = document.getElementById('cta-button');
         const subtitle = document.getElementById('dashboard-subtitle');
         
@@ -471,24 +555,25 @@
             }).join('');
         }
 
-        // Load recommendations
+        // Load relevant projects
         async function loadRecommendations() {
             const container = document.getElementById('recommendations');
             try {
-                const recRes = await authFetch('/api/recommendations');
+                // Fetch projects that match user's skills/location
+                const recRes = await authFetch('/api/projects?status=open&limit=5');
                 if (!recRes.ok) {
                     const ct = recRes.headers.get('content-type') || '';
                     const errorData = ct.includes('application/json') ? await recRes.json() : null;
-                    throw new Error((errorData && (errorData.message || errorData.error)) || `Failed to load recommendations (HTTP ${recRes.status})`);
+                    throw new Error((errorData && (errorData.message || errorData.error)) || `Failed to load projects (HTTP ${recRes.status})`);
                 }
                 const recData = await recRes.json();
-                console.log('Recommendations loaded:', recData); // Debug
-                displayRecommendations(recData.recommendations || []);
+                console.log('Relevant projects loaded:', recData);
+                displayRecommendations(recData.projects || []);
             } catch (error) {
-                console.error('Error loading recommendations:', error);
+                console.error('Error loading projects:', error);
                 container.innerHTML = `
                     <div class="p-6 text-center">
-                        <p class="text-sm text-gray-600 mb-2">Unable to load recommendations</p>
+                        <p class="text-sm text-gray-600 mb-2">Unable to load projects</p>
                         <button onclick="loadRecommendations()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
                             Try Again
                         </button>
@@ -497,43 +582,55 @@
             }
         }
 
-        function displayRecommendations(recommendations) {
+        function displayRecommendations(projects) {
             const container = document.getElementById('recommendations');
             
-            if (recommendations.length === 0) {
-                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No recommendations available yet</p></div>';
+            if (projects.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No projects available right now</p><a href="/browse.html" class="text-blue-600 hover:underline text-xs mt-2 block">Browse all</a></div>';
                 return;
             }
 
-            container.innerHTML = recommendations.map(rec => `
-                <div class="p-4 hover:bg-gray-50 transition">
-                    <div class="flex items-start gap-3 mb-3">
-                        <a href="/profile.html?id=${rec._id}">
-                            ${getAvatarHTML(rec, 'w-10 h-10')}
-                        </a>
-                        <div class="flex-1 min-w-0">
-                            <a href="/profile.html?id=${rec._id}" class="font-medium text-gray-900 hover:underline block truncate">
-                                ${rec.company || rec.firstName + ' ' + rec.lastName}
-                            </a>
-                            <p class="text-xs text-gray-500 truncate">${rec.location || 'Unknown location'}</p>
-                            ${rec.bio ? `<p class="text-xs text-gray-600 mt-1 line-clamp-2">${rec.bio}</p>` : ''}
+            // Filter out user's own projects and show max 5
+            const relevantProjects = projects.filter(p => p.owner._id !== currentUser.id).slice(0, 5);
+
+            if (relevantProjects.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No new projects match your profile</p><a href="/browse.html" class="text-blue-600 hover:underline text-xs mt-2 block">Browse all</a></div>';
+                return;
+            }
+
+            container.innerHTML = relevantProjects.map(project => {
+                const owner = project.owner;
+                const budgetDisplay = project.budget ? `$${project.budget.toLocaleString()}` : 'Budget TBD';
+                const timeAgo = getTimeAgo(new Date(project.createdAt));
+                
+                return `
+                    <div class="p-4 hover:bg-gray-50 transition cursor-pointer" onclick="window.location.href='/project-detail.html?id=${project._id}'">
+                        <div class="mb-2">
+                            <h3 class="font-medium text-gray-900 text-sm hover:text-blue-600 line-clamp-2">${project.title}</h3>
+                            <p class="text-xs text-gray-600 mt-1 line-clamp-2">${project.description}</p>
+                        </div>
+                        
+                        <div class="flex items-center justify-between text-xs text-gray-500 mb-2">
+                            <span class="font-medium text-green-600">${budgetDisplay}</span>
+                            <span>${timeAgo}</span>
+                        </div>
+
+                        ${project.skills && project.skills.length > 0 ? `
+                            <div class="flex flex-wrap gap-1 mb-3">
+                                ${project.skills.slice(0, 2).map(skill => 
+                                    `<span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded">${skill}</span>`
+                                ).join('')}
+                                ${project.skills.length > 2 ? `<span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">+${project.skills.length - 2}</span>` : ''}
+                            </div>
+                        ` : ''}
+
+                        <div class="flex items-center gap-2 pt-2 border-t border-gray-100">
+                            ${getAvatarHTML(owner, 'w-6 h-6')}
+                            <span class="text-xs text-gray-600 truncate">${owner.company || owner.firstName + ' ' + owner.lastName}${owner.registrarId ? ' ' : ''}${getVerificationBadge(owner, 'small')}</span>
                         </div>
                     </div>
-                    
-                    ${rec.skills && rec.skills.length > 0 ? `
-                        <div class="flex flex-wrap gap-1 mb-3">
-                            ${rec.skills.slice(0, 2).map(skill => 
-                                `<span class="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded">${skill}</span>`
-                            ).join('')}
-                            ${rec.skills.length > 2 ? `<span class="px-2 py-0.5 bg-gray-100 text-gray-700 text-xs rounded">+${rec.skills.length - 2}</span>` : ''}
-                        </div>
-                    ` : ''}
-                    
-                    <a href="/profile.html?id=${rec._id}" class="block w-full text-center px-3 py-2 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50">
-                        View Profile
-                    </a>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         // Modal content loaders

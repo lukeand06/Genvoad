@@ -29,6 +29,65 @@ function setCurrentUser(user) {
   localStorage.setItem('user', JSON.stringify(user));
 }
 
+// Get active role
+function getActiveRole() {
+  const user = getCurrentUser();
+  return user?.activeRole || user?.role || 'owner';
+}
+
+// Set active role in localStorage and user object
+function setActiveRole(role) {
+  const user = getCurrentUser();
+  if (user) {
+    user.activeRole = role;
+    user.role = role;
+    setCurrentUser(user);
+  }
+}
+
+// Switch role on server and locally
+async function switchRole(role) {
+  try {
+    const response = await authFetch('/api/auth/switch-role', {
+      method: 'POST',
+      body: JSON.stringify({ role })
+    });
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to switch role');
+    }
+    
+    const data = await response.json();
+    setCurrentUser(data.user);
+    
+    // Reload page or trigger role update event
+    window.dispatchEvent(new CustomEvent('roleChanged', { detail: { role } }));
+    
+    return data.user;
+  } catch (error) {
+    console.error('Role switch error:', error);
+    throw error;
+  }
+}
+
+// Get available roles for current user
+function getAvailableRoles() {
+  const user = getCurrentUser();
+  return user?.roles || [user?.role || 'owner'];
+}
+
+// Check if user has specific role
+function hasRole(role) {
+  const roles = getAvailableRoles();
+  return roles.includes(role);
+}
+
+// Check if in specific role
+function isActiveRole(role) {
+  return getActiveRole() === role;
+}
+
 // Check if authenticated
 function isAuthenticated() {
   return !!getToken();

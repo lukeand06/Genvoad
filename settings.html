@@ -487,7 +487,11 @@
         // Load profile data
         async function loadProfile() {
             try {
-                const response = await authFetch(`/users/${user.id}`);
+                const response = await authFetch(`/api/users/${user.id}`);
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to load settings');
+                }
                 const data = await response.json();
                 profileData = data.user;
 
