@@ -275,20 +275,52 @@
                     <!-- Bids Section -->
                     ${project.bids && project.bids.length > 0 ? `
                         <div class="bg-white rounded-lg border border-gray-200 p-8">
-                            <h2 class="text-xl font-bold text-gray-900 mb-6">Bids (${project.bids.length})</h2>
-                            <div class="space-y-4">
-                                ${project.bids.map(bid => `
-                                    <div class="border border-gray-200 rounded-lg p-6 ${bid.status === 'accepted' ? 'bg-green-50 border-green-200' : ''}">
+                            <div class="flex items-center justify-between mb-6">
+                                <h2 class="text-xl font-bold text-gray-900">Bids (${project.bids.length})</h2>
+                                ${isOwner ? `
+                                    <div class="flex gap-2">
+                                        <button id="sort-toggle" onclick="toggleBidSort()" class="px-3 py-1 bg-gray-100 text-gray-900 rounded text-sm font-medium hover:bg-gray-200">Sort: <span id="sort-label">Price ↓</span></button>
+                                        <button id="compare-toggle" onclick="toggleBidComparison()" class="px-3 py-1 bg-gray-100 text-gray-900 rounded text-sm font-medium hover:bg-gray-200">Compare</button>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <!-- Comparison View -->
+                            ${isOwner ? `
+                                <div id="bid-comparison" style="display:none;" class="mb-6 overflow-x-auto">
+                                    <table class="w-full text-sm border border-gray-200 rounded">
+                                        <thead class="bg-gray-50 border-b border-gray-200">
+                                            <tr>
+                                                <th class="px-4 py-2 text-left font-semibold">Vendor</th>
+                                                <th class="px-4 py-2 text-left font-semibold">Amount</th>
+                                                <th class="px-4 py-2 text-left font-semibold">Timeline</th>
+                                                <th class="px-4 py-2 text-left font-semibold">Rating</th>
+                                                <th class="px-4 py-2 text-left font-semibold">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="comparison-table-body"></tbody>
+                                    </table>
+                                </div>
+                            ` : ''}
+                            
+                            <div id="bids-list" class="space-y-4">
+                                ${project.bids.map((bid, idx) => `
+                                    <div class="bid-card border border-gray-200 rounded-lg p-6 ${bid.status === 'accepted' ? 'bg-green-50 border-green-300' : bid.status === 'rejected' ? 'bg-red-50 border-red-200' : ''}" data-amount="${bid.amount}" data-index="${idx}">
                                         <div class="flex items-start justify-between mb-4">
-                                            <div class="flex items-center gap-3">
+                                            <div class="flex items-center gap-3 flex-1">
                                                 ${getAvatarHTML(bid.user, 'w-12 h-12')}
                                                 <div>
                                                     <div class="flex items-center gap-2">
                                                         <h3 class="font-semibold text-gray-900">${bid.user.firstName} ${bid.user.lastName}</h3>
-                                                        ${bid.status === 'accepted' ? '<span class="px-2 py-1 bg-green-500 text-white text-xs rounded">Accepted</span>' : ''}
+                                                        ${bid.status === 'accepted' ? '<span class="px-2 py-1 bg-green-500 text-white text-xs rounded font-medium">Accepted</span>' : ''}
+                                                        ${bid.status === 'rejected' ? '<span class="px-2 py-1 bg-red-500 text-white text-xs rounded font-medium">Rejected</span>' : ''}
+                                                        ${bid.status === 'revision_requested' ? '<span class="px-2 py-1 bg-yellow-500 text-white text-xs rounded font-medium">Revision Requested</span>' : ''}
                                                     </div>
                                                     ${bid.user.company ? `<p class="text-sm text-gray-600">${bid.user.company}</p>` : ''}
-                                                    ${bid.user.rating ? `<div class="flex items-center gap-1 text-sm"><span class="text-yellow-500">★</span><span>${bid.user.rating.toFixed(1)}</span></div>` : ''}
+                                                    <div class="flex items-center gap-2 text-sm mt-1">
+                                                        ${bid.user.rating ? `<span class="text-yellow-500">★${bid.user.rating.toFixed(1)}</span>` : ''}
+                                                        ${bid.expiresAt && new Date(bid.expiresAt) < new Date() ? '<span class="text-red-500">Expired</span>' : bid.expiresAt ? `<span class="text-gray-500">Expires ${formatDate(bid.expiresAt)}</span>` : ''}
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div class="text-right">
@@ -297,11 +329,40 @@
                                             </div>
                                         </div>
                                         <p class="text-gray-700 mb-4">${bid.proposal}</p>
-                                        <div class="flex items-center justify-between text-sm text-gray-500">
+                                        
+                                        ${bid.revisionNotes ? `
+                                            <div class="bg-yellow-50 border border-yellow-200 rounded p-3 mb-4 text-sm">
+                                                <p class="font-semibold text-yellow-900 mb-1">Revision Requested:</p>
+                                                <p class="text-yellow-800">${bid.revisionNotes}</p>
+                                            </div>
+                                        ` : ''}
+                                        
+                                        ${bid.counterOffers && bid.counterOffers.length > 0 ? `
+                                            <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-4 text-sm">
+                                                <p class="font-semibold text-blue-900 mb-2">Counter-Offers:</p>
+                                                <div class="space-y-2">
+                                                    ${bid.counterOffers.map((co, coIdx) => `
+                                                        <div class="text-blue-800 pb-2 border-b border-blue-200 last:border-0">
+                                                            <div>${formatCurrency(co.amount)} • ${co.timeline}</div>
+                                                            ${co.notes ? `<p class="text-xs mt-1">${co.notes}</p>` : ''}
+                                                            ${bid.status === 'pending' ? `<button onclick="acceptCounterOffer('${bid._id}', ${coIdx})" class="text-xs mt-1 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">Accept</button>` : ''}
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                        
+                                        <div class="flex items-center justify-between text-sm text-gray-500 pt-4 border-t border-gray-200">
                                             <span>Submitted ${formatDate(bid.createdAt)}</span>
-                                            ${isOwner && bid.status === 'pending' && project.status === 'open' ? `
-                                                <button onclick="acceptBid('${bid._id}', '${bid.user._id}', '${encodeURIComponent(project.title)}')" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Accept Bid</button>
-                                            ` : ''}
+                                            <div class="flex gap-2 flex-wrap">
+                                                ${isOwner && bid.status === 'pending' && project.status === 'open' ? `
+                                                    <button onclick="showCounterOfferModal('${bid._id}')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200">Counter</button>
+                                                    <button onclick="showRevisionModal('${bid._id}')" class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium hover:bg-yellow-200">Revise</button>
+                                                    <button onclick="acceptBid('${bid._id}', '${bid.user._id}', '${encodeURIComponent(project.title)}')" class="px-3 py-1 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700">Accept</button>
+                                                    <button onclick="rejectBid('${bid._id}')" class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200">Reject</button>
+                                                ` : ''}
+                                                ${isOwner && bid.status === 'revision_requested' ? `<p class="text-yellow-600 font-medium">Awaiting revision...</p>` : ''}
+                                            </div>
                                         </div>
                                     </div>
                                 `).join('')}
@@ -522,6 +583,157 @@
             } catch (error) {
                 alert(error.message);
             }
+        }
+
+        async function rejectBid(bidId) {
+            const reason = prompt('Reason for rejection (optional):') || '';
+            if (reason === null) return;
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}/reject`, {
+                    method: 'POST',
+                    body: JSON.stringify({ reason })
+                });
+                const data = await res.json();
+                
+                if (!res.ok) throw new Error(data.error || 'Failed to reject bid');
+                
+                alert('Bid rejected');
+                loadProject();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        function showRevisionModal(bidId) {
+            const notes = prompt('What changes would you like the vendor to make?');
+            if (notes === null) return;
+            
+            requestBidRevision(bidId, notes);
+        }
+
+        async function requestBidRevision(bidId, notes) {
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}/request-revision`, {
+                    method: 'POST',
+                    body: JSON.stringify({ notes })
+                });
+                const data = await res.json();
+                
+                if (!res.ok) throw new Error(data.error || 'Failed to request revision');
+                
+                alert('Revision requested - vendor will be notified');
+                loadProject();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        function showCounterOfferModal(bidId) {
+            const amount = prompt('Counter offer amount (USD):');
+            if (amount === null) return;
+            
+            const timeline = prompt('Timeline:');
+            if (timeline === null) return;
+            
+            const notes = prompt('Additional notes (optional):') || '';
+            
+            submitCounterOffer(bidId, Number(amount), timeline, notes);
+        }
+
+        async function submitCounterOffer(bidId, amount, timeline, notes) {
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}/counter-offer`, {
+                    method: 'POST',
+                    body: JSON.stringify({ amount, timeline, notes })
+                });
+                const data = await res.json();
+                
+                if (!res.ok) throw new Error(data.error || 'Failed to send counter-offer');
+                
+                alert('Counter-offer sent - vendor will be notified');
+                loadProject();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        async function acceptCounterOffer(bidId, counterIndex) {
+            if (!confirm('Accept this counter-offer?')) return;
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}/accept-counter`, {
+                    method: 'POST',
+                    body: JSON.stringify({ counterIndex })
+                });
+                const data = await res.json();
+                
+                if (!res.ok) throw new Error(data.error || 'Failed to accept counter-offer');
+                
+                alert('Counter-offer accepted!');
+                loadProject();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        let bidSortOrder = 'price-asc';
+        
+        function toggleBidSort() {
+            const orders = ['price-asc', 'price-desc', 'timeline-asc', 'rating-desc'];
+            const currentIdx = orders.indexOf(bidSortOrder);
+            bidSortOrder = orders[(currentIdx + 1) % orders.length];
+            
+            const labels = {
+                'price-asc': 'Price ↑',
+                'price-desc': 'Price ↓',
+                'timeline-asc': 'Timeline ↑',
+                'rating-desc': 'Rating ↓'
+            };
+            
+            document.getElementById('sort-label').textContent = labels[bidSortOrder];
+            sortBids();
+        }
+
+        function sortBids() {
+            const cards = Array.from(document.querySelectorAll('.bid-card'));
+            
+            cards.sort((a, b) => {
+                if (bidSortOrder === 'price-asc') return Number(a.dataset.amount) - Number(b.dataset.amount);
+                if (bidSortOrder === 'price-desc') return Number(b.dataset.amount) - Number(a.dataset.amount);
+                return 0;
+            });
+            
+            const list = document.getElementById('bids-list');
+            cards.forEach(card => list.appendChild(card));
+        }
+
+        function toggleBidComparison() {
+            const comp = document.getElementById('bid-comparison');
+            if (comp.style.display === 'none') {
+                comp.style.display = 'block';
+                populateComparison();
+            } else {
+                comp.style.display = 'none';
+            }
+        }
+
+        function populateComparison() {
+            const project_data = globalProject || project;
+            const tbody = document.getElementById('comparison-table-body');
+            tbody.innerHTML = (project_data.bids || []).map(bid => `
+                <tr class="border-b border-gray-200 hover:bg-gray-50">
+                    <td class="px-4 py-2 font-medium">${bid.user.firstName} ${bid.user.lastName}</td>
+                    <td class="px-4 py-2 font-bold">${formatCurrency(bid.amount)}</td>
+                    <td class="px-4 py-2">${bid.timeline}</td>
+                    <td class="px-4 py-2">${bid.user.rating ? `${bid.user.rating.toFixed(1)} ★` : 'N/A'}</td>
+                    <td class="px-4 py-2"><span class="px-2 py-1 rounded text-xs font-medium ${
+                        bid.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                        bid.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                        'bg-gray-100 text-gray-800'
+                    }">${bid.status}</span></td>
+                </tr>
+            `).join('');
         }
 
         loadProject();

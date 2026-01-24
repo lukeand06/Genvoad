@@ -1007,6 +1007,160 @@ app.delete('/api/projects/:projectId/bids/:bidId', authMiddleware, async (req, r
   }
 });
 
+// Reject bid - owner only
+app.post('/api/projects/:projectId/bids/:bidId/reject', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can reject bids' });
+    }
+
+    const bid = project.bids.id(req.params.bidId);
+    if (!bid) return res.status(404).json({ error: 'Bid not found' });
+
+    if (bid.status !== 'pending') {
+      return res.status(400).json({ error: 'Can only reject pending bids' });
+    }
+
+    bid.status = 'rejected';
+    bid.rejectionReason = req.body.reason || 'Not selected';
+    project.updatedAt = new Date();
+    await project.save();
+
+    res.json({ success: true, message: 'Bid rejected' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reject bid' });
+  }
+});
+
+// Request bid modifications - owner asks vendor to revise
+app.post('/api/projects/:projectId/bids/:bidId/request-revision', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can request revisions' });
+    }
+
+    const bid = project.bids.id(req.params.bidId);
+    if (!bid) return res.status(404).json({ error: 'Bid not found' });
+
+    if (bid.status !== 'pending') {
+      return res.status(400).json({ error: 'Can only request revisions on pending bids' });
+    }
+
+    bid.status = 'revision_requested';
+    bid.revisionNotes = req.body.notes;
+    project.updatedAt = new Date();
+    await project.save();
+
+    // Send message to vendor
+    const message = new Message({
+      sender: req.user._id,
+      recipient: bid.user,
+      content: `I'd like you to revise your bid for "${project.title}". ${req.body.notes}`,
+      type: 'bid_revision_request',
+      project: project._id
+    });
+    await message.save();
+
+    res.json({ success: true, message: 'Revision requested, vendor notified' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to request revision' });
+  }
+});
+
+// Submit counter-offer - owner makes counter-proposal
+app.post('/api/projects/:projectId/bids/:bidId/counter-offer', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can make counter-offers' });
+    }
+
+    const bid = project.bids.id(req.params.bidId);
+    if (!bid) return res.status(404).json({ error: 'Bid not found' });
+
+    if (!bid.counterOffers) bid.counterOffers = [];
+    
+    bid.counterOffers.push({
+      offeredBy: req.user._id,
+      amount: req.body.amount,
+      timeline: req.body.timeline,
+      notes: req.body.notes
+    });
+
+    bid.status = 'pending'; // Keep open for vendor response
+    project.updatedAt = new Date();
+    await project.save();
+
+    // Send message to vendor
+    const message = new Message({
+      sender: req.user._id,
+      recipient: bid.user,
+      content: `I have a counter-offer for your bid on "${project.title}": ${formatCurrency(req.body.amount)} for ${req.body.timeline}. ${req.body.notes || ''}`,
+      type: 'counter_offer',
+      project: project._id,
+      structuredData: {
+        amount: req.body.amount,
+        timeline: req.body.timeline
+      }
+    });
+    await message.save();
+
+    res.json({ success: true, message: 'Counter-offer sent' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send counter-offer' });
+  }
+});
+
+// Vendor accepts counter-offer
+app.post('/api/projects/:projectId/bids/:bidId/accept-counter', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const bid = project.bids.id(req.params.bidId);
+    if (!bid) return res.status(404).json({ error: 'Bid not found' });
+
+    if (bid.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only bid owner can accept counter-offers' });
+    }
+
+    const counterIndex = Number(req.body.counterIndex);
+    if (isNaN(counterIndex) || !bid.counterOffers || !bid.counterOffers[counterIndex]) {
+      return res.status(400).json({ error: 'Invalid counter-offer' });
+    }
+
+    // Update bid with counter-offer terms
+    const counter = bid.counterOffers[counterIndex];
+    bid.amount = counter.amount;
+    bid.timeline = counter.timeline;
+    
+    // Reject all other bids
+    project.bids.forEach(b => {
+      if (b._id.toString() !== req.params.bidId) {
+        b.status = 'rejected';
+      }
+    });
+
+    bid.status = 'accepted';
+    project.acceptedBid = bid._id;
+    project.acceptedContractor = bid.user;
+    project.status = 'in_progress';
+
+    await project.save();
+    res.json({ success: true, message: 'Counter-offer accepted' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to accept counter-offer' });
+  }
+});
+
 // ============ MESSAGE ROUTES ============
 
 // Send message

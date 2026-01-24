@@ -444,8 +444,54 @@
         }
 
         async function inviteToBid(projectId) {
-            alert('Invite functionality: You can invite vendors from your partners list to bid on this project. Navigate to Browse > Partners to send invitations.');
-            // TODO: Implement modal to select partners and send invitation messages
+            try {
+                // Load user's partners
+                const res = await authFetch('/api/partners');
+                const data = await res.json();
+                const partners = data.partners || [];
+                
+                if (partners.length === 0) {
+                    alert('You don\'t have any partners to invite. Build your network first by browsing professionals.');
+                    return;
+                }
+                
+                // Build partner list HTML
+                let partnerList = 'Select vendors to invite:\n\n';
+                partners.forEach((p, i) => {
+                    partnerList += `${i + 1}. ${p.firstName} ${p.lastName}${p.company ? ` (${p.company})` : ''}\n`;
+                });
+                
+                const selected = prompt(partnerList + '\nEnter numbers separated by commas (e.g., 1,2,3):');
+                if (!selected) return;
+                
+                const indices = selected.split(',').map(s => parseInt(s.trim()) - 1).filter(i => i >= 0 && i < partners.length);
+                if (indices.length === 0) {
+                    alert('No valid selections');
+                    return;
+                }
+                
+                const project = allProjects.find(p => p._id === projectId);
+                if (!project) return;
+                
+                // Send invitations
+                for (const idx of indices) {
+                    const partner = partners[idx];
+                    await authFetch('/api/messages', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            recipient: partner._id,
+                            content: `I'd like to invite you to bid on my project: "${project.title}". Budget: ${formatCurrency(project.budget)}, Location: ${project.location}. Check it out and submit your bid if interested!`,
+                            type: 'bid_invitation',
+                            project: projectId
+                        })
+                    });
+                }
+                
+                alert(`Invitation(s) sent to ${indices.length} vendor(s)!`);
+            } catch (e) {
+                console.error('Invite error:', e);
+                alert('Failed to send invitations');
+            }
         }
 
         async function closeProject(projectId, newStatus) {

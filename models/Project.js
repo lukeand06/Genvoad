@@ -46,7 +46,17 @@ const ProjectSchema = new mongoose.Schema({
     proposal: String,
     timeline: String,
     createdAt: { type: Date, default: Date.now },
-    status: { type: String, enum: ['pending', 'accepted', 'rejected'], default: 'pending' }
+    expiresAt: { type: Date }, // Bid expiration time (e.g., 7 days from creation)
+    status: { type: String, enum: ['pending', 'accepted', 'rejected', 'expired', 'revision_requested'], default: 'pending' },
+    rejectionReason: { type: String }, // Why it was rejected
+    revisionNotes: { type: String }, // What changes owner is requesting
+    counterOffers: [{ // Track counter-offer history for negotiation
+      offeredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // owner or vendor
+      amount: Number,
+      timeline: String,
+      notes: String,
+      createdAt: { type: Date, default: Date.now }
+    }]
   }],
   
   // Selected bid
