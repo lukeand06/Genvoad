@@ -637,7 +637,7 @@
                 const res = await authFetch(`/api/reviews/${reviewId}`, { method: 'DELETE' });
                 if (!res.ok) { 
                     const d = await res.json(); 
-                    alert(d.error || 'Failed to delete review'); 
+                    alert((d && d.error) || 'Failed to delete review'); 
                     return; 
                 }
                 
