@@ -10,6 +10,7 @@ require('dotenv').config();
 const User = require('./models/User');
 const Project = require('./models/Project');
 const Message = require('./models/Message');
+const Review = require('./models/Review');
 const { sendVerificationEmail } = require('./utils/email');
 
 const app = express();
@@ -337,6 +338,77 @@ app.get('/api/users/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// ============ REVIEW ROUTES ============
+
+// Create a review (Yelp-like)
+app.post('/api/reviews', authMiddleware, async (req, res) => {
+  try {
+    const { reviewee, projectId, rating, comment } = req.body;
+    if (!reviewee || !projectId || typeof rating === 'undefined') {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // Only owner or accepted contractor can review after completion
+    const isOwnerReviewer = project.owner.toString() === req.user._id.toString();
+    const isContractorReviewer = project.acceptedContractor && project.acceptedContractor.toString() === req.user._id.toString();
+    if (!isOwnerReviewer && !isContractorReviewer) {
+      return res.status(403).json({ error: 'Not authorized to review this project' });
+    }
+    if (project.status !== 'completed') {
+      return res.status(400).json({ error: 'Reviews allowed only after project completion' });
+    }
+
+    const expectedReviewee = isOwnerReviewer ? project.acceptedContractor?.toString() : project.owner.toString();
+    if (!expectedReviewee || expectedReviewee !== reviewee) {
+      return res.status(400).json({ error: 'Invalid reviewee for this project' });
+    }
+
+    const existing = await Review.findOne({ reviewer: req.user._id, reviewee, project: projectId });
+    if (existing) return res.status(400).json({ error: 'You already reviewed this project' });
+
+    const clampedRating = Math.max(1, Math.min(5, Number(rating)));
+    const review = new Review({
+      reviewer: req.user._id,
+      reviewee,
+      project: projectId,
+      rating: clampedRating,
+      comment: comment || ''
+    });
+    await review.save();
+
+    // Update aggregate on reviewee
+    const user = await User.findById(reviewee);
+    if (user) {
+      const newCount = (user.reviewCount || 0) + 1;
+      const newRating = (((user.rating || 0) * (user.reviewCount || 0)) + clampedRating) / newCount;
+      user.reviewCount = newCount;
+      user.rating = Number(newRating.toFixed(2));
+      await user.save();
+    }
+
+    res.json({ success: true, review });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create review' });
+  }
+});
+
+// List reviews for a user
+app.get('/api/users/:id/reviews', authMiddleware, async (req, res) => {
+  try {
+    const reviews = await Review.find({ reviewee: req.params.id })
+      .populate('reviewer', 'firstName lastName avatar company')
+      .populate('project', 'title')
+      .sort('-createdAt')
+      .limit(50);
+    res.json({ reviews });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch reviews' });
+  }
+});
+
 // Update profile
 app.put('/api/users/profile', authMiddleware, async (req, res) => {
   try {
@@ -485,12 +557,13 @@ app.post('/api/projects', authMiddleware, upload.array('attachments', 10), async
 // Get projects
 app.get('/api/projects', authMiddleware, async (req, res) => {
   try {
-    const { status, category, owner } = req.query;
+    const { status, category, owner, contractor } = req.query;
     const query = {};
     
     if (status) query.status = status;
     if (category) query.category = category;
     if (owner) query.owner = owner;
+    if (contractor) query.acceptedContractor = contractor;
     
     const projects = await Project.find(query)
       .populate('owner', 'firstName lastName avatar company')
