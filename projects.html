@@ -63,7 +63,7 @@
         <div class="flex items-center justify-between mb-8">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Projects</h1>
-                <p class="text-gray-600 mt-1">Browse projects or track your bids</p>
+                <p class="text-gray-600 mt-1" id="projects-subtitle">Browse projects or track your bids</p>
             </div>
         </div>
 
@@ -71,7 +71,7 @@
         <div class="bg-white rounded-lg border border-gray-200 mb-6">
             <nav class="flex">
                 <button id="tab-browse" class="project-tab px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900">Browse Projects</button>
-                <button id="tab-mybids" class="project-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">My Bids</button>
+                <button id="tab-my" class="project-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900" style="display:none;">My Projects</button>
             </nav>
         </div>
 
@@ -131,6 +131,19 @@
         if (isVendor && navCta) {
             navCta.textContent = 'Find Work';
             navCta.href = '/browse.html';
+        }
+
+        // Role-based tab and subtitle
+        const myTab = document.getElementById('tab-my');
+        const subtitle = document.getElementById('projects-subtitle');
+        if (isVendor) {
+            myTab.textContent = 'My Bids';
+            myTab.style.display = 'block';
+            subtitle.textContent = 'Browse projects and track your bids';
+        } else {
+            myTab.textContent = 'My Posted Projects';
+            myTab.style.display = 'block';
+            subtitle.textContent = 'Browse projects and manage your postings';
         }
 
         // User menu toggle
@@ -275,10 +288,14 @@
             loadProjects();
         });
 
-        document.getElementById('tab-mybids').addEventListener('click', () => {
-            currentTab = 'mybids';
+        document.getElementById('tab-my').addEventListener('click', () => {
+            currentTab = 'my';
             updateTabs();
-            loadMyBids();
+            if (isVendor) {
+                loadMyBids();
+            } else {
+                loadMyProjects();
+            }
         });
 
         function updateTabs() {
@@ -288,13 +305,173 @@
                 t.classList.add('border-transparent', 'text-gray-600');
             });
             
-            const activeTab = currentTab === 'browse' ? 'tab-browse' : 'tab-mybids';
+            const activeTab = currentTab === 'browse' ? 'tab-browse' : 'tab-my';
             const tab = document.getElementById(activeTab);
             tab.classList.remove('border-transparent', 'text-gray-600');
             tab.classList.add('border-gray-900', 'text-gray-900');
             
             // Show/hide filters
             document.getElementById('filters-section').style.display = currentTab === 'browse' ? 'block' : 'none';
+        }
+
+        async function loadMyProjects() {
+            try {
+                const response = await authFetch('/api/projects');
+                if (!response.ok) {
+                    const ct = response.headers.get('content-type') || '';
+                    const err = ct.includes('application/json') ? await response.json() : null;
+                    throw new Error((err && (err.error || err.message)) || `Failed to load projects (HTTP ${response.status})`);
+                }
+                const data = await response.json();
+                
+                // Filter projects owned by current user
+                const myProjects = (data.projects || []).filter(p => 
+                    p.owner && (p.owner._id === user.id || p.owner === user.id)
+                );
+                
+                displayMyProjects(myProjects);
+            } catch (error) {
+                console.error('Error loading my projects:', error);
+                document.getElementById('projects-container').innerHTML = `<div class="text-center py-12 text-red-500">${error.message}</div>`;
+            }
+        }
+
+        function displayMyProjects(projects) {
+            const container = document.getElementById('projects-container');
+            
+            if (projects.length === 0) {
+                container.innerHTML = '<div class="text-center py-12"><p class="text-gray-500">You haven\'t posted any projects yet</p><a href="/create-project.html" class="text-blue-600 hover:underline">Post your first project</a></div>';
+                return;
+            }
+
+            container.innerHTML = projects.map(project => {
+                const statusColor = project.status === 'open' ? 'bg-green-50 text-green-700 border-green-200' :
+                                   project.status === 'in_progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                   project.status === 'completed' ? 'bg-gray-100 text-gray-700 border-gray-200' :
+                                   'bg-red-50 text-red-700 border-red-200';
+                const bidsCount = project.bids?.length || 0;
+                const pendingBids = (project.bids || []).filter(b => b.status === 'pending').length;
+                const acceptedBid = (project.bids || []).find(b => b.status === 'accepted');
+                
+                return `
+                <div class="bg-white rounded-lg border-2 ${project.status === 'in_progress' ? 'border-blue-300' : 'border-gray-200'} p-6 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-xl font-semibold text-gray-900">${project.title}</h3>
+                                <span class="px-3 py-1 text-xs font-medium rounded-full ${statusColor} border">
+                                    ${project.status.replace('_', ' ')}
+                                </span>
+                            </div>
+                            <p class="text-gray-600 mb-4">${project.description || ''}</p>
+                            
+                            <!-- Project Stats -->
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <div class="text-2xl font-bold text-gray-900">${bidsCount}</div>
+                                        <div class="text-sm text-gray-600">Total Bids</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold text-yellow-600">${pendingBids}</div>
+                                        <div class="text-sm text-gray-600">Pending Review</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold ${acceptedBid ? 'text-green-600' : 'text-gray-400'}">${acceptedBid ? '1' : '0'}</div>
+                                        <div class="text-sm text-gray-600">Accepted</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    ${project.location || ''}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Budget: ${formatCurrency(project.budget || 0)}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                    </svg>
+                                    ${project.category || ''}
+                                </span>
+                                <span class="text-gray-500">Posted ${formatDate(project.createdAt)}</span>
+                            </div>
+
+                            ${acceptedBid ? `
+                                <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <span class="text-sm font-medium text-green-900">Vendor Selected: ${acceptedBid.user.firstName} ${acceptedBid.user.lastName}</span>
+                                    </div>
+                                    <div class="text-sm text-green-800"><strong>Accepted Bid:</strong> ${formatCurrency(acceptedBid.amount)}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
+                        <a href="/project-detail.html?id=${project._id}" class="flex-1 text-center px-3 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">View Details</a>
+                        ${project.status === 'open' && bidsCount > 0 ? `
+                            <a href="/project-detail.html?id=${project._id}#bids" class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Review Bids (${pendingBids})</a>
+                        ` : ''}
+                        ${project.status === 'open' ? `
+                            <button onclick="inviteToBid('${project._id}')" class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50" title="Invite specific vendors">
+                                <svg class="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Invite Vendor
+                            </button>
+                            <button onclick="closeProject('${project._id}', 'cancelled')" class="px-3 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50">Close</button>
+                        ` : ''}
+                        ${project.status === 'in_progress' ? `
+                            <button onclick="closeProject('${project._id}', 'completed')" class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">Mark Complete</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        async function inviteToBid(projectId) {
+            alert('Invite functionality: You can invite vendors from your partners list to bid on this project. Navigate to Browse > Partners to send invitations.');
+            // TODO: Implement modal to select partners and send invitation messages
+        }
+
+        async function closeProject(projectId, newStatus) {
+            try {
+                const action = newStatus === 'completed' ? 'mark this project as complete' : 'close this project';
+                if (!confirm(`Are you sure you want to ${action}?`)) return;
+                
+                // Use the project update endpoint if it exists, or create a new one
+                const res = await authFetch(`/api/projects/${projectId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    alert(data.error || 'Failed to update project');
+                    return;
+                }
+                
+                alert(`Project ${newStatus === 'completed' ? 'completed' : 'closed'} successfully`);
+                loadMyProjects();
+            } catch (e) {
+                console.error('Close project error', e);
+                alert('Failed to update project');
+            }
         }
 
         async function loadMyBids() {
@@ -323,7 +500,7 @@
             const container = document.getElementById('projects-container');
             
             if (projects.length === 0) {
-                container.innerHTML = '<div class="text-center py-12"><p class="text-gray-500">You haven\'t submitted any bids yet</p><a href="#" onclick="document.getElementById(\'tab-browse\').click(); return false;" class="text-blue-600 hover:underline">Browse projects to bid on</a></div>';
+                container.innerHTML = '<div class="text-center py-12"><p class="text-gray-500">You haven\'t submitted any bids yet</p><br><a href="#" onclick="document.getElementById(\'tab-browse\').click(); return false;" class="text-blue-600 hover:underline font-medium">Browse projects to bid on</a></div>';
                 return;
             }
 

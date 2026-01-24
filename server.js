@@ -861,6 +861,33 @@ app.get('/api/projects/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Update project (status, etc.) - owner only
+app.patch('/api/projects/:id', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    // Verify ownership
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can update this project' });
+    }
+    
+    // Update allowed fields
+    const { status, title, description, budget, location } = req.body;
+    if (status) project.status = status;
+    if (title) project.title = title;
+    if (description) project.description = description;
+    if (budget) project.budget = budget;
+    if (location) project.location = location;
+    
+    await project.save();
+    res.json({ success: true, message: 'Project updated successfully', project });
+  } catch (error) {
+    console.error('Update project error:', error);
+    res.status(500).json({ error: 'Failed to update project' });
+  }
+});
+
 // Submit bid
 app.post('/api/projects/:id/bids', authMiddleware, async (req, res) => {
   try {
