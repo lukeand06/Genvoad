@@ -6,6 +6,22 @@ const MessageSchema = new mongoose.Schema({
   content: { type: String, required: true },
   read: { type: Boolean, default: false },
   
+  // Attachments
+  attachments: [{
+    filename: String,
+    url: String,
+    mimeType: String,
+    size: Number,
+    uploadedAt: { type: Date, default: Date.now }
+  }],
+  
+  // Reactions (like Slack/Teams)
+  reactions: [{
+    emoji: { type: String, required: true }, // 👍, ❤️, 😂, 😮, 😢, 🎉
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    createdAt: { type: Date, default: Date.now }
+  }],
+  
   // Open Governance: Message Classification
   type: {
     type: String,

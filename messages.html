@@ -110,7 +110,7 @@
                     </div>
 
                     <!-- Messages -->
-                    <div id="messages-container" class="hidden flex-1 overflow-y-auto p-6 space-y-4">
+                    <div id="messages-container" class="hidden flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth">
                     </div>
 
                     <!-- Message Input -->
@@ -123,7 +123,19 @@
                                 <button type="button" class="px-3 py-1 bg-green-100 text-green-700 text-xs rounded-lg hover:bg-green-200" data-template="I agree to the terms discussed. Let's move forward." data-type="agreement">✓ Agreement</button>
                                 <button type="button" class="px-3 py-1 bg-blue-100 text-blue-700 text-xs rounded-lg hover:bg-blue-200" data-template="I'd like to propose: [your counter terms here]" data-type="counter_proposal">Counter Offer</button>
                             </div>
+                            
+                            <!-- File attachment input -->
+                            <input type="file" id="attachment-input" multiple accept="*/*" class="hidden">
+                            
+                            <!-- Attachment preview -->
+                            <div id="attachment-preview" class="hidden flex flex-wrap gap-2"></div>
+                            
                             <div class="flex gap-2">
+                                <button type="button" onclick="document.getElementById('attachment-input').click()" class="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200" title="Attach files">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                    </svg>
+                                </button>
                                 <input type="text" id="message-input" required placeholder="Type your message..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                                 <input type="hidden" id="message-type" value="standard">
                                 <input type="hidden" id="message-project" value="">
@@ -314,19 +326,190 @@
                     'change_request': '📝 Change Request'
                 }[msg.type] || '';
                 
+                // Format attachments
+                const attachmentsHTML = msg.attachments && msg.attachments.length > 0 ? `
+                    <div class="mt-2 space-y-1">
+                        ${msg.attachments.map(att => {
+                            const isImage = att.mimeType?.startsWith('image/');
+                            const fileSize = (att.size / 1024).toFixed(1) + ' KB';
+                            return isImage ? `
+                                <a href="${att.url}" target="_blank" class="block">
+                                    <img src="${att.url}" alt="${att.filename}" class="max-w-xs rounded border ${isSent ? 'border-gray-700' : 'border-gray-300'} hover:opacity-80 transition-opacity">
+                                </a>
+                            ` : `
+                                <a href="${att.url}" download="${att.filename}" class="flex items-center gap-2 ${isSent ? 'bg-gray-800' : 'bg-gray-200'} px-3 py-2 rounded hover:opacity-80 transition-opacity">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <div class="flex-1">
+                                        <div class="text-xs">${att.filename}</div>
+                                        <div class="text-xs opacity-70">${fileSize}</div>
+                                    </div>
+                                </a>
+                            `;
+                        }).join('')}
+                    </div>
+                ` : '';
+
+                // Format reactions
+                const reactionGroups = msg.reactions && msg.reactions.length > 0 ? getReactionGroups(msg.reactions) : [];
+                const reactionsHTML = reactionGroups.length > 0 ? `
+                    <div class="flex flex-wrap gap-1 mt-2">
+                        ${reactionGroups.map(group => `
+                            <button 
+                                onclick="toggleReaction('${msg._id}', '${group.emoji}')"
+                                class="flex items-center gap-1 ${isSent ? 'bg-gray-800' : 'bg-gray-200'} px-2 py-1 rounded-full text-xs hover:opacity-80 transition-opacity ${group.userReacted ? 'ring-1 ring-blue-500' : ''}"
+                                title="${group.users.join(', ')}"
+                            >
+                                <span>${group.emoji}</span>
+                                <span>${group.count}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                ` : '';
+                
                 return `
-                    <div class="flex ${isSent ? 'justify-end' : 'justify-start'}">
-                        <div class="${isSent ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-2 max-w-md">
-                            ${typeLabel ? `<p class="text-xs opacity-75 mb-1">${typeLabel}</p>` : ''}
-                            <p class="text-sm">${msg.content}</p>
-                            <p class="text-xs ${isSent ? 'text-gray-300' : 'text-gray-500'} mt-1">${formatDate(msg.createdAt)}</p>
+                    <div class="flex ${isSent ? 'justify-end' : 'justify-start'} group">
+                        <div class="max-w-md">
+                            <div class="${isSent ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'} rounded-lg px-4 py-2">
+                                ${typeLabel ? `<p class="text-xs opacity-75 mb-1">${typeLabel}</p>` : ''}
+                                <p class="text-sm">${msg.content}</p>
+                                ${attachmentsHTML}
+                            </div>
+                            ${reactionsHTML}
+                            <div class="flex items-center gap-2 mt-1">
+                                <p class="text-xs ${isSent ? 'text-gray-300' : 'text-gray-500'}">${formatDate(msg.createdAt)}</p>
+                                <button onclick="showReactionPicker(event, '${msg._id}')" class="opacity-0 group-hover:opacity-100 text-xs text-gray-500 hover:text-gray-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
             }).join('');
             
             // Scroll to bottom
-            container.scrollTop = container.scrollHeight;
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 50);
+        }
+
+        // Group reactions by emoji
+        function getReactionGroups(reactions) {
+            const groups = {};
+            reactions.forEach(r => {
+                if (!groups[r.emoji]) {
+                    groups[r.emoji] = { emoji: r.emoji, count: 0, users: [], userReacted: false };
+                }
+                groups[r.emoji].count++;
+                groups[r.emoji].users.push(r.user.firstName + ' ' + r.user.lastName);
+                if (r.user._id === user.id) {
+                    groups[r.emoji].userReacted = true;
+                }
+            });
+            return Object.values(groups);
+        }
+
+        // Show reaction picker
+        let activeReactionPicker = null;
+        function showReactionPicker(event, messageId) {
+            event.stopPropagation();
+            
+            if (activeReactionPicker) {
+                activeReactionPicker.remove();
+                if (activeReactionPicker.dataset.messageId === messageId) {
+                    activeReactionPicker = null;
+                    return;
+                }
+            }
+
+            const emojis = ['👍', '❤️', '😂', '😮', '😢', '🎉'];
+            const picker = document.createElement('div');
+            picker.dataset.messageId = messageId;
+            picker.className = 'fixed bg-white border border-gray-300 rounded-lg p-2 flex gap-2 shadow-xl z-50';
+            picker.style.left = event.clientX + 'px';
+            picker.style.top = (event.clientY - 50) + 'px';
+            
+            picker.innerHTML = emojis.map(emoji => `
+                <button onclick="toggleReaction('${messageId}', '${emoji}')" class="text-2xl hover:scale-125 transition-transform">
+                    ${emoji}
+                </button>
+            `).join('');
+            
+            document.body.appendChild(picker);
+            activeReactionPicker = picker;
+
+            // Close on click outside
+            setTimeout(() => {
+                document.addEventListener('click', function closePickerOutside(e) {
+                    if (!picker.contains(e.target)) {
+                        picker.remove();
+                        activeReactionPicker = null;
+                        document.removeEventListener('click', closePickerOutside);
+                    }
+                });
+            }, 100);
+        }
+
+        // Toggle reaction
+        async function toggleReaction(messageId, emoji) {
+            if (activeReactionPicker) {
+                activeReactionPicker.remove();
+                activeReactionPicker = null;
+            }
+
+            try {
+                await authFetch(`/api/messages/${messageId}/react`, {
+                    method: 'POST',
+                    body: JSON.stringify({ emoji })
+                });
+                
+                // Reload messages to show updated reactions
+                await loadMessages();
+            } catch (error) {
+                console.error('Failed to toggle reaction:', error);
+            }
+        }
+
+        // Handle file selection
+        document.getElementById('attachment-input').addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            const preview = document.getElementById('attachment-preview');
+            
+            if (files.length > 0) {
+                preview.classList.remove('hidden');
+                preview.innerHTML = files.map((file, idx) => `
+                    <div class="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <span class="text-sm">${file.name}</span>
+                        <button type="button" onclick="removeAttachment(${idx})" class="text-red-500 hover:text-red-700">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                preview.classList.add('hidden');
+            }
+        });
+
+        // Remove attachment
+        function removeAttachment(index) {
+            const input = document.getElementById('attachment-input');
+            const dt = new DataTransfer();
+            const files = Array.from(input.files);
+            
+            files.forEach((file, idx) => {
+                if (idx !== index) dt.items.add(file);
+            });
+            
+            input.files = dt.files;
+            input.dispatchEvent(new Event('change'));
         }
 
         document.getElementById('message-form').addEventListener('submit', async (e) => {
@@ -336,23 +519,31 @@
             const content = input.value.trim();
             const type = document.getElementById('message-type').value;
             const project = document.getElementById('message-project').value;
+            const attachmentInput = document.getElementById('attachment-input');
             
             if (!content || !currentChatUserId) return;
             
             try {
-                const payload = {
-                    recipient: currentChatUserId,
-                    content,
-                    type: type || 'standard'
-                };
+                const formData = new FormData();
+                formData.append('recipient', currentChatUserId);
+                formData.append('content', content);
+                formData.append('type', type || 'standard');
                 
                 if (project) {
-                    payload.project = project;
+                    formData.append('project', project);
                 }
                 
-                const response = await authFetch('/messages', {
+                // Add attachments
+                if (attachmentInput.files.length > 0) {
+                    Array.from(attachmentInput.files).forEach(file => {
+                        formData.append('attachments', file);
+                    });
+                }
+                
+                const response = await authFetch('/api/messages', {
                     method: 'POST',
-                    body: JSON.stringify(payload)
+                    body: formData,
+                    headers: {} // Let browser set Content-Type with boundary
                 });
                 
                 if (!response.ok) {
@@ -360,6 +551,8 @@
                 }
                 
                 input.value = '';
+                attachmentInput.value = '';
+                document.getElementById('attachment-preview').classList.add('hidden');
                 document.getElementById('message-type').value = 'standard';
                 await loadMessages();
                 await loadConversations();

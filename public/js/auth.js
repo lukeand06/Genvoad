@@ -55,10 +55,14 @@ function redirectIfAuth() {
 // API helper with auth
 async function authFetch(url, options = {}) {
   const token = getToken();
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers
-  };
+  
+  // Don't set Content-Type for FormData (let browser set it with boundary)
+  const headers = options.body instanceof FormData 
+    ? { ...options.headers }
+    : {
+        'Content-Type': 'application/json',
+        ...options.headers
+      };
   
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;

@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const User = require('./models/User');
@@ -17,6 +18,12 @@ const app = express();
 
 // Configure file uploads
 const uploadDir = path.join(__dirname, 'uploads');
+
+// Create uploads directory if it doesn't exist
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -28,17 +35,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = /pdf|doc|docx|xls|xlsx|jpg|jpeg|png|zip/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('File type not allowed'));
-    }
-  }
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
 // Middleware
@@ -786,15 +783,24 @@ app.delete('/api/projects/:projectId/bids/:bidId', authMiddleware, async (req, r
 // ============ MESSAGE ROUTES ============
 
 // Send message
-app.post('/api/messages', authMiddleware, async (req, res) => {
+// Send message (with optional attachments)
+app.post('/api/messages', authMiddleware, upload.array('attachments', 5), async (req, res) => {
   try {
+    const attachments = req.files ? req.files.map(file => ({
+      filename: file.originalname,
+      url: `/uploads/${file.filename}`,
+      mimeType: file.mimetype,
+      size: file.size
+    })) : [];
+
     const message = new Message({
       sender: req.user._id,
       recipient: req.body.recipient,
       content: req.body.content,
       type: req.body.type || 'standard',
       project: req.body.project,
-      structuredData: req.body.structuredData
+      structuredData: req.body.structuredData,
+      attachments
     });
     await message.save();
     
@@ -814,6 +820,7 @@ app.post('/api/messages', authMiddleware, async (req, res) => {
     
     res.json({ success: true, message });
   } catch (error) {
+    console.error('Send message error:', error);
     res.status(500).json({ error: 'Failed to send message' });
   }
 });
@@ -865,6 +872,7 @@ app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
     })
     .populate('sender', 'firstName lastName avatar')
     .populate('recipient', 'firstName lastName avatar')
+    .populate('reactions.user', 'firstName lastName avatar')
     .sort('createdAt');
     
     // Mark as read
@@ -876,6 +884,43 @@ app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
     res.json({ messages });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Add/toggle reaction to message
+app.post('/api/messages/:messageId/react', authMiddleware, async (req, res) => {
+  try {
+    const { emoji } = req.body;
+    if (!emoji) return res.status(400).json({ error: 'Emoji required' });
+
+    const message = await Message.findById(req.params.messageId);
+    if (!message) return res.status(404).json({ error: 'Message not found' });
+
+    // Check if user already reacted with this emoji
+    const existingReaction = message.reactions.find(
+      r => r.user.toString() === req.user._id.toString() && r.emoji === emoji
+    );
+
+    if (existingReaction) {
+      // Remove the reaction (toggle off)
+      message.reactions = message.reactions.filter(
+        r => !(r.user.toString() === req.user._id.toString() && r.emoji === emoji)
+      );
+    } else {
+      // Add the reaction
+      message.reactions.push({
+        emoji,
+        user: req.user._id
+      });
+    }
+
+    await message.save();
+    await message.populate('reactions.user', 'firstName lastName avatar');
+    
+    res.json({ success: true, message });
+  } catch (error) {
+    console.error('React error:', error);
+    res.status(500).json({ error: 'Failed to add reaction' });
   }
 });
 
