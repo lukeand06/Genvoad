@@ -41,7 +41,7 @@
                         </svg>
                         <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
                     </a>
-                    <a href="/create-project.html" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <a href="/create-project.html" id="nav-cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
                     <div class="relative" id="user-menu">
                         <button id="user-menu-btn">
                             <div id="user-avatar"></div>
@@ -63,7 +63,7 @@
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-900">Browse</h1>
-            <p class="text-gray-600 mt-2">See your connections, their projects, and discover new service providers</p>
+            <p class="text-gray-600 mt-2" id="browse-subtitle">See your connections, their projects, and discover new service providers</p>
         </div>
 
         <!-- Tabs -->
@@ -99,6 +99,21 @@
 
         const user = getCurrentUser();
         document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+        
+        // Role-based subtitle and nav
+        const isVendor = user.role === 'vendor';
+        const subtitle = document.getElementById('browse-subtitle');
+        const navCta = document.getElementById('nav-cta-button');
+        
+        if (isVendor) {
+            subtitle.textContent = 'Find project owners, build your network, and discover new opportunities';
+            if (navCta) {
+                navCta.textContent = 'Find Work';
+                navCta.href = '/browse.html';
+            }
+        } else {
+            subtitle.textContent = 'See your connections, their projects, and discover new service providers';
+        }
         
         document.getElementById('user-menu-btn').addEventListener('click', () => {
             document.getElementById('user-dropdown').classList.toggle('hidden');

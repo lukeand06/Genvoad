@@ -40,7 +40,7 @@
                         </svg>
                         <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
                     </a>
-                    <a href="/create-project.html" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <a href="/create-project.html" id="cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
                     <div class="relative" id="user-menu">
                         <button id="user-menu-btn" class="flex items-center space-x-2">
                             <div id="user-avatar"></div>
@@ -62,7 +62,7 @@
         <!-- Welcome Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-900">Welcome back, <span id="user-name"></span>!</h1>
-            <p class="text-gray-600 mt-1">Here's what's happening with your projects</p>
+            <p class="text-gray-600 mt-1" id="dashboard-subtitle">Here's what's happening with your projects</p>
         </div>
 
         <!-- Stats Grid -->
@@ -256,6 +256,21 @@
         const user = getCurrentUser();
         document.getElementById('user-name').textContent = user.firstName;
         document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+        
+        // Role-based UI customization
+        const isVendor = user.role === 'vendor';
+        const ctaBtn = document.getElementById('cta-button');
+        const subtitle = document.getElementById('dashboard-subtitle');
+        
+        if (isVendor) {
+            ctaBtn.textContent = 'Find Work';
+            ctaBtn.href = '/browse.html';
+            subtitle.textContent = 'Track your bids and discover new opportunities';
+        } else {
+            ctaBtn.textContent = 'Post Project';
+            ctaBtn.href = '/create-project.html';
+            subtitle.textContent = "Here's what's happening with your projects";
+        }
 
         // User menu toggle
         document.getElementById('user-menu-btn').addEventListener('click', () => {
