@@ -63,22 +63,22 @@
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-900">Browse</h1>
-            <p class="text-gray-600 mt-2" id="browse-subtitle">See your connections, their projects, and discover new service providers</p>
+            <p class="text-gray-600 mt-2" id="browse-subtitle">See your partners, their projects, and discover new service providers</p>
         </div>
 
         <!-- Tabs -->
         <div class="bg-white rounded-lg border border-gray-200 mb-6">
             <nav class="flex border-b border-gray-200">
-                <button id="tab-connections" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900">My Connections</button>
+                <button id="tab-partners" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900">My Partners</button>
                 <button id="tab-featured" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Featured Services</button>
-                <button id="tab-projects" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Connections' Projects</button>
+                <button id="tab-projects" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Partners' Projects</button>
             </nav>
         </div>
 
         <!-- Search -->
         <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
             <div class="flex gap-4">
-                <input type="text" id="search-input" placeholder="Search connections or services..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                <input type="text" id="search-input" placeholder="Search partners or services..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                 <button id="search-btn" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Search</button>
             </div>
         </div>
@@ -112,7 +112,7 @@
                 navCta.href = '/browse.html';
             }
         } else {
-            subtitle.textContent = 'See your connections, their projects, and discover new service providers';
+            subtitle.textContent = 'See your partners, their projects, and discover new service providers';
         }
         
         document.getElementById('user-menu-btn').addEventListener('click', () => {
@@ -120,31 +120,26 @@
         });
         document.getElementById('logout-btn').addEventListener('click', logout);
 
-        let connections = [];
+        let partners = [];
         let featuredServices = [];
-        let connectionProjects = [];
-        let currentTab = 'connections';
+        let partnerProjects = [];
+        let currentTab = 'partners';
 
-        const formatCurrency = (amount) => {
-            try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount); }
-            catch { return `$${amount || 0}`; }
-        };
-
-        async function loadConnections() {
+        async function loadPartners() {
             try {
                 const res = await authFetch('/api/partners');
                 const ct = res.headers.get('content-type') || '';
                 if (!res.ok || !ct.includes('application/json')) {
                     let err;
                     try { err = await res.json(); } catch {}
-                    throw new Error((err && (err.error || err.message)) || `Failed to load connections (HTTP ${res.status})`);
+                    throw new Error((err && (err.error || err.message)) || `Failed to load partners (HTTP ${res.status})`);
                 }
                 const data = await res.json();
-                connections = data.partners || [];
-                displayConnections();
+                partners = data.partners || [];
+                displayPartners();
             } catch (error) {
-                console.error('Error loading connections:', error);
-                document.getElementById('network-content').innerHTML = `<div class="col-span-full text-center py-12 text-red-500">${error.message || 'Failed to load connections'}</div>`;
+                console.error('Error loading partners:', error);
+                document.getElementById('network-content').innerHTML = `<div class="col-span-full text-center py-12 text-red-500">${error.message || 'Failed to load partners'}</div>`;
             }
         }
 
@@ -166,10 +161,10 @@
             }
         }
 
-        async function loadConnectionProjects() {
+        async function loadPartnerProjects() {
             try {
-                if (!connections || connections.length === 0) {
-                    await loadConnections();
+                if (!partners || partners.length === 0) {
+                    await loadPartners();
                 }
                 const res = await authFetch('/api/projects');
                 const ct = res.headers.get('content-type') || '';
@@ -180,26 +175,26 @@
                 }
                 const data = await res.json();
                 const allProjects = data.projects || [];
-                const connectionIds = new Set(connections.map(c => c._id));
-                connectionProjects = allProjects.filter(p => connectionIds.has(p.owner?._id));
-                displayConnectionProjects();
+                const partnerIds = new Set(partners.map(c => c._id));
+                partnerProjects = allProjects.filter(p => partnerIds.has(p.owner?._id));
+                displayPartnerProjects();
             } catch (error) {
-                console.error('Error loading connection projects:', error);
+                console.error('Error loading partner projects:', error);
                 document.getElementById('network-content').innerHTML = `<div class="col-span-full text-center py-12 text-red-500">${error.message || 'Failed to load projects'}</div>`;
             }
         }
 
-        function displayConnections() {
+        function displayPartners() {
             const search = (document.getElementById('search-input').value || '').toLowerCase();
-            const filtered = connections.filter(conn => {
-                const name = `${conn.firstName} ${conn.lastName}`.toLowerCase();
-                const company = (conn.company || '').toLowerCase();
+            const filtered = partners.filter(partner => {
+                const name = `${partner.firstName} ${partner.lastName}`.toLowerCase();
+                const company = (partner.company || '').toLowerCase();
                 return !search || name.includes(search) || company.includes(search);
             });
 
             const container = document.getElementById('network-content');
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No connections yet. Browse professionals to build your network.</p></div>';
+                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No partners yet. Browse professionals to build your network.</p></div>';
                 return;
             }
 
@@ -288,9 +283,9 @@
             `).join('');
         }
 
-        function displayConnectionProjects() {
+        function displayPartnerProjects() {
             const search = (document.getElementById('search-input').value || '').toLowerCase();
-            const filtered = connectionProjects.filter(proj => {
+            const filtered = partnerProjects.filter(proj => {
                 const title = (proj.title || '').toLowerCase();
                 const desc = (proj.description || '').toLowerCase();
                 return !search || title.includes(search) || desc.includes(search);
@@ -298,7 +293,7 @@
 
             const container = document.getElementById('network-content');
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">Your connections haven\'t posted any projects yet.</p></div>';
+                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">Your partners haven\'t posted any projects yet.</p></div>';
                 return;
             }
 
@@ -350,10 +345,10 @@
         }
 
         // Tab switching
-        document.getElementById('tab-connections').addEventListener('click', () => {
-            currentTab = 'connections';
+        document.getElementById('tab-partners').addEventListener('click', () => {
+            currentTab = 'partners';
             updateTabs();
-            loadConnections();
+            loadPartners();
         });
 
         document.getElementById('tab-featured').addEventListener('click', () => {
@@ -365,7 +360,7 @@
         document.getElementById('tab-projects').addEventListener('click', () => {
             currentTab = 'projects';
             updateTabs();
-            loadConnectionProjects();
+            loadPartnerProjects();
         });
 
         function updateTabs() {
@@ -375,7 +370,7 @@
                 t.classList.add('border-transparent', 'text-gray-600');
             });
             
-            const activeTab = currentTab === 'connections' ? 'tab-connections' : 
+            const activeTab = currentTab === 'partners' ? 'tab-partners' : 
                              currentTab === 'featured' ? 'tab-featured' : 'tab-projects';
             const tab = document.getElementById(activeTab);
             tab.classList.remove('border-transparent', 'text-gray-600');
@@ -383,9 +378,9 @@
         }
 
         document.getElementById('search-btn').addEventListener('click', () => {
-            if (currentTab === 'connections') displayConnections();
+            if (currentTab === 'partners') displayPartners();
             else if (currentTab === 'featured') displayFeaturedServices();
-            else displayConnectionProjects();
+            else displayPartnerProjects();
         });
 
         document.getElementById('search-input').addEventListener('keypress', (e) => {
@@ -395,7 +390,7 @@
         });
 
         // Initial load
-        loadConnections();
+        loadPartners();
     </script>
 </body>
 </html>
