@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Browse Professionals - Genovad</title>
-    <link rel="stylesheet" href="/public/css/tailwind.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
@@ -117,24 +117,35 @@
 
         async function loadPartners() {
             try {
-                const res = await authFetch('/partners');
+                const res = await authFetch('/api/partners');
+                if (!res.ok) {
+                    const ct = res.headers.get('content-type') || '';
+                    const err = ct.includes('application/json') ? await res.json() : null;
+                    throw new Error((err && (err.error || err.message)) || `Failed to load partners (HTTP ${res.status})`);
+                }
                 const data = await res.json();
                 partnerIds = new Set((data.partners || []).map(p => p._id));
             } catch (e) {
                 console.error('Failed to load partners', e);
+                document.getElementById('partners-list').innerHTML = '<p class="text-xs text-red-500">Failed to load partners</p>';
             }
         }
 
         async function loadUsers(params = {}) {
             try {
                 const queryString = new URLSearchParams(params).toString();
-                const response = await authFetch(`/users?${queryString}`);
+                const response = await authFetch(`/api/users?${queryString}`);
+                if (!response.ok) {
+                    const ct = response.headers.get('content-type') || '';
+                    const err = ct.includes('application/json') ? await response.json() : null;
+                    throw new Error((err && (err.error || err.message)) || `Failed to load professionals (HTTP ${response.status})`);
+                }
                 const data = await response.json();
-                allUsers = data.users.filter(u => u._id !== currentUser.id); // Exclude current user
+                allUsers = (data.users || []).filter(u => u._id !== currentUser.id); // Exclude current user
                 displayUsers(allUsers);
             } catch (error) {
                 console.error('Error loading users:', error);
-                document.getElementById('users-container').innerHTML = '<div class="col-span-full text-center py-12 text-red-500">Failed to load professionals</div>';
+                document.getElementById('users-container').innerHTML = `<div class="col-span-full text-center py-12 text-red-500">${error.message}</div>`;
             }
         }
 
@@ -232,11 +243,16 @@
 
         window.addPartner = async (partnerId) => {
             try {
-                await authFetch(`/partners/${partnerId}`, { method: 'POST' });
+                const res = await authFetch(`/api/partners/${partnerId}`, { method: 'POST' });
+                if (!res.ok) {
+                    const ct = res.headers.get('content-type') || '';
+                    const err = ct.includes('application/json') ? await res.json() : null;
+                    throw new Error((err && (err.error || err.message)) || `Failed to add partner (HTTP ${res.status})`);
+                }
                 partnerIds.add(partnerId);
                 displayUsers(allUsers);
             } catch (err) {
-                alert('Failed to add partner');
+                alert(err.message || 'Failed to add partner');
             }
         };
 

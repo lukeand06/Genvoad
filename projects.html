@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projects - Genovad</title>
-    <link rel="stylesheet" href="/public/css/tailwind.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
@@ -136,13 +136,18 @@
 
         async function loadProjects() {
             try {
-                const response = await authFetch('/projects');
+                const response = await authFetch('/api/projects');
+                if (!response.ok) {
+                    const ct = response.headers.get('content-type') || '';
+                    const err = ct.includes('application/json') ? await response.json() : null;
+                    throw new Error((err && (err.error || err.message)) || `Failed to load projects (HTTP ${response.status})`);
+                }
                 const data = await response.json();
-                allProjects = data.projects;
+                allProjects = data.projects || [];
                 filterProjects(); // respect default status selection
             } catch (error) {
                 console.error('Error loading projects:', error);
-                document.getElementById('projects-container').innerHTML = '<div class="text-center py-12 text-red-500">Failed to load projects</div>';
+                document.getElementById('projects-container').innerHTML = `<div class="text-center py-12 text-red-500">${error.message}</div>`;
             }
         }
 
@@ -283,18 +288,23 @@
 
         async function loadMyBids() {
             try {
-                const response = await authFetch('/projects');
+                const response = await authFetch('/api/projects');
+                if (!response.ok) {
+                    const ct = response.headers.get('content-type') || '';
+                    const err = ct.includes('application/json') ? await response.json() : null;
+                    throw new Error((err && (err.error || err.message)) || `Failed to load bids (HTTP ${response.status})`);
+                }
                 const data = await response.json();
                 
                 // Filter projects where user has bid
-                const projectsWithMyBids = data.projects.filter(p => 
+                const projectsWithMyBids = (data.projects || []).filter(p => 
                     (p.bids || []).some(bid => (bid.user && bid.user._id ? bid.user._id : bid.user) === user.id)
                 );
                 
                 displayMyBids(projectsWithMyBids);
             } catch (error) {
                 console.error('Error loading my bids:', error);
-                document.getElementById('projects-container').innerHTML = '<div class="text-center py-12 text-red-500">Failed to load bids</div>';
+                document.getElementById('projects-container').innerHTML = `<div class="text-center py-12 text-red-500">${error.message}</div>`;
             }
         }
 
