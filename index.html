@@ -3,105 +3,568 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genovad - Construction Services Marketplace</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>Genovad - AI-Driven Procurement Platform | Connect Vendors Directly</title>
+    <meta name="title" content="Genovad - AI-Driven Procurement Platform | Connect Vendors Directly">
+    <meta name="description" content="Genovad is an AI-powered marketplace connecting project owners directly with vendors. Zero commissions, no middlemen, pure transparency. Streamline your procurement process today.">
+    <meta name="keywords" content="procurement, marketplace, vendors, project management, AI procurement, direct connection, transparent bidding, RFP software">
+    <meta name="author" content="Genovad">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://genovad.com/">
+    <meta property="og:title" content="Genovad - AI-Driven Procurement Platform | Connect Vendors Directly">
+    <meta property="og:description" content="Genovad is an AI-powered marketplace connecting project owners directly with vendors. Zero commissions, no middlemen, pure transparency. Streamline your procurement process today.">
+    <meta property="og:image" content="https://genovad.com/og-image.png">
+    <meta property="og:site_name" content="Genovad">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://genovad.com/">
+    <meta property="twitter:title" content="Genovad - AI-Driven Procurement Platform | Connect Vendors Directly">
+    <meta property="twitter:description" content="Genovad is an AI-powered marketplace connecting project owners directly with vendors. Zero commissions, no middlemen, pure transparency. Streamline your procurement process today.">
+    <meta property="twitter:image" content="https://genovad.com/og-image.png">
+    <meta name="twitter:creator" content="@genovad">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://genovad.com/">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#60a5fa">
+    
+    <!-- Preconnect to External Domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com">
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    
+    <!-- Stylesheets -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3/dist/svg.min.js"></script>
+    
+    <!-- Schema.org Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org/",
+      "@type": "WebSite",
+      "name": "Genovad",
+      "description": "AI-driven procurement platform connecting project owners directly with vendors",
+      "url": "https://genovad.com",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://genovad.com/search?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    <!-- Organization Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Genovad",
+      "url": "https://genovad.com",
+      "logo": "https://genovad.com/logo.png",
+      "description": "AI-powered marketplace connecting project owners directly with vendors",
+      "sameAs": [
+        "https://twitter.com/genovad"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Service",
+        "email": "support@genovad.com",
+        "telephone": "+1-XXX-XXX-XXXX"
+      }
+    }
+    </script>
+    
+    <!-- Service Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org/",
+      "@type": "Service",
+      "name": "Genovad Procurement Platform",
+      "description": "AI-driven marketplace platform for transparent vendor connections and project management",
+      "provider": {
+        "@type": "Organization",
+        "name": "Genovad"
+      },
+      "areaServed": "US",
+      "availableChannel": {
+        "@type": "ServiceChannel",
+        "serviceUrl": "https://genovad.com"
+      }
+    }
+    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        * { font-family: 'Inter', sans-serif; }
-        .hero-gradient { background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); }
+        body {
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            background-color: #ffffff;
+            color: #1a1a1a;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        .hero-static {
+            background-color: #3b4534;
+        }
+        .beige-section {
+            background-color: #ffffff;
+        }
+        a {
+            color: #000000;
+        }
+        a:hover {
+            color: #c1c8cd;
+        }
+        nav a, nav div {
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(20px); }
+        }
+        .animate-float-slow {
+            animation: float-slow 6s ease-in-out infinite;
+        }
+        .icon-container {
+            width: 32px;
+            height: 32px;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body class="bg-white">
     <!-- Navigation -->
-    <nav class="border-b border-gray-100">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-2">
-                    <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
-                        <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
-                        <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                        <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
-                    </svg>
-                    <span class="text-xl font-semibold text-gray-900">Genovad</span>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <a href="login.html" class="text-gray-600 hover:text-gray-900 text-sm font-medium">Sign In</a>
-                    <a href="signup.html" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Get Started</a>
-                </div>
-            </div>
+    <nav class="absolute top-0 left-0 w-full z-50 px-6 py-4 md:px-20 flex justify-between items-center bg-transparent">
+        <div class="text-2xl font-extrabold text-white drop-shadow-lg">Genovad</div>
+        <div class="hidden md:flex space-x-6 text-sm font-medium text-white drop-shadow">
+            <a href="#how" class="hover:text-[#c1c8cd] transition">How It Works</a>
+            <a href="#about" class="hover:text-[#c1c8cd] transition">About</a>
+            <a href="#features" class="hover:text-[#c1c8cd] transition">Features</a>
+        </div>
+        <div class="space-x-2">
+            <a href="login.html" class="text-sm text-white hover:underline">Login</a>
+            <a href="signup.html" class="bg-[#60a5fa]/30 text-white px-4 py-2 rounded-full text-sm hover:bg-[#60a5fa]/50 transition">Sign Up</a>
         </div>
     </nav>
 
     <!-- Hero Section -->
-    <section class="hero-gradient text-white py-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto">
-                <h1 class="text-5xl font-bold mb-6">Connect. Build. Grow.</h1>
-                <p class="text-xl text-gray-300 mb-8">The professional network for construction services. Find projects, connect with contractors, and build your business.</p>
-                <div class="flex justify-center gap-4">
-                    <a href="signup.html" class="bg-white text-gray-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100">Join Genovad</a>
-                    <a href="#features" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-900">Learn More</a>
+    <section class="relative min-h-screen flex flex-col md:flex-row items-center justify-center hero-static overflow-hidden text-white px-6 md:px-20 py-16">
+        <!-- SVG Canvas for Animated Shapes -->
+        <div id="svg-container" class="absolute inset-0 z-0"></div>
+
+        <!-- Hero Content -->
+        <div class="relative z-10 max-w-2xl text-center md:text-left font-[Inter] text-white space-y-6" data-aos="fade-up">
+            <p class="text-sm uppercase tracking-widest font-semibold">THE PROCUREMENT MARKETPLACE</p>
+            <h1 class="text-5xl md:text-7xl font-black leading-tight text-white drop-shadow-xl">
+                Find vendors.<br/>No middlemen.<br/>No fees.
+            </h1>
+            <p class="text-lg md:text-xl text-white/90">
+                Genovad is building the marketplace that puts you first. Post projects, connect with verified vendors, and manage everything in one place—without hidden fees or commissions.
+            </p>
+            <div class="flex flex-col md:flex-row items-center gap-6 pt-4">
+                <a href="signup.html" class="inline-block bg-[#60a5fa]/30 text-white px-8 py-3 text-base font-semibold rounded-full hover:bg-[#60a5fa]/50 shadow-md transition transform hover:scale-105 duration-200">
+                    Get Started
+                </a>
+                <a href="#how" class="text-white text-base font-medium underline hover:text-[#c1c8cd]">See How It Works →</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="h-8 bg-[#3b4534] w-full"></div>
+
+    <!-- What Genovad Offers Section -->
+    <section id="how" class="bg-white py-20 px-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Section Title -->
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Our Vision</h2>
+                <p class="text-gray-600 text-lg">A transparent marketplace built for the people—connecting project owners and vendors with zero commissions.</p>
+            </div>
+
+            <!-- Capabilities + How It Works Container -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center mb-20">
+                <!-- Platform Capabilities -->
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 transform transition-transform hover:scale-105 hover:shadow-2xl" data-aos="fade-right">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6">What We're Building</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="icon-container" id="icon-ai-scope"></div>
+                                <h4 class="font-semibold text-lg text-gray-900">Direct Marketplace</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">Connect project owners and vendors directly. No middlemen, no percentage fees—just transparent connections.</p>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="icon-container" id="icon-vendor-match"></div>
+                                <h4 class="font-semibold text-lg text-gray-900">Smart Vendor Discovery</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">Browse and filter vendors by insurance, certifications, location, and project history. AI-powered matching coming soon.</p>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="icon-container" id="icon-messaging"></div>
+                                <h4 class="font-semibold text-lg text-gray-900">Secure Communication</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">Built-in messaging keeps all project discussions organized and accessible in one place.</p>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="icon-container" id="icon-verification"></div>
+                                <h4 class="font-semibold text-lg text-gray-900">Project Management Tools</h4>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">Create detailed scopes, track proposals, and manage project documentation all in your dashboard.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- How It Works -->
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 transform transition-transform hover:scale-105 hover:shadow-2xl" data-aos="fade-left">
+                    <h3 class="text-2xl font-bold mb-6 text-gray-900">How It Works</h3>
+                    <div class="space-y-6">
+                        <div class="flex gap-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-[#60a5fa] rounded-full flex items-center justify-center font-bold text-white">1</div>
+                            <div>
+                                <h4 class="font-semibold text-lg text-gray-900">Post Your Project</h4>
+                                <p class="text-sm text-gray-600 mt-1">Create a detailed project scope and requirements to attract the right vendors.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-[#60a5fa] rounded-full flex items-center justify-center font-bold text-white">2</div>
+                            <div>
+                                <h4 class="font-semibold text-lg text-gray-900">Discover Vendors</h4>
+                                <p class="text-sm text-gray-600 mt-1">Browse verified vendors or receive proposals from those interested in your project.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-[#60a5fa] rounded-full flex items-center justify-center font-bold text-white">3</div>
+                            <div>
+                                <h4 class="font-semibold text-lg text-gray-900">Communicate Directly</h4>
+                                <p class="text-sm text-gray-600 mt-1">Discuss project details, timelines, and terms directly—no platform taking a cut.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="flex-shrink-0 w-8 h-8 bg-[#60a5fa] rounded-full flex items-center justify-center font-bold text-white">4</div>
+                            <div>
+                                <h4 class="font-semibold text-lg text-gray-900">Move Forward</h4>
+                                <p class="text-sm text-gray-600 mt-1">Choose your vendor and manage the entire project lifecycle in one workspace.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section id="features" class="py-20 bg-gray-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl font-bold text-gray-900 mb-4">Everything you need to succeed</h2>
-                <p class="text-gray-600">Streamline your construction business with powerful tools</p>
+    <!-- About + Pricing Section -->
+    <section id="about-pricing" class="bg-gray-100 text-gray-900 py-20 px-6 md:px-20">
+        <div class="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-center mb-16">
+            <!-- About Us -->
+            <div data-aos="fade-up">
+                <h2 id="about" class="text-4xl font-bold mb-6 leading-snug text-gray-900">Built for the People, Not for Profit</h2>
+                <p class="text-lg text-gray-700 leading-relaxed mb-4">
+                    Genovad is a marketplace designed to connect project owners and vendors directly—with zero commissions, no percentage fees, and complete transparency. We believe procurement should benefit the people doing the work, not middlemen.
+                </p>
+                <p class="text-lg text-gray-700 leading-relaxed">
+                    Today, we're building the core platform for posting projects, discovering vendors, and managing proposals. Tomorrow, we're adding AI-powered tools to make the entire process smarter, faster, and more efficient for everyone.
+                </p>
             </div>
-            
+
+            <!-- Stats or Visual -->
+            <div data-aos="zoom-in" class="bg-gradient-to-br from-cyan-50 to-blue-50 rounded-2xl p-12 text-center border border-blue-200">
+                <div class="space-y-8">
+                    <div>
+                        <h3 class="text-5xl font-bold text-blue-600">0%</h3>
+                        <p class="text-gray-700 mt-2">Commission fees—ever</p>
+                    </div>
+                    <div>
+                        <h3 class="text-5xl font-bold text-blue-600">100%</h3>
+                        <p class="text-gray-700 mt-2">Transparent pricing</p>
+                    </div>
+                    <div>
+                        <h3 class="text-5xl font-bold text-blue-600">∞</h3>
+                        <p class="text-gray-700 mt-2">Unlimited connections</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features / Post Request Examples Section -->
+    <section id="features" class="py-20 bg-white px-6 md:px-20">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16" data-aos="fade-up">
+                <h2 class="text-4xl font-bold text-gray-900 mb-4">Current & Upcoming Features</h2>
+                <p class="text-gray-700 text-lg max-w-2xl mx-auto">
+                    What's live now and what we're building next to make procurement simple and transparent.
+                </p>
+            </div>
+
             <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-white p-8 rounded-xl border border-gray-100">
-                    <div class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Find Projects</h3>
-                    <p class="text-gray-600">Browse construction projects matching your skills and location</p>
-                </div>
-                
-                <div class="bg-white p-8 rounded-xl border border-gray-100">
-                    <div class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Connect with Pros</h3>
-                    <p class="text-gray-600">Message and collaborate with verified contractors instantly</p>
-                </div>
-                
-                <div class="bg-white p-8 rounded-xl border border-gray-100">
-                    <div class="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mb-4">
-                        <svg class="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 transform transition-transform hover:scale-105" data-aos="fade-up">
+                    <div class="w-14 h-14 bg-[#60a5fa]/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-7 h-7 text-[#60a5fa]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                     </div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-2">Build Your Profile</h3>
-                    <p class="text-gray-600">Showcase your work, skills, and reviews to attract clients</p>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Project Posting <span class="text-xs font-normal text-blue-500">✓ Live</span></h3>
+                    <p class="text-gray-600">Create detailed project scopes, set budgets, and publish to our growing vendor network.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 transform transition-transform hover:scale-105" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-14 h-14 bg-[#60a5fa]/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-7 h-7 text-[#60a5fa]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">AI-Powered Matching <span class="text-xs font-normal text-gray-500">Coming Soon</span></h3>
+                    <p class="text-gray-600">Intelligent recommendations to connect owners with the most qualified vendors based on project needs.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 transform transition-transform hover:scale-105" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-14 h-14 bg-[#60a5fa]/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-7 h-7 text-[#60a5fa]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Direct Messaging <span class="text-xs font-normal text-blue-500">✓ Live</span></h3>
+                    <p class="text-gray-600">Secure communication between owners and vendors—keep all project discussions in one place.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 transform transition-transform hover:scale-105" data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-14 h-14 bg-[#60a5fa]/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-7 h-7 text-[#60a5fa]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Vendor Profiles & Reviews <span class="text-xs font-normal text-blue-500">✓ Live</span></h3>
+                    <p class="text-gray-600">Browse detailed vendor profiles with past work, certifications, and reviews from other project owners.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 transform transition-transform hover:scale-105" data-aos="fade-up" data-aos-delay="400">
+                    <div class="w-14 h-14 bg-[#60a5fa]/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-7 h-7 text-[#60a5fa]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Proposal Management <span class="text-xs font-normal text-blue-500">✓ Live</span></h3>
+                    <p class="text-gray-600">Track all vendor proposals and bids in one organized dashboard to make informed decisions.</p>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100 transform transition-transform hover:scale-105" data-aos="fade-up" data-aos-delay="500">
+                    <div class="w-14 h-14 bg-[#60a5fa]/10 rounded-lg flex items-center justify-center mb-4">
+                        <svg class="w-7 h-7 text-[#60a5fa]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-3">Smart Automation <span class="text-xs font-normal text-gray-500">Coming Soon</span></h3>
+                    <p class="text-gray-600">AI-powered scope generation, automated vendor notifications, and intelligent project insights.</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="py-20">
-        <div class="max-w-4xl mx-auto px-4 text-center">
-            <h2 class="text-3xl font-bold text-gray-900 mb-4">Ready to get started?</h2>
-            <p class="text-gray-600 mb-8">Join thousands of construction professionals on Genovad</p>
-            <a href="signup.html" class="inline-block bg-gray-900 text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800">Create Free Account</a>
+    <!-- Final CTA Section -->
+    <section class="bg-gray-100 text-gray-900 py-20 px-6">
+        <div class="max-w-4xl mx-auto text-center" data-aos="fade-up">
+            <h2 class="text-4xl font-bold mb-4">Ready to connect without the fees?</h2>
+            <p class="text-xl text-gray-700 mb-8">Join project owners and vendors building better connections on Genovad—zero commissions, pure transparency.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="signup.html" class="inline-block bg-[#60a5fa]/70 text-white px-8 py-3 rounded-full font-semibold hover:bg-[#60a5fa] transition transform hover:scale-105">
+                    Get Started Free
+                </a>
+                <a href="#how" class="inline-block border-2 border-gray-900 text-gray-900 px-8 py-3 rounded-full font-semibold hover:bg-gray-900 hover:text-white transition">
+                    Learn More
+                </a>
+            </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="border-t border-gray-100 py-8">
-        <div class="max-w-7xl mx-auto px-4 text-center text-gray-600 text-sm">
-            <p>&copy; 2026 Genovad. All rights reserved.</p>
+    <footer class="bg-gray-100 text-gray-900 py-12 px-6 md:px-20">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            <!-- Brand -->
+            <div>
+                <h3 class="text-lg font-bold mb-3 text-gray-900">Genovad</h3>
+                <p class="text-gray-600 text-sm leading-relaxed">
+                    Redefining procurement with AI — built for teams who value speed, trust, and simplicity.
+                </p>
+            </div>
+
+            <!-- Product -->
+            <div>
+                <h4 class="font-semibold mb-4 text-gray-900">Product</h4>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li><a href="#how" class="hover:text-gray-900 transition">How It Works</a></li>
+                    <li><a href="#features" class="hover:text-gray-900 transition">Features</a></li>
+                    <li><a href="#pricing" class="hover:text-gray-900 transition">Pricing</a></li>
+                    <li><a href="#about" class="hover:text-gray-900 transition">About</a></li>
+                </ul>
+            </div>
+
+            <!-- Resources -->
+            <div>
+                <h4 class="font-semibold mb-4 text-gray-900">Resources</h4>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li><a href="#" class="hover:text-gray-900 transition">Documentation</a></li>
+                    <li><a href="#" class="hover:text-gray-900 transition">Blog</a></li>
+                    <li><a href="#" class="hover:text-gray-900 transition">Support</a></li>
+                    <li><a href="#" class="hover:text-gray-900 transition">Contact</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact -->
+            <div>
+                <h4 class="font-semibold mb-4 text-gray-900">Get in Touch</h4>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li><a href="mailto:support@genovad.com" class="hover:text-gray-900 transition">support@genovad.com</a></li>
+                    <li><a href="mailto:sales@genovad.com" class="hover:text-gray-900 transition">sales@genovad.com</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="border-t border-gray-300 pt-8">
+            <div class="flex flex-col md:flex-row justify-between items-center text-xs text-gray-600 gap-4">
+                <p>&copy; 2026 Genovad. All rights reserved.</p>
+                <div class="flex gap-6">
+                    <a href="#" class="hover:text-gray-900 transition">Privacy Policy</a>
+                    <a href="#" class="hover:text-gray-900 transition">Terms of Service</a>
+                    <a href="GOVERNANCE.md" class="hover:text-gray-900 transition">Governance</a>
+                </div>
+            </div>
         </div>
     </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            once: true
+        });
+
+        // Create SVG.js icons for capabilities
+        function createCapabilityIcons() {
+            // AI Scope Builder - Sparkles + Lightning
+            const aiDraw = SVG().addTo('#icon-ai-scope').size(32, 32);
+            aiDraw.path('M 16 2 L 18 8 L 24 10 L 19 14 L 21 20 L 16 17 L 11 20 L 13 14 L 8 10 L 14 8 Z')
+                .fill('#1d7874');
+            aiDraw.circle(1.5).move(6, 6).fill('#1d7874');
+            aiDraw.circle(1).move(24, 6).fill('#1d7874');
+
+            // Smart Vendor Matching - Handshake
+            const handDraw = SVG().addTo('#icon-vendor-match').size(32, 32);
+            handDraw.path('M 8 18 L 10 14 L 14 16 L 14 22 Q 14 26 10 26 L 6 26 Q 4 26 4 24 L 4 20 Q 4 18 6 18 Z')
+                .fill('#1d7874');
+            handDraw.path('M 24 18 L 22 14 L 18 16 L 18 22 Q 18 26 22 26 L 26 26 Q 28 26 28 24 L 28 20 Q 28 18 26 18 Z')
+                .fill('#1d7874');
+            handDraw.line(12, 16, 16, 16).stroke({ color: '#1d7874', width: 2, linecap: 'round' });
+
+            // RFIs, RFPs & Messaging - Envelope with Arrow
+            const envDraw = SVG().addTo('#icon-messaging').size(32, 32);
+            envDraw.rect(22, 14).move(5, 9).fill('none').stroke({ color: '#1d7874', width: 1.5 });
+            envDraw.polyline([[5, 9], [16, 16], [27, 9]]).fill('none').stroke({ color: '#1d7874', width: 1.5 });
+            envDraw.polyline([[20, 18], [24, 14], [28, 18]]).fill('none').stroke({ color: '#1d7874', width: 1.5, linecap: 'round', linejoin: 'round' });
+
+            // Verification & Contracts - Document with Badge
+            const docDraw = SVG().addTo('#icon-verification').size(32, 32);
+            docDraw.rect(14, 20).move(9, 4).fill('none').stroke({ color: '#1d7874', width: 1.5 });
+            docDraw.line(13, 9, 21, 9).stroke({ color: '#1d7874', width: 1 });
+            docDraw.line(13, 13, 21, 13).stroke({ color: '#1d7874', width: 1 });
+            docDraw.line(13, 17, 19, 17).stroke({ color: '#1d7874', width: 1 });
+            docDraw.circle(6).move(18, 18).fill('none').stroke({ color: '#1d7874', width: 1.5 });
+            docDraw.polyline([[20, 20], [22, 22], [25, 19]]).fill('none').stroke({ color: '#1d7874', width: 1.5, linecap: 'round', linejoin: 'round' });
+        }
+
+        // SVG.js - Create animated background shapes
+        function initializeBackgroundShapes() {
+            const container = document.getElementById('svg-container');
+            if (!container) return;
+
+            // Get container dimensions
+            const width = window.innerWidth;
+            const height = container.parentElement.clientHeight;
+
+            // Create SVG canvas
+            const draw = SVG().addTo('#svg-container').size('100%', '100%');
+
+            // Create animated blob shapes
+            function createAnimatedBlob(x, y, radius, delay, opacity) {
+                const blob = draw.circle(radius * 2)
+                    .move(x - radius, y - radius)
+                    .fill('white')
+                    .opacity(opacity)
+                    .attr('class', 'animated-blob');
+
+                // Add floating animation
+                const animation = blob.animate(3000, '<>')
+                    .move(x - radius, y - radius - 20)
+                    .after(function() {
+                        this.animate(3000, '<>')
+                            .move(x - radius, y - radius)
+                            .after(animation.bind(this));
+                    });
+
+                return blob;
+            }
+
+            // Create blobs at different positions
+            createAnimatedBlob(width * 0.1, height * 0.3, 80, 0, 0.08);
+            createAnimatedBlob(width * 0.85, height * 0.2, 120, 1000, 0.05);
+            createAnimatedBlob(width * 0.5, height * 0.8, 100, 2000, 0.07);
+
+            // Create additional decorative circles
+            draw.circle(200)
+                .move(width * 0.15, height * 0.5)
+                .fill('none')
+                .stroke({ color: 'white', width: 1 })
+                .opacity(0.1);
+
+            draw.circle(150)
+                .move(width * 0.8, height * 0.6)
+                .fill('none')
+                .stroke({ color: 'white', width: 1 })
+                .opacity(0.08);
+        }
+
+        // Initialize shapes when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeBackgroundShapes();
+                createCapabilityIcons();
+            });
+        } else {
+            initializeBackgroundShapes();
+            createCapabilityIcons();
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('svg-container');
+            if (container) {
+                container.innerHTML = '';
+                initializeBackgroundShapes();
+            }
+        });
+    </script>
 </body>
 </html>
