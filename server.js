@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const jwksClient = require('jwks-rsa');
 require('dotenv').config();
 
 const User = require('./models/User');
@@ -111,7 +112,105 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
+// Social sign-in configuration
+const socialProviders = {
+  google: {
+    jwksUri: 'https://www.googleapis.com/oauth2/v3/certs',
+    issuer: ['https://accounts.google.com', 'accounts.google.com'],
+    audience: process.env.GOOGLE_CLIENT_ID,
+    name: 'google'
+  },
+  microsoft: {
+    jwksUri: 'https://login.microsoftonline.com/common/discovery/v2.0/keys',
+    issuer: ['https://login.microsoftonline.com/common/v2.0', 'https://login.microsoftonline.com/{tenantid}/v2.0'],
+    audience: process.env.MICROSOFT_CLIENT_ID,
+    name: 'microsoft'
+  },
+  apple: {
+    jwksUri: 'https://appleid.apple.com/auth/keys',
+    issuer: ['https://appleid.apple.com'],
+    audience: process.env.APPLE_CLIENT_ID,
+    name: 'apple'
+  }
+};
+
+const jwksClients = Object.fromEntries(
+  Object.entries(socialProviders).map(([key, config]) => [
+    key,
+    jwksClient({ jwksUri: config.jwksUri, cache: true, rateLimit: true })
+  ])
+);
+
+const providerEnabled = (provider) => {
+  const cfg = socialProviders[provider];
+  return Boolean(cfg && cfg.audience);
+};
+
+const verifySocialToken = async (provider, idToken) => {
+  const cfg = socialProviders[provider];
+  if (!cfg) {
+    throw new Error('Unsupported provider');
+  }
+  if (!cfg.audience) {
+    throw new Error(`${provider} not configured`);
+  }
+
+  const client = jwksClients[provider];
+
+  const getKey = (header, callback) => {
+    client
+      .getSigningKey(header.kid)
+      .then((key) => callback(null, key.getPublicKey()))
+      .catch((err) => callback(err));
+  };
+
+  return new Promise((resolve, reject) => {
+    jwt.verify(
+      idToken,
+      getKey,
+      {
+        audience: cfg.audience,
+        issuer: cfg.issuer
+      },
+      (err, decoded) => {
+        if (err) return reject(err);
+        return resolve(decoded);
+      }
+    );
+  });
+};
+
+const extractNames = (payload = {}) => {
+  const firstName = payload.given_name || (payload.name ? payload.name.split(' ')[0] : '');
+  const lastName = payload.family_name || (payload.name ? payload.name.split(' ').slice(1).join(' ') : '');
+  return {
+    firstName: firstName || 'New',
+    lastName: lastName || 'User'
+  };
+};
+
+const generatePlaceholderPassword = async () => {
+  const randomString = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  return bcrypt.hash(randomString, 10);
+};
+
 // ============ AUTH ROUTES ============
+
+// Public config for client-side social buttons
+app.get('/api/auth/config', (req, res) => {
+  res.json({
+    providers: {
+      google: providerEnabled('google'),
+      microsoft: providerEnabled('microsoft'),
+      apple: providerEnabled('apple')
+    },
+    clientIds: {
+      google: process.env.GOOGLE_CLIENT_ID || '',
+      microsoft: process.env.MICROSOFT_CLIENT_ID || '',
+      apple: process.env.APPLE_CLIENT_ID || ''
+    }
+  });
+});
 
 // Signup
 app.post('/api/auth/signup', async (req, res) => {
@@ -169,6 +268,7 @@ app.post('/api/auth/signup', async (req, res) => {
       lastName,
       email: email.toLowerCase(),
       password: hashedPassword,
+      authProvider: 'password',
       company,
       role: normalizedRole,
       verificationCode,
@@ -266,7 +366,8 @@ app.post('/api/auth/verify', async (req, res) => {
         email: user.email,
         avatar: user.avatar,
         company: user.company,
-        role: user.role
+        role: user.role,
+        authProvider: user.authProvider
       }
     });
   } catch (error) {
@@ -278,13 +379,18 @@ app.post('/api/auth/verify', async (req, res) => {
 // Login
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
     
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user || user.deletedAt) return res.status(401).json({ error: 'Invalid credentials' });
     
     if (!user.emailVerified) {
       return res.status(403).json({ error: 'Please verify your email first' });
+    }
+
+    if (role && user.role !== role) {
+      const friendlyRole = user.role === 'owner' ? 'owner' : 'vendor';
+      return res.status(403).json({ error: `You are registered as a ${friendlyRole}. Switch to the ${friendlyRole === 'owner' ? 'owner' : 'vendor'} sign-in.` });
     }
     
     const validPassword = await bcrypt.compare(password, user.password);
@@ -308,12 +414,103 @@ app.post('/api/auth/login', async (req, res) => {
         location: user.location,
         company: user.company,
         title: user.title,
-        role: user.role
+        role: user.role,
+        authProvider: user.authProvider
       }
     });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+// Social login
+app.post('/api/auth/social', async (req, res) => {
+  try {
+    const { provider, idToken, role } = req.body;
+
+    if (!provider || !idToken || !role) {
+      return res.status(400).json({ error: 'Provider, token, and role are required' });
+    }
+
+    if (!['owner', 'vendor'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role selection' });
+    }
+
+    if (!providerEnabled(provider)) {
+      return res.status(400).json({ error: `${provider} sign-in is not configured` });
+    }
+
+    let decoded;
+    try {
+      decoded = await verifySocialToken(provider, idToken);
+    } catch (err) {
+      console.error('Social token verify error:', err.message || err);
+      return res.status(401).json({ error: 'Unable to verify social login' });
+    }
+
+    const email = decoded?.email?.toLowerCase();
+    if (!email) {
+      return res.status(400).json({ error: 'Provider did not return an email' });
+    }
+
+    const { firstName, lastName } = extractNames(decoded);
+    let user = await User.findOne({ email });
+
+    if (user && user.deletedAt) {
+      return res.status(403).json({ error: 'Account is disabled' });
+    }
+
+    if (user && user.role !== role) {
+      return res.status(403).json({ error: `This email is registered as a ${user.role}. Switch to that sign-in.` });
+    }
+
+    if (user) {
+      user.firstName = user.firstName || firstName;
+      user.lastName = user.lastName || lastName;
+      user.authProvider = provider;
+      user.providerId = decoded.sub || user.providerId;
+      user.emailVerified = true;
+      user.lastActive = new Date();
+      await user.save();
+    } else {
+      const placeholderPassword = await generatePlaceholderPassword();
+      user = new User({
+        firstName,
+        lastName,
+        email,
+        password: placeholderPassword,
+        role,
+        authProvider: provider,
+        providerId: decoded.sub || '',
+        company: decoded.hd ? `${decoded.hd} workspace` : 'Self-registered',
+        emailVerified: true
+      });
+      await user.save();
+    }
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        avatar: user.avatar,
+        bio: user.bio,
+        location: user.location,
+        company: user.company,
+        title: user.title,
+        role: user.role,
+        authProvider: user.authProvider
+      }
+    });
+  } catch (error) {
+    console.error('Social login error:', error);
+    res.status(500).json({ error: 'Social login failed' });
   }
 });
 
@@ -484,9 +681,12 @@ app.put('/api/users/profile', authMiddleware, async (req, res) => {
   try {
     const allowed = [
       'firstName','lastName','bio','title','company','location','phone','yearsExperience',
-      'skills','services','city','state','registrarId','links','preferences'
+      'skills','services','city','state','registrarId','links','preferences','role'
     ];
     const updates = {};
+    if (req.body.role && !['owner', 'vendor'].includes(req.body.role)) {
+      return res.status(400).json({ error: 'Invalid role selection' });
+    }
     allowed.forEach(key => {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     });

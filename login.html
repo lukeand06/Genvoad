@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In - Genovad</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js" defer></script>
+    <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
@@ -30,6 +33,37 @@
             <!-- Login Form -->
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
                 <div id="error-message" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"></div>
+
+                <div class="mb-6">
+                    <p class="text-sm font-medium text-gray-700 mb-2">Sign in as</p>
+                    <div class="grid grid-cols-2 gap-3" id="role-options">
+                        <button type="button" data-role="owner" class="role-option border border-gray-300 rounded-lg p-4 text-left hover:border-gray-400 focus:ring-2 focus:ring-gray-900">
+                            <p class="font-semibold text-gray-900">Owner</p>
+                            <p class="text-sm text-gray-600">Post projects, invite bids, and manage work.</p>
+                        </button>
+                        <button type="button" data-role="vendor" class="role-option border border-gray-200 rounded-lg p-4 text-left hover:border-gray-400 focus:ring-2 focus:ring-gray-900">
+                            <p class="font-semibold text-gray-900">Vendor</p>
+                            <p class="text-sm text-gray-600">Bid on opportunities and deliver services.</p>
+                        </button>
+                    </div>
+                    <p id="role-helper" class="text-xs text-gray-500 mt-2">Owners post work. Vendors win and deliver work.</p>
+                </div>
+
+                <div class="space-y-3" id="social-buttons">
+                    <div id="google-signin" class="w-full"></div>
+                    <button id="microsoft-signin" class="w-full border border-gray-300 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
+                        <span>Continue with Microsoft</span>
+                    </button>
+                    <button id="apple-signin" class="w-full border border-gray-900 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-900 hover:text-white transition flex items-center justify-center gap-2">
+                        <span>Sign in with Apple</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center my-6">
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                    <span class="px-3 text-xs text-gray-500 uppercase tracking-[0.2em]">or</span>
+                    <div class="flex-1 h-px bg-gray-200"></div>
+                </div>
                 
                 <form id="login-form" class="space-y-4">
                     <div>
@@ -57,39 +91,215 @@
 
     <script src="/public/js/auth.js"></script>
     <script>
-        redirectIfAuth();
+        window.addEventListener('load', () => {
+            redirectIfAuth();
 
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            const btn = document.getElementById('login-btn');
-            btn.disabled = true;
-            btn.textContent = 'Signing in...';
-            
-            try {
-                const response = await fetch(`${API_URL}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+            const roleHelperCopy = {
+                owner: 'Owners post work and invite vendors.',
+                vendor: 'Vendors bid on work and deliver services.'
+            };
+
+            let selectedRole = 'owner';
+            let authConfig = { providers: {}, clientIds: {} };
+
+            const roleButtons = document.querySelectorAll('.role-option');
+            const roleHelper = document.getElementById('role-helper');
+
+            const setRole = (role) => {
+                selectedRole = role;
+                roleButtons.forEach(btn => {
+                    const isActive = btn.dataset.role === role;
+                    btn.classList.toggle('border-gray-900', isActive);
+                    btn.classList.toggle('shadow-sm', isActive);
+                    btn.classList.toggle('bg-gray-50', isActive);
+                    btn.classList.toggle('border-gray-300', !isActive);
                 });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.error || 'Login failed');
+                roleHelper.textContent = roleHelperCopy[role];
+            };
+
+            roleButtons.forEach(btn => {
+                btn.addEventListener('click', () => setRole(btn.dataset.role));
+            });
+
+            setRole('owner');
+
+            const disableButton = (btn, text) => {
+                if (!btn) return;
+                btn.disabled = true;
+                btn.textContent = text;
+                btn.classList.add('opacity-60', 'cursor-not-allowed');
+            };
+
+            const handleSocial = async (provider, token, buttonEl) => {
+                if (!token) {
+                    showError('Missing provider token');
+                    return;
                 }
+
+                if (buttonEl) {
+                    buttonEl.dataset.defaultLabel = buttonEl.dataset.defaultLabel || buttonEl.textContent;
+                    buttonEl.disabled = true;
+                    buttonEl.textContent = 'Signing in...';
+                }
+
+                try {
+                    const response = await fetch(`${API_URL}/auth/social`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ provider, idToken: token, role: selectedRole })
+                    });
+
+                    const data = await response.json();
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Social login failed');
+                    }
+
+                    setToken(data.token);
+                    setCurrentUser(data.user);
+                    window.location.href = '/dashboard.html';
+                } catch (err) {
+                    showError(err.message || 'Social login failed');
+                } finally {
+                    if (buttonEl) {
+                        buttonEl.disabled = false;
+                        buttonEl.textContent = buttonEl.dataset.defaultLabel || 'Continue';
+                    }
+                }
+            };
+
+            const initGoogle = (clientId) => {
+                const googleContainer = document.getElementById('google-signin');
+                if (!window.google || !google.accounts || !googleContainer) {
+                    disableButton(googleContainer, 'Google unavailable');
+                    return;
+                }
+                google.accounts.id.initialize({
+                    client_id: clientId,
+                    callback: (response) => handleSocial('google', response.credential)
+                });
+                google.accounts.id.renderButton(
+                    googleContainer,
+                    { theme: 'outline', size: 'large', text: 'continue_with', width: 360 }
+                );
+            };
+
+            const initMicrosoft = (clientId) => {
+                const msButton = document.getElementById('microsoft-signin');
+                if (!window.msal || !msButton) {
+                    disableButton(msButton, 'Microsoft unavailable');
+                    return;
+                }
+
+                const msalInstance = new msal.PublicClientApplication({
+                    auth: {
+                        clientId,
+                        redirectUri: window.location.origin
+                    }
+                });
+
+                msButton.dataset.defaultLabel = msButton.textContent;
+                msButton.addEventListener('click', async () => {
+                    try {
+                        const result = await msalInstance.loginPopup({ scopes: ['openid', 'profile', 'email'] });
+                        await handleSocial('microsoft', result.idToken, msButton);
+                    } catch (err) {
+                        showError(err.message || 'Microsoft sign-in failed');
+                    }
+                });
+            };
+
+            const initApple = (clientId) => {
+                const appleButton = document.getElementById('apple-signin');
+                if (!window.AppleID || !appleButton) {
+                    disableButton(appleButton, 'Apple unavailable');
+                    return;
+                }
+
+                AppleID.auth.init({
+                    clientId,
+                    scope: 'name email',
+                    redirectURI: window.location.origin,
+                    usePopup: true
+                });
+
+                appleButton.dataset.defaultLabel = appleButton.textContent;
+                appleButton.addEventListener('click', async () => {
+                    try {
+                        const response = await AppleID.auth.signIn();
+                        const idToken = response?.authorization?.id_token;
+                        await handleSocial('apple', idToken, appleButton);
+                    } catch (err) {
+                        if (err?.error !== 'popup_closed_by_user') {
+                            showError(err?.error || 'Apple sign-in failed');
+                        }
+                    }
+                });
+            };
+
+            const loadAuthConfig = async () => {
+                try {
+                    const res = await fetch(`${API_URL}/auth/config`);
+                    authConfig = await res.json();
+
+                    if (authConfig.providers.google && authConfig.clientIds.google) {
+                        initGoogle(authConfig.clientIds.google);
+                    } else {
+                        disableButton(document.querySelector('#google-signin'), 'Google not configured');
+                    }
+
+                    if (authConfig.providers.microsoft && authConfig.clientIds.microsoft) {
+                        initMicrosoft(authConfig.clientIds.microsoft);
+                    } else {
+                        disableButton(document.getElementById('microsoft-signin'), 'Microsoft not configured');
+                    }
+
+                    if (authConfig.providers.apple && authConfig.clientIds.apple) {
+                        initApple(authConfig.clientIds.apple);
+                    } else {
+                        disableButton(document.getElementById('apple-signin'), 'Apple not configured');
+                    }
+                } catch (err) {
+                    console.error('Auth config load failed', err);
+                    disableButton(document.getElementById('microsoft-signin'), 'SSO unavailable');
+                    disableButton(document.getElementById('apple-signin'), 'SSO unavailable');
+                    disableButton(document.querySelector('#google-signin'), 'SSO unavailable');
+                }
+            };
+
+            loadAuthConfig();
+
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
                 
-                setToken(data.token);
-                setCurrentUser(data.user);
-                window.location.href = '/dashboard.html';
-            } catch (error) {
-                showError(error.message);
-                btn.disabled = false;
-                btn.textContent = 'Sign In';
-            }
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                const btn = document.getElementById('login-btn');
+                btn.disabled = true;
+                btn.textContent = 'Signing in...';
+                
+                try {
+                    const response = await fetch(`${API_URL}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, role: selectedRole })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Login failed');
+                    }
+                    
+                    setToken(data.token);
+                    setCurrentUser(data.user);
+                    window.location.href = '/dashboard.html';
+                } catch (error) {
+                    showError(error.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Sign In';
+                }
+            });
         });
     </script>
 </body>

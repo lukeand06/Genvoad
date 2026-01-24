@@ -7,6 +7,8 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   role: { type: String, enum: ['owner', 'vendor'], default: 'owner' },
+  authProvider: { type: String, enum: ['password', 'google', 'microsoft', 'apple'], default: 'password' },
+  providerId: { type: String, default: '' },
   
   // Profile
   avatar: { type: String, default: '' },
