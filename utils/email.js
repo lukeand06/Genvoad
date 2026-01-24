@@ -45,54 +45,26 @@ async function sendVerificationEmail(email, firstName, code) {
 </html>
   `;
 
-  // Prefer API provider (Resend) when configured
-  if (process.env.RESEND_API_KEY && resend) {
-    try {
-      const { Resend } = resend;
-      const client = new Resend(process.env.RESEND_API_KEY);
-      await client.emails.send({
-        from: process.env.RESEND_FROM || 'noreply@genovad.com',
-        to: email,
-        subject: 'Verify Your Genovad Account',
-        html: htmlContent,
-        text: `Your Genovad verification code is: ${code}`
-      });
-      console.log(`✓ Verification email (Resend) sent to ${email}`);
-      return { success: true };
-    } catch (error) {
-      console.error('Resend send error:', error.message || error);
-      console.log(`⚠️  EMAIL FAILED (Resend) - Verification code for ${email}: ${code}`);
-      // Fall through to SMTP/console
-    }
+  if (!process.env.RESEND_API_KEY || !resend) {
+    console.error(`❌ Resend not configured - Cannot send email to ${email}`);
+    throw new Error('Email service not configured. Please set RESEND_API_KEY.');
   }
 
-  // If SMTP is configured, send email
-  if (transporter) {
-    const mailOptions = {
-      from: `Genovad <noreply@genovad.com>`,
+  try {
+    const { Resend } = resend;
+    const client = new Resend(process.env.RESEND_API_KEY);
+    await client.emails.send({
+      from: process.env.RESEND_FROM || 'noreply@genovad.com',
       to: email,
       subject: 'Verify Your Genovad Account',
       html: htmlContent,
       text: `Your Genovad verification code is: ${code}`
-    };
-
-    try {
-      await transporter.sendMail(mailOptions);
-      console.log(`✓ Verification email sent to ${email}`);
-      return { success: true };
-    } catch (error) {
-      console.error('Email send error:', error.message);
-      console.log(`⚠️  EMAIL FAILED - Verification code for ${email}: ${code}`);
-      return { success: false, code };
-    }
-  } else {
-    // Development mode - log code to console
-    console.log(`\n${'='.repeat(60)}`);
-    console.log(`📧 VERIFICATION CODE for ${email}`);
-    console.log(`   Code: ${code}`);
-    console.log(`   Name: ${firstName}`);
-    console.log(`${'='.repeat(60)}\n`);
-    return { success: true, devMode: true, code };
+    });
+    console.log(`✓ Verification email sent to ${email}`);
+    return { success: true };
+  } catch (error) {
+    console.error('Resend error:', error.message || error);
+    throw new Error('Failed to send verification email');
   }
 }
 
