@@ -15,6 +15,7 @@ const UserSchema = new mongoose.Schema({
   bio: { type: String, default: '', maxlength: 500 },
   phone: { type: String, default: '' },
   location: { type: String, default: '' },
+  profileBackground: { type: String, default: '' },
   
   // Professional Info
   company: { type: String, default: '' },

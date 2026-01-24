@@ -205,11 +205,14 @@
                             <div class="flex items-center gap-3 mb-3">
                                 ${getAvatarHTML(conn, 'w-12 h-12')}
                                 <div class="flex-1">
-                                    <h3 class="font-semibold text-gray-900">${conn.firstName} ${conn.lastName}</h3>
-                                    ${conn.company ? `<p class="text-sm text-gray-600">${conn.company}</p>` : ''}
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-semibold text-gray-900">${conn.company || `${conn.firstName} ${conn.lastName}`}</h3>
+                                        ${getVerificationBadge(conn, 'small')}
+                                    </div>
+                                    ${conn.company ? `<p class="text-sm text-gray-600">${conn.firstName} ${conn.lastName}</p>` : (conn.title ? `<p class="text-sm text-gray-600">${conn.title}</p>` : '')}
                                 </div>
                             </div>
-                            ${conn.title ? `<p class="text-sm text-gray-700 mb-2">${conn.title}</p>` : ''}
+                            ${conn.title && conn.company ? `<p class="text-sm text-gray-700 mb-2">${conn.title}</p>` : ''}
                             ${conn.bio ? `<p class="text-sm text-gray-600 mb-3 line-clamp-2">${conn.bio}</p>` : ''}
                             
                             ${conn.skills && conn.skills.length > 0 ? `
@@ -252,11 +255,14 @@
                             <div class="flex items-center gap-3 mb-3">
                                 ${getAvatarHTML(service, 'w-12 h-12')}
                                 <div class="flex-1">
-                                    <h3 class="font-semibold text-gray-900">${service.firstName} ${service.lastName}</h3>
-                                    ${service.company ? `<p class="text-sm text-gray-600">${service.company}</p>` : ''}
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="font-semibold text-gray-900">${service.company || `${service.firstName} ${service.lastName}`}</h3>
+                                        ${getVerificationBadge(service, 'small')}
+                                    </div>
+                                    ${service.company ? `<p class="text-sm text-gray-600">${service.firstName} ${service.lastName}</p>` : (service.title ? `<p class="text-sm text-gray-600">${service.title}</p>` : '')}
                                 </div>
                             </div>
-                            ${service.title ? `<p class="text-sm text-gray-700 mb-2">${service.title}</p>` : ''}
+                            ${service.title && service.company ? `<p class="text-sm text-gray-700 mb-2">${service.title}</p>` : ''}
                             ${service.bio ? `<p class="text-sm text-gray-600 mb-3 line-clamp-2">${service.bio}</p>` : ''}
                             
                             ${service.skills && service.skills.length > 0 ? `
@@ -331,9 +337,12 @@
                             <p class="text-xs text-gray-600 mb-2">Posted by</p>
                             <div class="flex items-center gap-2">
                                 ${getAvatarHTML(project.owner, 'w-8 h-8')}
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">${project.owner.firstName} ${project.owner.lastName}</p>
-                                    ${project.owner.company ? `<p class="text-xs text-gray-600">${project.owner.company}</p>` : ''}
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-1.5">
+                                        <p class="text-sm font-medium text-gray-900 truncate">${project.owner.company || `${project.owner.firstName} ${project.owner.lastName}`}</p>
+                                        ${getVerificationBadge(project.owner, 'small')}
+                                    </div>
+                                    ${project.owner.company ? `<p class="text-xs text-gray-600 truncate">${project.owner.firstName} ${project.owner.lastName}</p>` : ''}
                                 </div>
                             </div>
                         </div>

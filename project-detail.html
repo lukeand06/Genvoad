@@ -309,14 +309,17 @@
                                         <div class="flex items-start justify-between mb-4">
                                             <div class="flex items-center gap-3 flex-1">
                                                 ${getAvatarHTML(bid.user, 'w-12 h-12')}
-                                                <div>
-                                                    <div class="flex items-center gap-2">
-                                                        <h3 class="font-semibold text-gray-900">${bid.user.firstName} ${bid.user.lastName}</h3>
+                                                <div class="min-w-0 flex-1">
+                                                    <div class="flex items-center gap-2 flex-wrap">
+                                                        <div class="flex items-center gap-1.5">
+                                                            <h3 class="font-semibold text-gray-900">${bid.user.company || `${bid.user.firstName} ${bid.user.lastName}`}</h3>
+                                                            ${getVerificationBadge(bid.user, 'small')}
+                                                        </div>
                                                         ${bid.status === 'accepted' ? '<span class="px-2 py-1 bg-green-500 text-white text-xs rounded font-medium">Accepted</span>' : ''}
                                                         ${bid.status === 'rejected' ? '<span class="px-2 py-1 bg-red-500 text-white text-xs rounded font-medium">Rejected</span>' : ''}
                                                         ${bid.status === 'revision_requested' ? '<span class="px-2 py-1 bg-yellow-500 text-white text-xs rounded font-medium">Revision Requested</span>' : ''}
                                                     </div>
-                                                    ${bid.user.company ? `<p class="text-sm text-gray-600">${bid.user.company}</p>` : ''}
+                                                    ${bid.user.company ? `<p class="text-sm text-gray-600 truncate">${bid.user.firstName} ${bid.user.lastName}</p>` : ''}
                                                     <div class="flex items-center gap-2 text-sm mt-1">
                                                         ${bid.user.rating ? `<span class="text-yellow-500">★${bid.user.rating.toFixed(1)}</span>` : ''}
                                                         ${bid.expiresAt && new Date(bid.expiresAt) < new Date() ? '<span class="text-red-500">Expired</span>' : bid.expiresAt ? `<span class="text-gray-500">Expires ${formatDate(bid.expiresAt)}</span>` : ''}
@@ -491,9 +494,12 @@
                         <h3 class="font-semibold text-gray-900 mb-4">Client</h3>
                         <div class="flex items-center gap-3 mb-4">
                             ${getAvatarHTML(project.owner, 'w-12 h-12')}
-                            <div>
-                                <p class="font-medium text-gray-900">${project.owner.firstName} ${project.owner.lastName}</p>
-                                ${project.owner.company ? `<p class="text-sm text-gray-600">${project.owner.company}</p>` : ''}
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-1.5">
+                                    <p class="font-medium text-gray-900 truncate">${project.owner.company || `${project.owner.firstName} ${project.owner.lastName}`}</p>
+                                    ${getVerificationBadge(project.owner, 'small')}
+                                </div>
+                                ${project.owner.company ? `<p class="text-sm text-gray-600 truncate">${project.owner.firstName} ${project.owner.lastName}</p>` : ''}
                             </div>
                         </div>
                         ${project.owner.location ? `<p class="text-sm text-gray-600 mb-2">📍 ${project.owner.location}</p>` : ''}

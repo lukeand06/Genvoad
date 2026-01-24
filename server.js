@@ -379,18 +379,13 @@ app.post('/api/auth/verify', async (req, res) => {
 // Login
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const { email, password } = req.body;
     
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user || user.deletedAt) return res.status(401).json({ error: 'Invalid credentials' });
     
     if (!user.emailVerified) {
       return res.status(403).json({ error: 'Please verify your email first' });
-    }
-
-    if (role && user.role !== role) {
-      const friendlyRole = user.role === 'owner' ? 'owner' : 'vendor';
-      return res.status(403).json({ error: `You are registered as a ${friendlyRole}. Switch to the ${friendlyRole === 'owner' ? 'owner' : 'vendor'} sign-in.` });
     }
     
     const validPassword = await bcrypt.compare(password, user.password);
@@ -681,7 +676,7 @@ app.put('/api/users/profile', authMiddleware, async (req, res) => {
   try {
     const allowed = [
       'firstName','lastName','bio','title','company','location','phone','yearsExperience',
-      'skills','services','city','state','registrarId','links','preferences','role'
+      'skills','services','city','state','registrarId','links','preferences','role','profileBackground'
     ];
     const updates = {};
     if (req.body.role && !['owner', 'vendor'].includes(req.body.role)) {

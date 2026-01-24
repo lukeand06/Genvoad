@@ -34,22 +34,7 @@
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
                 <div id="error-message" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"></div>
 
-                <div class="mb-6">
-                    <p class="text-sm font-medium text-gray-700 mb-2">Sign in as</p>
-                    <div class="grid grid-cols-2 gap-3" id="role-options">
-                        <button type="button" data-role="owner" class="role-option border border-gray-300 rounded-lg p-4 text-left hover:border-gray-400 focus:ring-2 focus:ring-gray-900">
-                            <p class="font-semibold text-gray-900">Owner</p>
-                            <p class="text-sm text-gray-600">Post projects, invite bids, and manage work.</p>
-                        </button>
-                        <button type="button" data-role="vendor" class="role-option border border-gray-200 rounded-lg p-4 text-left hover:border-gray-400 focus:ring-2 focus:ring-gray-900">
-                            <p class="font-semibold text-gray-900">Vendor</p>
-                            <p class="text-sm text-gray-600">Bid on opportunities and deliver services.</p>
-                        </button>
-                    </div>
-                    <p id="role-helper" class="text-xs text-gray-500 mt-2">Owners post work. Vendors win and deliver work.</p>
-                </div>
-
-                <div class="space-y-3" id="social-buttons">
+                <div class="space-y-3 mb-6" id="social-buttons">
                     <div id="google-signin" class="w-full"></div>
                     <button id="microsoft-signin" class="w-full border border-gray-300 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
                         <span>Continue with Microsoft</span>
@@ -94,34 +79,7 @@
         window.addEventListener('load', () => {
             redirectIfAuth();
 
-            const roleHelperCopy = {
-                owner: 'Owners post work and invite vendors.',
-                vendor: 'Vendors bid on work and deliver services.'
-            };
-
-            let selectedRole = 'owner';
             let authConfig = { providers: {}, clientIds: {} };
-
-            const roleButtons = document.querySelectorAll('.role-option');
-            const roleHelper = document.getElementById('role-helper');
-
-            const setRole = (role) => {
-                selectedRole = role;
-                roleButtons.forEach(btn => {
-                    const isActive = btn.dataset.role === role;
-                    btn.classList.toggle('border-gray-900', isActive);
-                    btn.classList.toggle('shadow-sm', isActive);
-                    btn.classList.toggle('bg-gray-50', isActive);
-                    btn.classList.toggle('border-gray-300', !isActive);
-                });
-                roleHelper.textContent = roleHelperCopy[role];
-            };
-
-            roleButtons.forEach(btn => {
-                btn.addEventListener('click', () => setRole(btn.dataset.role));
-            });
-
-            setRole('owner');
 
             const disableButton = (btn, text) => {
                 if (!btn) return;
@@ -146,7 +104,7 @@
                     const response = await fetch(`${API_URL}/auth/social`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ provider, idToken: token, role: selectedRole })
+                        body: JSON.stringify({ provider, idToken: token })
                     });
 
                     const data = await response.json();
@@ -282,7 +240,7 @@
                     const response = await fetch(`${API_URL}/auth/login`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password, role: selectedRole })
+                        body: JSON.stringify({ email, password })
                     });
                     
                     const data = await response.json();

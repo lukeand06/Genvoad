@@ -417,10 +417,11 @@
                                 ${getAvatarHTML(owner, 'w-12 h-12')}
                             </a>
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2">
+                                <div class="flex items-center gap-1.5 flex-wrap">
                                     <a href="/profile.html?id=${owner._id}" class="font-semibold text-gray-900 hover:underline">
                                         ${owner.company || owner.firstName + ' ' + owner.lastName}
                                     </a>
+                                    ${getVerificationBadge(owner, 'small')}
                                     ${owner.company ? `<span class="text-sm text-gray-500">• ${owner.firstName} ${owner.lastName}</span>` : ''}
                                 </div>
                                 <p class="text-sm text-gray-500">${owner.location || 'Unknown location'} • ${timeAgo}</p>

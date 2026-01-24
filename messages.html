@@ -278,10 +278,13 @@
                         ${getAvatarHTML(conv.user, 'w-12 h-12')}
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between">
-                                <p class="font-medium text-gray-900 truncate">${conv.user.firstName} ${conv.user.lastName}</p>
-                                ${conv.unread > 0 ? `<span class="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full">${conv.unread}</span>` : ''}
+                                <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                                    <p class="font-medium text-gray-900 truncate">${conv.user.company || `${conv.user.firstName} ${conv.user.lastName}`}</p>
+                                    ${getVerificationBadge(conv.user, 'small')}
+                                </div>
+                                ${conv.unread > 0 ? `<span class="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full flex-shrink-0">${conv.unread}</span>` : ''}
                             </div>
-                            ${conv.user.company ? `<p class="text-xs text-gray-500">${conv.user.company}</p>` : ''}
+                            ${conv.user.company ? `<p class="text-xs text-gray-500 truncate">${conv.user.firstName} ${conv.user.lastName}</p>` : ''}
                             <p class="text-sm text-gray-600 truncate mt-1">${conv.lastMessage.content}</p>
                             <p class="text-xs text-gray-400 mt-1">${formatDate(conv.lastMessage.createdAt)}</p>
                         </div>
@@ -312,8 +315,14 @@
                 const chatUser = userData.user;
                 
                 document.getElementById('chat-user-avatar').innerHTML = getAvatarHTML(chatUser, 'w-12 h-12');
-                document.getElementById('chat-user-name').textContent = `${chatUser.firstName} ${chatUser.lastName}`;
-                document.getElementById('chat-user-company').textContent = chatUser.company || '';
+                const nameEl = document.getElementById('chat-user-name');
+                nameEl.innerHTML = `
+                    <span class="flex items-center gap-1.5">
+                        ${chatUser.company || `${chatUser.firstName} ${chatUser.lastName}`}
+                        ${getVerificationBadge(chatUser, 'small')}
+                    </span>
+                `;
+                document.getElementById('chat-user-company').textContent = chatUser.company ? `${chatUser.firstName} ${chatUser.lastName}` : '';
 
                 // Surface negotiation context when arriving from a project card
                 if (initialProjectTitle) {
