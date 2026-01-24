@@ -129,13 +129,19 @@
 
         async function loadProject() {
             try {
-                const response = await authFetch(`/projects/${projectId}`);
-                const data = await response.json();
+                const res = await authFetch(`/api/projects/${projectId}`);
+                const ct = res.headers.get('content-type') || '';
+                if (!res.ok || !ct.includes('application/json')) {
+                    let err;
+                    try { err = await res.json(); } catch {}
+                    throw new Error((err && (err.error || err.message)) || `Failed to load project (HTTP ${res.status})`);
+                }
+                const data = await res.json();
                 currentProject = data.project;
                 displayProject(currentProject);
             } catch (error) {
                 console.error('Error loading project:', error);
-                document.getElementById('project-content').innerHTML = '<div class="text-center py-12 text-red-500">Failed to load project</div>';
+                document.getElementById('project-content').innerHTML = `<div class="text-center py-12 text-red-500">${error.message || 'Failed to load project'}</div>`;
             }
         }
 
@@ -466,14 +472,15 @@
             btn.textContent = 'Submitting...';
             
             try {
-                const response = await authFetch(`/projects/${projectId}/bids`, {
+                const res = await authFetch(`/api/projects/${projectId}/bids`, {
                     method: 'POST',
                     body: JSON.stringify({ amount, proposal, timeline })
                 });
+                const ct = res.headers.get('content-type') || '';
+                const data = ct.includes('application/json') ? await res.json() : {};
                 
-                if (!response.ok) {
-                    const data = await response.json();
-                    throw new Error(data.error || 'Failed to submit bid');
+                if (!res.ok) {
+                    throw new Error(data.error || `Failed to submit bid (HTTP ${res.status})`);
                 }
                 
                 document.getElementById('bid-modal').classList.add('hidden');
@@ -494,12 +501,14 @@
             }
             
             try {
-                const response = await authFetch(`/projects/${projectId}/bids/${bidId}/accept`, {
+                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}/accept`, {
                     method: 'POST'
                 });
+                const ct = res.headers.get('content-type') || '';
+                const data = ct.includes('application/json') ? await res.json() : {};
                 
-                if (!response.ok) {
-                    throw new Error('Failed to accept bid');
+                if (!res.ok) {
+                    throw new Error(data.error || `Failed to accept bid (HTTP ${res.status})`);
                 }
                 
                 alert('Bid accepted successfully! Redirecting to messages...');
@@ -590,8 +599,14 @@
         
         async function loadActivityLog(container) {
             try {
-                const response = await authFetch(`/projects/${projectId}/activity`);
-                const data = await response.json();
+                const res = await authFetch(`/api/projects/${projectId}/activity`);
+                const ct = res.headers.get('content-type') || '';
+                if (!res.ok || !ct.includes('application/json')) {
+                    let err;
+                    try { err = await res.json(); } catch {}
+                    throw new Error((err && (err.error || err.message)) || `Failed to load activity (HTTP ${res.status})`);
+                }
+                const data = await res.json();
                 
                 container.innerHTML = `
                     <div class="space-y-0">
@@ -604,7 +619,7 @@
                     </div>
                 `;
             } catch (error) {
-                container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load activity log</p>';
+                container.innerHTML = `<p class="text-red-500 text-center py-8">${error.message || 'Failed to load activity log'}</p>`;
             }
         }
         
@@ -616,7 +631,7 @@
             const amount = prompt('Payment Amount ($):');
             const dueDate = prompt('Due Date (YYYY-MM-DD):');
             
-            authFetch(`/projects/${projectId}/milestones`, {
+            authFetch(`/api/projects/${projectId}/milestones`, {
                 method: 'POST',
                 body: JSON.stringify({
                     title: modal,
@@ -624,11 +639,12 @@
                     amount: amount ? parseFloat(amount) : 0,
                     dueDate: dueDate || null
                 })
-            }).then(() => {
+            }).then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 alert('Milestone added!');
                 location.reload();
             }).catch(err => {
-                alert('Failed to add milestone');
+                alert('Failed to add milestone: ' + (err.message || 'Unknown error'));
             });
         }
         
@@ -640,7 +656,7 @@
             const budgetImpact = prompt('Budget Impact ($, use + or -):');
             const timelineImpact = prompt('Timeline Impact (e.g., +2 weeks):');
             
-            authFetch(`/projects/${projectId}/change-orders`, {
+            authFetch(`/api/projects/${projectId}/change-orders`, {
                 method: 'POST',
                 body: JSON.stringify({
                     title,
@@ -648,11 +664,12 @@
                     budgetImpact: budgetImpact ? parseFloat(budgetImpact) : 0,
                     timelineImpact
                 })
-            }).then(() => {
+            }).then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 alert('Change order submitted!');
                 location.reload();
             }).catch(err => {
-                alert('Failed to submit change order');
+                alert('Failed to submit change order: ' + (err.message || 'Unknown error'));
             });
         }
         
