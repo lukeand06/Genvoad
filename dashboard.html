@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Genovad</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/public/css/tailwind.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
@@ -294,6 +294,11 @@
             try {
                 // Load user's projects
                 const projectsRes = await authFetch(`/api/projects?owner=${user.id}`);
+                if (!projectsRes.ok) {
+                    const ct = projectsRes.headers.get('content-type') || '';
+                    const errMsg = ct.includes('application/json') ? (await projectsRes.json()).error || 'Failed to load projects' : `HTTP ${projectsRes.status}`;
+                    throw new Error(errMsg);
+                }
                 const projectsData = await projectsRes.json();
                 userProjects = projectsData.projects || [];
                 
@@ -313,6 +318,11 @@
                 // Load messages count
                 try {
                     const messagesRes = await authFetch('/api/messages/conversations');
+                    if (!messagesRes.ok) {
+                        const ct = messagesRes.headers.get('content-type') || '';
+                        const d = ct.includes('application/json') ? await messagesRes.json() : null;
+                        throw new Error((d && d.error) || `HTTP ${messagesRes.status}`);
+                    }
                     const data = await messagesRes.json();
                     messagesData = data.conversations || [];
                     let unreadCount = 0;
@@ -336,12 +346,11 @@
                 container.innerHTML = '<div class="p-6 text-center text-gray-500"><div class="animate-pulse">Loading your personalized feed...</div></div>';
                 
                 const feedRes = await authFetch('/api/feed');
-                
                 if (!feedRes.ok) {
-                    const errorData = await feedRes.json();
-                    throw new Error(errorData.message || 'Failed to load feed');
+                    const ct = feedRes.headers.get('content-type') || '';
+                    const errorData = ct.includes('application/json') ? await feedRes.json() : null;
+                    throw new Error((errorData && (errorData.message || errorData.error)) || `Failed to load feed (HTTP ${feedRes.status})`);
                 }
-                
                 const feedData = await feedRes.json();
                 console.log('Feed loaded:', feedData); // Debug
                 displayFeed(feedData.feed || []);
@@ -451,12 +460,11 @@
             const container = document.getElementById('recommendations');
             try {
                 const recRes = await authFetch('/api/recommendations');
-                
                 if (!recRes.ok) {
-                    const errorData = await recRes.json();
-                    throw new Error(errorData.message || 'Failed to load recommendations');
+                    const ct = recRes.headers.get('content-type') || '';
+                    const errorData = ct.includes('application/json') ? await recRes.json() : null;
+                    throw new Error((errorData && (errorData.message || errorData.error)) || `Failed to load recommendations (HTTP ${recRes.status})`);
                 }
-                
                 const recData = await recRes.json();
                 console.log('Recommendations loaded:', recData); // Debug
                 displayRecommendations(recData.recommendations || []);

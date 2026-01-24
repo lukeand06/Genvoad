@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "build:css": "tailwindcss -i ./public/css/tw.css -o ./public/css/tailwind.css --minify"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -22,6 +23,10 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.2"
+    "@tailwindcss/cli": "^4.1.18",
+    "autoprefixer": "^10.4.23",
+    "nodemon": "^3.0.2",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18"
   }
 }

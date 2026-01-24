@@ -68,7 +68,19 @@ async function authFetch(url, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
   
-  const response = await fetch(`${API_URL}${url}`, {
+  // Build full URL robustly to avoid double "/api"
+  let fullUrl = '';
+  if (/^https?:\/\//i.test(url)) {
+    fullUrl = url;
+  } else if (url.startsWith('/api/')) {
+    fullUrl = `${window.location.origin}${url}`;
+  } else if (url.startsWith('/')) {
+    fullUrl = `${window.location.origin}${url}`;
+  } else {
+    fullUrl = `${API_URL}${url}`;
+  }
+
+  const response = await fetch(fullUrl, {
     ...options,
     headers
   });
