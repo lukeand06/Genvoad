@@ -61,11 +61,15 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="bg-white rounded-lg border border-gray-200 overflow-hidden" style="height: calc(100vh - 140px);">
-            <div class="grid grid-cols-12 h-full">
+            <div class="grid grid-cols-12 h-full min-h-0">
                 <!-- Conversations List -->
-                <div class="col-span-4 border-r border-gray-200">
-                    <div class="p-4 border-b border-gray-200">
+                <div class="col-span-4 border-r border-gray-200 h-full flex flex-col min-h-0">
+                    <div class="p-4 border-b border-gray-200 flex items-center justify-between gap-2">
                         <h2 class="text-lg font-semibold text-gray-900">Messages</h2>
+                        <div class="relative">
+                            <button id="new-thread-btn" class="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">New thread</button>
+                            <div id="new-thread-menu" class="hidden absolute right-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto z-30"></div>
+                        </div>
                     </div>
                     <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
                         <div class="flex items-center justify-between mb-2">
@@ -82,7 +86,7 @@
                 </div>
 
                 <!-- Chat Area -->
-                <div class="col-span-8 flex flex-col">
+                <div class="col-span-8 flex flex-col min-h-0">
                     <div id="no-conversation" class="flex-1 flex items-center justify-center text-gray-500">
                         <div class="text-center">
                             <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,7 +114,7 @@
                     </div>
 
                     <!-- Messages -->
-                    <div id="messages-container" class="hidden flex-1 overflow-y-auto p-6 space-y-4 scroll-smooth">
+                    <div id="messages-container" class="hidden flex-1 min-h-0 overflow-y-auto p-6 space-y-4 scroll-smooth">
                     </div>
 
                     <!-- Message Input -->
@@ -167,6 +171,7 @@
         let currentMessages = [];
         let messagesPollInterval = null;
         let partners = [];
+        let forceScrollNextRender = false;
 
         // Check for user parameter in URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -211,6 +216,7 @@
                 const data = await res.json();
                 partners = data.partners || [];
                 renderPartners();
+                renderInviteMenu();
             } catch (e) {
                 console.error('Error loading partners', e);
                 document.getElementById('partners-list').innerHTML = '<p class="text-xs text-red-500">Failed to load partners</p>';
@@ -228,6 +234,26 @@
                     ${p.firstName} ${p.lastName}
                 </button>
             `).join('');
+        }
+
+        function renderInviteMenu() {
+            const menu = document.getElementById('new-thread-menu');
+            if (!menu) return;
+
+            if (!partners || partners.length === 0) {
+                menu.innerHTML = '<p class="px-3 py-2 text-sm text-gray-500">No partners yet</p>';
+                return;
+            }
+
+            menu.innerHTML = partners.map(p => `
+                <button data-invite-id="${p._id}" class="w-full text-left px-3 py-2 text-sm hover:bg-gray-50">
+                    Start with ${p.firstName} ${p.lastName}
+                </button>
+            `).join('');
+
+            menu.querySelectorAll('[data-invite-id]').forEach(btn => {
+                btn.addEventListener('click', () => startConversation(btn.dataset.inviteId));
+            });
         }
 
         function displayConversations() {
@@ -258,6 +284,7 @@
 
         async function openChat(userId) {
             currentChatUserId = userId;
+            forceScrollNextRender = true;
             
             // Stop previous polling
             if (messagesPollInterval) {
@@ -351,6 +378,7 @@
             const container = document.getElementById('messages-container');
             // Detect if user is near the bottom before rerendering
             const nearBottom = Math.abs((container.scrollHeight - container.scrollTop) - container.clientHeight) < 60;
+            const shouldForceScroll = forceScrollNextRender;
             
             if (currentMessages.length === 0) {
                 container.innerHTML = '<div class="text-center text-gray-500">No messages yet. Start the conversation!</div>';
@@ -430,12 +458,13 @@
                 `;
             }).join('');
             
-            // Auto-scroll only if user was near the bottom
-            if (nearBottom) {
+            // Auto-scroll on first render or when user was near the bottom
+            if (shouldForceScroll || nearBottom) {
                 setTimeout(() => {
                     container.scrollTop = container.scrollHeight;
                 }, 0);
             }
+            forceScrollNextRender = false;
         }
 
         // Group reactions by emoji
@@ -512,6 +541,39 @@
                 await loadMessages();
             } catch (error) {
                 console.error('Failed to toggle reaction:', error);
+            }
+        }
+
+        async function startConversation(partnerId) {
+            const menu = document.getElementById('new-thread-menu');
+            if (!partnerId) return;
+
+            const partner = partners.find(p => p._id === partnerId);
+            const intro = partner ? `Hi ${partner.firstName}, I'd like to start a conversation.` : 'Hi, I would like to start a conversation.';
+
+            try {
+                const formData = new FormData();
+                formData.append('recipient', partnerId);
+                formData.append('content', intro);
+                formData.append('type', 'standard');
+
+                const res = await authFetch('/api/messages', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const ct = res.headers.get('content-type') || '';
+                    const err = ct.includes('application/json') ? await res.json() : null;
+                    throw new Error((err && (err.error || err.message)) || 'Failed to start thread');
+                }
+
+                if (menu) menu.classList.add('hidden');
+                await loadConversations();
+                await openChat(partnerId);
+            } catch (error) {
+                console.error('Failed to start conversation', error);
+                alert(error.message || 'Failed to start thread');
             }
         }
 
@@ -603,6 +665,24 @@
                 alert('Failed to send message');
             }
         });
+
+        // New thread menu interactions
+        const newThreadBtn = document.getElementById('new-thread-btn');
+        const newThreadMenu = document.getElementById('new-thread-menu');
+
+        if (newThreadBtn && newThreadMenu) {
+            newThreadBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                renderInviteMenu();
+                newThreadMenu.classList.toggle('hidden');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!newThreadMenu.classList.contains('hidden') && !newThreadMenu.contains(e.target) && !newThreadBtn.contains(e.target)) {
+                    newThreadMenu.classList.add('hidden');
+                }
+            });
+        }
 
         function setDraft(text) {
             const input = document.getElementById('message-input');
