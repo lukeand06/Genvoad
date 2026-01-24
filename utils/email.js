@@ -1,27 +1,9 @@
-// Internal OTP system with pluggable email providers
-// Prefers API provider (Resend) when configured; falls back to SMTP; then console logging in dev
-const nodemailer = require('nodemailer');
+// Email system using Resend API only
 let resend = null;
 try {
-  // Lazy load; will be used only if RESEND_API_KEY is present
   resend = require('resend');
-} catch (_) {}
-
-// Create transporter (falls back to console logging if no SMTP configured)
-let transporter = null;
-if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
-  transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: process.env.SMTP_PORT || 587,
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS
-    }
-  });
-  console.log('✓ Email transporter configured');
-} else {
-  console.log('⚠️  No SMTP configured - verification codes will be logged to console');
+} catch (_) {
+  console.error('⚠️ Resend package not installed');
 }
 
 async function sendVerificationEmail(email, firstName, code) {
