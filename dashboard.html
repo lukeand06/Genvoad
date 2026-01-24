@@ -64,6 +64,17 @@
         </div>
     </nav>
 
+    <!-- Loading Overlay -->
+    <div id="role-loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 text-center">
+            <div class="inline-flex items-center justify-center w-12 h-12 mb-4">
+                <div class="w-10 h-10 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            </div>
+            <p class="text-lg font-semibold text-gray-900">Switching roles...</p>
+            <p class="text-sm text-gray-600 mt-1">Loading your new dashboard</p>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Welcome Header -->
@@ -300,8 +311,11 @@
                     if (role === currentRole) return;
                     
                     try {
+                        // Show loading overlay
+                        const loadingOverlay = document.getElementById('role-loading-overlay');
+                        loadingOverlay.classList.remove('hidden');
+                        
                         button.disabled = true;
-                        button.textContent = 'Switching...';
                         
                         await switchRole(role);
                         
@@ -325,10 +339,16 @@
                         
                         // Reload dashboard data
                         loadDashboard();
+                        
+                        // Hide loading overlay after a brief delay
+                        setTimeout(() => {
+                            document.getElementById('role-loading-overlay').classList.add('hidden');
+                        }, 800);
                     } catch (error) {
                         showError(error.message);
                         button.disabled = false;
                         initializeRoleSwitcher();
+                        document.getElementById('role-loading-overlay').classList.add('hidden');
                     }
                 });
                 
