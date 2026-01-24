@@ -331,13 +331,34 @@
 
         // Load activity feed (LinkedIn-style)
         async function loadFeed() {
+            const container = document.getElementById('activity-feed');
             try {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500"><div class="animate-pulse">Loading your personalized feed...</div></div>';
+                
                 const feedRes = await authFetch('/api/feed');
+                
+                if (!feedRes.ok) {
+                    const errorData = await feedRes.json();
+                    throw new Error(errorData.message || 'Failed to load feed');
+                }
+                
                 const feedData = await feedRes.json();
+                console.log('Feed loaded:', feedData); // Debug
                 displayFeed(feedData.feed || []);
             } catch (error) {
                 console.error('Error loading feed:', error);
-                document.getElementById('activity-feed').innerHTML = '<div class="p-6 text-center text-gray-500"><p>Failed to load feed</p></div>';
+                container.innerHTML = `
+                    <div class="p-6 text-center">
+                        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-gray-600 mb-2">Unable to load feed</p>
+                        <p class="text-sm text-gray-500 mb-4">${error.message}</p>
+                        <button onclick="loadFeed()" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">
+                            Try Again
+                        </button>
+                    </div>
+                `;
             }
         }
 
@@ -345,7 +366,18 @@
             const container = document.getElementById('activity-feed');
             
             if (feedItems.length === 0) {
-                container.innerHTML = '<div class="p-6 text-center text-gray-500"><p>No activity yet. Follow more people to see their projects!</p></div>';
+                container.innerHTML = `
+                    <div class="p-8 text-center">
+                        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+                        </svg>
+                        <p class="text-gray-600 mb-2">Your feed is empty</p>
+                        <p class="text-sm text-gray-500 mb-4">No projects available yet. Create a project or check back later!</p>
+                        <a href="/create-project.html" class="inline-block px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">
+                            Post Your First Project
+                        </a>
+                    </div>
+                `;
                 return;
             }
 
@@ -416,13 +448,28 @@
 
         // Load recommendations
         async function loadRecommendations() {
+            const container = document.getElementById('recommendations');
             try {
                 const recRes = await authFetch('/api/recommendations');
+                
+                if (!recRes.ok) {
+                    const errorData = await recRes.json();
+                    throw new Error(errorData.message || 'Failed to load recommendations');
+                }
+                
                 const recData = await recRes.json();
+                console.log('Recommendations loaded:', recData); // Debug
                 displayRecommendations(recData.recommendations || []);
             } catch (error) {
                 console.error('Error loading recommendations:', error);
-                document.getElementById('recommendations').innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No recommendations available</p></div>';
+                container.innerHTML = `
+                    <div class="p-6 text-center">
+                        <p class="text-sm text-gray-600 mb-2">Unable to load recommendations</p>
+                        <button onclick="loadRecommendations()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                            Try Again
+                        </button>
+                    </div>
+                `;
             }
         }
 

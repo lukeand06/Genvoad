@@ -1120,47 +1120,247 @@ app.get('/api/projects/:id/activity', authMiddleware, async (req, res) => {
   }
 });
 
-// Get feed (projects from partners and recommended users)
+// Get feed with intelligent ranking algorithm (LinkedIn/Instagram/TikTok-style)
 app.get('/api/feed', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select('partners skills location');
+    const currentUser = await User.findById(req.user._id).select('partners skills location city state services');
     
-    // Get projects from partners and recent projects
-    const feedProjects = await Project.find({
+    if (!currentUser) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Fetch projects from all users except current user
+    const allProjects = await Project.find({
       owner: { $ne: req.user._id },
-      status: 'open'
+      status: 'open',
+      deletedAt: { $exists: false }
     })
-      .populate('owner', 'firstName lastName avatar company location bio skills')
+      .populate('owner', 'firstName lastName avatar company location city state bio skills rating reviewCount projectsCompleted')
+      .populate('bids.user', 'firstName lastName avatar')
       .sort({ createdAt: -1 })
-      .limit(20);
-    
-    res.json({ feed: feedProjects });
+      .limit(100); // Get more projects for better ranking
+
+    // Calculate relevance score for each project (algorithm similar to LinkedIn/Indeed/Instagram)
+    const scoredProjects = allProjects.map(project => {
+      let score = 0;
+      const owner = project.owner;
+      const daysSincePost = (Date.now() - new Date(project.createdAt)) / (1000 * 60 * 60 * 24);
+
+      // 1. RECENCY SCORE (TikTok/Instagram style - favor recent content)
+      // Decay function: newer posts get higher scores
+      if (daysSincePost < 1) score += 50; // Less than 1 day: high priority
+      else if (daysSincePost < 3) score += 35; // 1-3 days
+      else if (daysSincePost < 7) score += 20; // 3-7 days
+      else if (daysSincePost < 14) score += 10; // 1-2 weeks
+      else score += 5; // Older posts get minimal recency boost
+
+      // 2. CONNECTION STRENGTH (LinkedIn style)
+      // Prioritize content from partners (connections)
+      if (currentUser.partners && currentUser.partners.some(p => p.toString() === owner._id.toString())) {
+        score += 40; // Strong boost for partner content
+      }
+
+      // 3. SKILLS MATCH (Indeed/LinkedIn style - job/project relevance)
+      const userSkills = currentUser.skills || [];
+      const projectSkills = project.skills || [];
+      const matchingSkills = projectSkills.filter(skill => 
+        userSkills.some(userSkill => userSkill.toLowerCase() === skill.toLowerCase())
+      );
+      score += matchingSkills.length * 15; // +15 per matching skill
+
+      // 4. LOCATION RELEVANCE (Indeed/LinkedIn style)
+      if (owner.location && currentUser.location) {
+        if (owner.location.toLowerCase() === currentUser.location.toLowerCase()) {
+          score += 25; // Same location exact match
+        }
+      }
+      // City/State matching
+      if (owner.city && currentUser.city && owner.city.toLowerCase() === currentUser.city.toLowerCase()) {
+        score += 20;
+      }
+      if (owner.state && currentUser.state && owner.state.toLowerCase() === currentUser.state.toLowerCase()) {
+        score += 10;
+      }
+
+      // 5. ENGAGEMENT POTENTIAL (Instagram/TikTok style)
+      const bidCount = project.bids?.length || 0;
+      if (bidCount === 0) score += 15; // Boost new posts with no bids yet (opportunity)
+      else if (bidCount < 3) score += 10; // Some activity but not saturated
+      else if (bidCount < 5) score += 5; // Moderate activity
+      // Posts with too many bids get no boost (likely already filled)
+
+      // 6. BUDGET ATTRACTIVENESS
+      // Projects with higher budgets get slight boost (quality signal)
+      if (project.budget > 50000) score += 15;
+      else if (project.budget > 20000) score += 10;
+      else if (project.budget > 5000) score += 5;
+
+      // 7. OWNER REPUTATION (LinkedIn style - verified/quality users)
+      if (owner.rating && owner.rating >= 4.5) score += 20; // Highly rated
+      else if (owner.rating && owner.rating >= 4.0) score += 15;
+      else if (owner.rating && owner.rating >= 3.5) score += 10;
+
+      if (owner.reviewCount && owner.reviewCount > 10) score += 10; // Established user
+      if (owner.projectsCompleted && owner.projectsCompleted > 5) score += 10; // Active user
+
+      // 8. CONTENT QUALITY SIGNALS (Instagram/TikTok style)
+      // Posts with more details are higher quality
+      if (project.description && project.description.length > 200) score += 10;
+      if (project.requirements && project.requirements.length > 0) score += 10;
+      if (project.images && project.images.length > 0) score += 5;
+      if (project.zoomLink) score += 5; // Willing to meet = serious project
+
+      // 9. DIVERSITY FACTOR (Prevent feed from being dominated by one user)
+      // This will be applied after initial scoring
+      
+      return {
+        project,
+        score,
+        daysSincePost
+      };
+    });
+
+    // Sort by score (highest first)
+    scoredProjects.sort((a, b) => b.score - a.score);
+
+    // 10. APPLY DIVERSITY FILTER (Instagram/TikTok style)
+    // Don't show more than 2 consecutive posts from same user
+    const diversifiedFeed = [];
+    const recentOwners = [];
+    const maxConsecutive = 2;
+
+    for (const item of scoredProjects) {
+      const ownerId = item.project.owner._id.toString();
+      
+      // Check if this owner appears in last N posts
+      const recentCount = recentOwners.filter(id => id === ownerId).length;
+      
+      if (recentCount < maxConsecutive) {
+        diversifiedFeed.push(item.project);
+        recentOwners.push(ownerId);
+        
+        // Keep only last 5 owners in memory for diversity check
+        if (recentOwners.length > 5) {
+          recentOwners.shift();
+        }
+      }
+      
+      // Limit feed to 20 items
+      if (diversifiedFeed.length >= 20) break;
+    }
+
+    // Add debug info in development
+    const feedWithScores = diversifiedFeed.map((project, index) => {
+      const scoreInfo = scoredProjects.find(sp => sp.project._id.toString() === project._id.toString());
+      return {
+        ...project.toObject(),
+        _feedScore: process.env.NODE_ENV === 'development' ? scoreInfo?.score : undefined,
+        _feedRank: index + 1
+      };
+    });
+
+    res.json({ 
+      feed: feedWithScores,
+      total: diversifiedFeed.length,
+      algorithm: 'v1.0-intelligent-ranking'
+    });
   } catch (error) {
     console.error('Feed error:', error);
-    res.status(500).json({ error: 'Failed to fetch feed' });
+    res.status(500).json({ error: 'Failed to fetch feed', message: error.message });
   }
 });
 
-// Get recommended users based on profile matching
+// Get recommended users with intelligent matching (LinkedIn/Indeed style)
 app.get('/api/recommendations', authMiddleware, async (req, res) => {
   try {
-    const currentUser = await User.findById(req.user._id).select('skills location partners');
+    const currentUser = await User.findById(req.user._id).select('skills location city state partners services');
     
-    // Find users with matching skills or location
-    const recommendations = await User.find({
-      _id: { $ne: req.user._id, $nin: currentUser.partners || [] },
-      $or: [
-        { skills: { $in: currentUser.skills || [] } },
-        { location: currentUser.location }
-      ]
+    if (!currentUser) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    const partnerIds = (currentUser.partners || []).map(p => p.toString());
+
+    // Find potential matches
+    const allUsers = await User.find({
+      _id: { $ne: req.user._id, $nin: partnerIds },
+      deletedAt: { $exists: false }
     })
-      .select('firstName lastName avatar company location bio skills rating reviewCount projectsCompleted')
-      .limit(5);
-    
-    res.json({ recommendations });
+      .select('firstName lastName avatar company location city state bio skills services rating reviewCount projectsCompleted yearsExperience')
+      .limit(50);
+
+    // Score each user for recommendation relevance
+    const scoredUsers = allUsers.map(user => {
+      let score = 0;
+
+      // 1. SKILLS MATCH (Primary factor - LinkedIn/Indeed style)
+      const userSkills = currentUser.skills || [];
+      const theirSkills = user.skills || [];
+      const matchingSkills = theirSkills.filter(skill => 
+        userSkills.some(userSkill => userSkill.toLowerCase().includes(skill.toLowerCase()) || 
+                                     skill.toLowerCase().includes(userSkill.toLowerCase()))
+      );
+      score += matchingSkills.length * 20; // High weight for skill matches
+
+      // 2. LOCATION PROXIMITY
+      if (user.location && currentUser.location) {
+        if (user.location.toLowerCase() === currentUser.location.toLowerCase()) {
+          score += 30; // Same location
+        }
+      }
+      if (user.city && currentUser.city && user.city.toLowerCase() === currentUser.city.toLowerCase()) {
+        score += 25; // Same city
+      }
+      if (user.state && currentUser.state && user.state.toLowerCase() === currentUser.state.toLowerCase()) {
+        score += 15; // Same state
+      }
+
+      // 3. SERVICES MATCH (What they offer vs what you might need)
+      const userServices = currentUser.services || [];
+      const theirServices = user.services || [];
+      const matchingServices = theirServices.filter(service => 
+        userServices.some(userService => userService.toLowerCase() === service.toLowerCase())
+      );
+      score += matchingServices.length * 15;
+
+      // 4. REPUTATION & QUALITY
+      if (user.rating && user.rating >= 4.5) score += 25;
+      else if (user.rating && user.rating >= 4.0) score += 20;
+      else if (user.rating && user.rating >= 3.5) score += 15;
+
+      if (user.reviewCount && user.reviewCount > 20) score += 15; // Well-reviewed
+      else if (user.reviewCount && user.reviewCount > 10) score += 10;
+      else if (user.reviewCount && user.reviewCount > 5) score += 5;
+
+      if (user.projectsCompleted && user.projectsCompleted > 20) score += 15; // Very experienced
+      else if (user.projectsCompleted && user.projectsCompleted > 10) score += 10;
+      else if (user.projectsCompleted && user.projectsCompleted > 5) score += 5;
+
+      // 5. PROFILE COMPLETENESS (Quality signal)
+      if (user.bio && user.bio.length > 100) score += 10;
+      if (user.company) score += 10;
+      if (user.avatar) score += 5;
+      if (user.yearsExperience && user.yearsExperience > 5) score += 10;
+
+      // 6. ACTIVITY LEVEL (Active users are more valuable)
+      if (user.projectsCompleted && user.projectsCompleted > 0) {
+        score += 10; // Has completed projects
+      }
+
+      return { user, score };
+    });
+
+    // Sort by score and return top 10
+    scoredUsers.sort((a, b) => b.score - a.score);
+    const topRecommendations = scoredUsers.slice(0, 10).map(item => item.user);
+
+    res.json({ 
+      recommendations: topRecommendations,
+      algorithm: 'v1.0-intelligent-matching'
+    });
   } catch (error) {
     console.error('Recommendations error:', error);
-    res.status(500).json({ error: 'Failed to fetch recommendations' });
+    res.status(500).json({ error: 'Failed to fetch recommendations', message: error.message });
   }
 });
 
