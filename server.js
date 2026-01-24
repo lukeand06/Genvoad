@@ -351,6 +351,13 @@ app.post('/api/reviews', authMiddleware, async (req, res) => {
     const project = await Project.findById(projectId);
     if (!project) return res.status(404).json({ error: 'Project not found' });
 
+      // Ensure reviewee is a company profile (Indeed-like behavior)
+      const revieweeUser = await User.findById(reviewee);
+      if (!revieweeUser) return res.status(404).json({ error: 'Reviewee not found' });
+      if (!revieweeUser.company) {
+        return res.status(400).json({ error: 'Reviews are only allowed on company profiles' });
+      }
+
     // Only owner or accepted contractor can review after completion
     const isOwnerReviewer = project.owner.toString() === req.user._id.toString();
     const isContractorReviewer = project.acceptedContractor && project.acceptedContractor.toString() === req.user._id.toString();
@@ -406,6 +413,72 @@ app.get('/api/users/:id/reviews', authMiddleware, async (req, res) => {
     res.json({ reviews });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch reviews' });
+  }
+});
+
+// Edit a review (reviewer can always edit)
+app.patch('/api/reviews/:id', authMiddleware, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review) return res.status(404).json({ error: 'Review not found' });
+    if (review.reviewer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized to edit this review' });
+    }
+
+    const user = await User.findById(review.reviewee);
+    if (!user) return res.status(404).json({ error: 'Reviewee not found' });
+
+    const oldRating = review.rating;
+    const { rating, comment } = req.body;
+    const hasRating = typeof rating !== 'undefined';
+    const newRating = hasRating ? Math.max(1, Math.min(5, Number(rating))) : oldRating;
+
+    // Update review fields
+    if (hasRating) review.rating = newRating;
+    if (typeof comment !== 'undefined') review.comment = comment;
+    await review.save();
+
+    // Adjust aggregates if rating changed
+    if (hasRating && user.reviewCount > 0) {
+      const count = user.reviewCount;
+      const adjusted = ((user.rating || 0) * count - oldRating + newRating) / count;
+      user.rating = Number(adjusted.toFixed(2));
+      await user.save();
+    }
+
+    res.json({ success: true, review });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to edit review' });
+  }
+});
+
+// Delete a review (reviewer can always delete)
+app.delete('/api/reviews/:id', authMiddleware, async (req, res) => {
+  try {
+    const review = await Review.findById(req.params.id);
+    if (!review) return res.status(404).json({ error: 'Review not found' });
+    if (review.reviewer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized to delete this review' });
+    }
+
+    const user = await User.findById(review.reviewee);
+    if (!user) return res.status(404).json({ error: 'Reviewee not found' });
+
+    const oldCount = user.reviewCount || 0;
+    const oldRating = user.rating || 0;
+    const newCount = Math.max(0, oldCount - 1);
+    let newAvg = 0;
+    if (newCount > 0) {
+      newAvg = ((oldRating * oldCount) - review.rating) / newCount;
+    }
+    user.reviewCount = newCount;
+    user.rating = Number(newAvg.toFixed(2));
+    await user.save();
+
+    await review.deleteOne();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to delete review' });
   }
 });
 

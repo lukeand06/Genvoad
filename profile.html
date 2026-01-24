@@ -288,7 +288,7 @@
                             <div id="reviews-list" class="space-y-4">
                                 <p class="text-sm text-gray-500">Loading reviews...</p>
                             </div>
-                            ${!isOwnProfile ? `
+                            ${(profile.company && !isOwnProfile) ? `
                                 <div id="review-form" class="mt-5 border-t border-gray-200 pt-4">
                                     <h3 class="text-sm font-medium text-gray-900 mb-2">Leave a review</h3>
                                     <div class="flex items-center gap-1 mb-3" id="star-input">
@@ -331,6 +331,12 @@
                             <div class="text-yellow-500 text-sm">${'★'.repeat(r.rating)}${'☆'.repeat(5 - r.rating)}</div>
                             ${r.comment ? `<p class="text-sm text-gray-700 mt-1">${r.comment}</p>` : ''}
                             ${r.project ? `<p class="text-xs text-gray-500 mt-1">Project: ${r.project.title}</p>` : ''}
+                            ${(r.reviewer && (r.reviewer._id || r.reviewer) === currentUser.id) ? `
+                                <div class="mt-2 flex gap-2">
+                                    <button class="px-3 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50" onclick="editExistingReview('${r._id}', ${r.rating}, '${(r.comment || '').replace(/'/g, "\'")}', '${profile._id}')">Edit</button>
+                                    <button class="px-3 py-1 text-xs border border-red-300 text-red-700 rounded hover:bg-red-50" onclick="deleteExistingReview('${r._id}', '${profile._id}')">Delete</button>
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 `).join('');
@@ -382,6 +388,40 @@
                     alert('Failed to submit review');
                 }
             });
+        }
+
+        async function editExistingReview(reviewId, currentRating, currentComment, revieweeId) {
+            try {
+                const ratingStr = prompt('Update rating (1-5 stars):', String(currentRating));
+                if (ratingStr === null) return;
+                const rating = Number(ratingStr);
+                if (Number.isNaN(rating) || rating < 1 || rating > 5) { alert('Invalid rating'); return; }
+                const comment = prompt('Update comment (optional):', currentComment || '') ?? '';
+
+                const res = await authFetch(`/reviews/${reviewId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ rating, comment })
+                });
+                const data = await res.json();
+                if (!res.ok) { alert(data.error || 'Failed to edit review'); return; }
+                alert('Review updated');
+                loadReviews(revieweeId);
+            } catch (e) {
+                alert('Failed to edit review');
+            }
+        }
+
+        async function deleteExistingReview(reviewId, revieweeId) {
+            try {
+                if (!confirm('Delete your review?')) return;
+                const res = await authFetch(`/reviews/${reviewId}`, { method: 'DELETE' });
+                if (!res.ok) { const d = await res.json(); alert(d.error || 'Failed to delete review'); return; }
+                alert('Review deleted');
+                loadReviews(revieweeId);
+            } catch (e) {
+                alert('Failed to delete review');
+            }
         }
 
         loadProfile();
