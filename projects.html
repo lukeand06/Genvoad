@@ -288,7 +288,7 @@
                 
                 // Filter projects where user has bid
                 const projectsWithMyBids = data.projects.filter(p => 
-                    p.bids?.some(bid => bid.user._id === user.id)
+                    (p.bids || []).some(bid => (bid.user && bid.user._id ? bid.user._id : bid.user) === user.id)
                 );
                 
                 displayMyBids(projectsWithMyBids);
@@ -307,7 +307,7 @@
             }
 
             container.innerHTML = projects.map(project => {
-                const myBid = project.bids.find(bid => bid.user._id === user.id);
+                const myBid = project.bids.find(bid => (bid.user && bid.user._id ? bid.user._id : bid.user) === user.id);
                 const statusColor = myBid.status === 'accepted' ? 'bg-green-50 text-green-700 border-green-200' :
                                    myBid.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
                                    'bg-yellow-50 text-yellow-700 border-yellow-200';
@@ -392,12 +392,57 @@
                         ${myBid.status === 'accepted' ? `
                             <a href="/messages.html?user=${project.owner._id}&projectId=${project._id}" class="flex-1 text-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">Go to Project Chat</a>
                         ` : `
-                            <a href="/messages.html?user=${project.owner._id}&projectId=${project._id}" class="flex-1 text-center px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Message Client</a>
+                            <button onclick="editBid('${project._id}', '${myBid._id}')" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Edit Bid</button>
+                            <button onclick="withdrawBid('${project._id}', '${myBid._id}')" class="px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50">Withdraw</button>
                         `}
                     </div>
                 </div>
             `;
             }).join('');
+        }
+
+        async function editBid(projectId, bidId) {
+            try {
+                const amountStr = prompt('Enter new bid amount (USD):');
+                if (amountStr === null) return; // cancelled
+                const amount = Number(amountStr);
+                if (Number.isNaN(amount) || amount <= 0) { alert('Invalid amount'); return; }
+
+                const timeline = prompt('Enter new timeline (e.g., 6 weeks):');
+                if (timeline === null) return;
+
+                const proposal = prompt('Update proposal notes (optional):');
+                if (proposal === null) return;
+
+                const res = await authFetch(`/projects/${projectId}/bids/${bidId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount, timeline, proposal })
+                });
+                const data = await res.json();
+                if (!res.ok) { alert(data.error || 'Failed to update bid'); return; }
+                alert('Bid updated');
+                loadMyBids();
+            } catch (e) {
+                console.error('Edit bid error', e);
+                alert('Failed to update bid');
+            }
+        }
+
+        async function withdrawBid(projectId, bidId) {
+            try {
+                if (!confirm('Withdraw your bid? This cannot be undone.')) return;
+                const res = await authFetch(`/projects/${projectId}/bids/${bidId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (!res.ok) { alert(data.error || 'Failed to withdraw bid'); return; }
+                alert('Bid withdrawn');
+                loadMyBids();
+            } catch (e) {
+                console.error('Withdraw bid error', e);
+                alert('Failed to withdraw bid');
+            }
         }
 
         loadProjects();

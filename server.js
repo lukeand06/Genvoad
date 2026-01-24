@@ -494,6 +494,7 @@ app.get('/api/projects', authMiddleware, async (req, res) => {
     
     const projects = await Project.find(query)
       .populate('owner', 'firstName lastName avatar company')
+      .populate('bids.user', 'firstName lastName avatar company')
       .sort('-createdAt')
       .limit(50);
     
@@ -577,6 +578,62 @@ app.post('/api/projects/:projectId/bids/:bidId/accept', authMiddleware, async (r
     res.json({ success: true, message: 'Bid accepted' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to accept bid' });
+  }
+});
+
+// Edit bid (amount, timeline, proposal) by bidder when pending
+app.patch('/api/projects/:projectId/bids/:bidId', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const bid = project.bids.id(req.params.bidId);
+    if (!bid) return res.status(404).json({ error: 'Bid not found' });
+
+    if (bid.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized to edit this bid' });
+    }
+
+    if (bid.status !== 'pending') {
+      return res.status(400).json({ error: 'Only pending bids can be edited' });
+    }
+
+    const { amount, timeline, proposal } = req.body;
+    if (typeof amount !== 'undefined') bid.amount = amount;
+    if (typeof timeline !== 'undefined') bid.timeline = timeline;
+    if (typeof proposal !== 'undefined') bid.proposal = proposal;
+
+    project.updatedAt = new Date();
+    await project.save();
+    res.json({ success: true, message: 'Bid updated', bid });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to update bid' });
+  }
+});
+
+// Withdraw bid by bidder when pending (remove from array)
+app.delete('/api/projects/:projectId/bids/:bidId', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    const bid = project.bids.id(req.params.bidId);
+    if (!bid) return res.status(404).json({ error: 'Bid not found' });
+
+    if (bid.user.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized to withdraw this bid' });
+    }
+
+    if (bid.status !== 'pending') {
+      return res.status(400).json({ error: 'Only pending bids can be withdrawn' });
+    }
+
+    bid.remove();
+    project.updatedAt = new Date();
+    await project.save();
+    res.json({ success: true, message: 'Bid withdrawn' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to withdraw bid' });
   }
 });
 
