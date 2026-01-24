@@ -177,9 +177,15 @@
 
         async function loadConversations() {
             try {
-                const response = await authFetch('/messages/conversations');
-                const data = await response.json();
-                conversations = data.conversations;
+                const res = await authFetch('/api/messages/conversations');
+                const ct = res.headers.get('content-type') || '';
+                if (!res.ok || !ct.includes('application/json')) {
+                    let err;
+                    try { err = await res.json(); } catch {}
+                    throw new Error((err && (err.error || err.message)) || `Failed to load conversations (HTTP ${res.status})`);
+                }
+                const data = await res.json();
+                conversations = data.conversations || [];
                 displayConversations();
                 
                 // If there's a user param, open that conversation
@@ -188,12 +194,20 @@
                 }
             } catch (error) {
                 console.error('Error loading conversations:', error);
+                const container = document.getElementById('conversations-list');
+                if (container) container.innerHTML = '<div class="p-4 text-center text-red-500">Failed to load conversations</div>';
             }
         }
 
         async function loadPartners() {
             try {
-                const res = await authFetch('/partners');
+                const res = await authFetch('/api/partners');
+                const ct = res.headers.get('content-type') || '';
+                if (!res.ok || !ct.includes('application/json')) {
+                    let err;
+                    try { err = await res.json(); } catch {}
+                    throw new Error((err && (err.error || err.message)) || `Failed to load partners (HTTP ${res.status})`);
+                }
                 const data = await res.json();
                 partners = data.partners || [];
                 renderPartners();
@@ -252,7 +266,13 @@
             
             // Load user info
             try {
-                const userResponse = await authFetch(`/users/${userId}`);
+                const userResponse = await authFetch(`/api/users/${userId}`);
+                const ct = userResponse.headers.get('content-type') || '';
+                if (!userResponse.ok || !ct.includes('application/json')) {
+                    let err;
+                    try { err = await userResponse.json(); } catch {}
+                    throw new Error((err && (err.error || err.message)) || `Failed to load user (HTTP ${userResponse.status})`);
+                }
                 const userData = await userResponse.json();
                 const chatUser = userData.user;
                 
@@ -293,6 +313,13 @@
                 }
             } catch (error) {
                 console.error('Error opening chat:', error);
+                const header = document.getElementById('chat-header');
+                const noConv = document.getElementById('no-conversation');
+                if (noConv) {
+                    noConv.classList.remove('hidden');
+                    noConv.innerHTML = '<div class="text-center text-red-500">Failed to open chat</div>';
+                }
+                if (header) header.classList.add('hidden');
             }
         }
 
@@ -300,12 +327,23 @@
             if (!currentChatUserId) return;
             
             try {
-                const response = await authFetch(`/messages/${currentChatUserId}`);
-                const data = await response.json();
-                currentMessages = data.messages;
+                const res = await authFetch(`/api/messages/${currentChatUserId}`);
+                const ct = res.headers.get('content-type') || '';
+                if (!res.ok || !ct.includes('application/json')) {
+                    let err;
+                    try { err = await res.json(); } catch {}
+                    throw new Error((err && (err.error || err.message)) || `Failed to load messages (HTTP ${res.status})`);
+                }
+                const data = await res.json();
+                currentMessages = data.messages || [];
                 displayMessages();
             } catch (error) {
                 console.error('Error loading messages:', error);
+                const container = document.getElementById('messages-container');
+                if (container) {
+                    container.classList.remove('hidden');
+                    container.innerHTML = '<div class="text-center text-red-500">Failed to load messages</div>';
+                }
             }
         }
 
