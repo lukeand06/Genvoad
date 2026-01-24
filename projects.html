@@ -136,7 +136,14 @@
 
         async function loadProjects() {
             try {
-                const res = await authFetch('/api/projects');
+                const status = document.getElementById('status-filter').value;
+                const category = document.getElementById('category-filter').value;
+                const params = new URLSearchParams();
+                if (status) params.set('status', status);
+                if (category) params.set('category', category);
+                const url = params.toString() ? `/api/projects?${params.toString()}` : '/api/projects';
+
+                const res = await authFetch(url);
                 const ct = res.headers.get('content-type') || '';
                 if (!res.ok || !ct.includes('application/json')) {
                     let err;
@@ -145,7 +152,7 @@
                 }
                 const data = await res.json();
                 allProjects = data.projects || [];
-                filterProjects(); // respect default status selection
+                filterProjects(); // apply search locally
             } catch (error) {
                 console.error('Error loading projects:', error);
                 document.getElementById('projects-container').innerHTML = `<div class="text-center py-12 text-red-500">${error.message || 'Failed to load projects'}</div>`;
@@ -238,24 +245,19 @@
         }
 
         function filterProjects() {
-            const search = document.getElementById('search-input').value.toLowerCase();
-            const category = document.getElementById('category-filter').value;
-            const status = document.getElementById('status-filter').value;
-
+            const search = (document.getElementById('search-input').value || '').toLowerCase();
+            
             const filtered = allProjects.filter(project => {
-                const matchesSearch = !search || 
-                    project.title.toLowerCase().includes(search) || 
-                    project.description.toLowerCase().includes(search);
-                const matchesCategory = !category || project.category === category;
-                const matchesStatus = !status || project.status === status;
-                
-                return matchesSearch && matchesCategory && matchesStatus;
+                const title = (project.title || '').toLowerCase();
+                const desc = (project.description || '').toLowerCase();
+                const matchesSearch = !search || title.includes(search) || desc.includes(search);
+                return matchesSearch;
             });
 
             displayProjects(filtered);
         }
 
-        document.getElementById('filter-btn').addEventListener('click', filterProjects);
+        document.getElementById('filter-btn').addEventListener('click', loadProjects);
         document.getElementById('search-input').addEventListener('input', filterProjects);
 
         // Tab switching
