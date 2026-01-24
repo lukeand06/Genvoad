@@ -861,8 +861,20 @@ app.post('/api/projects', authMiddleware, upload.array('attachments', 10), async
     // Validate required fields
     const { title, description, category, budget, location } = req.body;
     
-    if (!title || !description || !category || !budget || !location) {
-      return res.status(400).json({ error: 'Missing required fields: title, description, category, budget, location' });
+    if (!title || !title.trim()) {
+      return res.status(400).json({ error: 'Project title is required' });
+    }
+    if (!description || !description.trim()) {
+      return res.status(400).json({ error: 'Project description is required' });
+    }
+    if (!category) {
+      return res.status(400).json({ error: 'Category is required' });
+    }
+    if (!budget) {
+      return res.status(400).json({ error: 'Budget is required' });
+    }
+    if (!location || !location.trim()) {
+      return res.status(400).json({ error: 'Location is required' });
     }
 
     // Validate budget is a number
@@ -871,19 +883,44 @@ app.post('/api/projects', authMiddleware, upload.array('attachments', 10), async
       return res.status(400).json({ error: 'Budget must be a positive number' });
     }
 
+    // Check authentication
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
     const projectData = {
-      ...req.body,
+      title: title.trim(),
+      description: description.trim(),
+      category: category,
       budget: budgetNum,
-      owner: req.user._id
+      location: location.trim(),
+      owner: req.user._id,
+      requirements: [],
+      skills: []
     };
 
     // Parse arrays from form data
-    if (typeof req.body.requirements === 'string') {
-      projectData.requirements = req.body.requirements.split(',').map(r => r.trim()).filter(r => r);
+    if (req.body.requirements) {
+      if (typeof req.body.requirements === 'string') {
+        projectData.requirements = req.body.requirements.split(',').map(r => r.trim()).filter(r => r);
+      } else if (Array.isArray(req.body.requirements)) {
+        projectData.requirements = req.body.requirements.map(r => String(r).trim()).filter(r => r);
+      }
     }
-    if (typeof req.body.skills === 'string') {
-      projectData.skills = req.body.skills.split(',').map(s => s.trim()).filter(s => s);
+
+    if (req.body.skills) {
+      if (typeof req.body.skills === 'string') {
+        projectData.skills = req.body.skills.split(',').map(s => s.trim()).filter(s => s);
+      } else if (Array.isArray(req.body.skills)) {
+        projectData.skills = req.body.skills.map(s => String(s).trim()).filter(s => s);
+      }
     }
+
+    // Add optional fields
+    if (req.body.startDate) projectData.startDate = req.body.startDate;
+    if (req.body.endDate) projectData.endDate = req.body.endDate;
+    if (req.body.zoomLink) projectData.zoomLink = req.body.zoomLink;
+    if (req.body.meetingDate) projectData.meetingDate = req.body.meetingDate;
 
     // Handle file uploads
     if (req.files && req.files.length > 0) {
@@ -895,12 +932,23 @@ app.post('/api/projects', authMiddleware, upload.array('attachments', 10), async
     }
 
     const project = new Project(projectData);
-    await project.save();
+    const savedProject = await project.save();
     
-    res.json({ success: true, project });
+    // Populate owner before returning
+    const populatedProject = await Project.findById(savedProject._id)
+      .populate('owner', 'firstName lastName avatar company');
+    
+    res.json({ success: true, project: populatedProject });
   } catch (error) {
     console.error('Error creating project:', error);
-    res.status(500).json({ error: 'Failed to create project' });
+    
+    // Handle mongoose validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(err => err.message);
+      return res.status(400).json({ error: messages.join('; ') });
+    }
+    
+    res.status(500).json({ error: 'Failed to create project: ' + error.message });
   }
 });
 

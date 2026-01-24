@@ -162,6 +162,12 @@
             throw new Error('Not authenticated');
         }
 
+        // Check if user is a vendor - redirect to browse if so
+        const user = getCurrentUser();
+        if (user.role === 'vendor') {
+            window.location.href = '/browse.html?vendor-restricted=true';
+        }
+
         let selectedFiles = [];
 
         function showError(message) {
@@ -259,9 +265,9 @@
             const location = document.getElementById('location').value.trim();
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
-            const skillsInput = document.getElementById('skills').value;
+            const skillsInput = document.getElementById('skills').value.trim();
             const meetingDate = document.getElementById('meetingDate').value;
-            const zoomLink = document.getElementById('zoomLink').value;
+            const zoomLink = document.getElementById('zoomLink').value.trim();
             
             // Validate required fields
             if (!title) {
@@ -306,8 +312,8 @@
                 location,
                 skills,
                 requirements,
-                meetingDate: meetingDate || null,
-                zoomLink: zoomLink || null
+                meetingDate: meetingDate || undefined,
+                zoomLink: zoomLink || undefined
             };
             
             if (startDate) projectData.startDate = startDate;
@@ -316,16 +322,33 @@
             // If there are files, use FormData for multipart upload
             if (selectedFiles.length > 0) {
                 const formData = new FormData();
-                for (const [key, value] of Object.entries(projectData)) {
-                    if (Array.isArray(value)) {
-                        value.forEach((item, idx) => formData.append(`${key}[${idx}]`, item));
-                    } else if (value !== null) {
-                        formData.append(key, value);
-                    }
+                
+                // Add form fields
+                formData.append('title', title);
+                formData.append('description', description);
+                formData.append('category', category);
+                formData.append('budget', budgetNum);
+                formData.append('location', location);
+                
+                // Add arrays
+                if (skills.length > 0) {
+                    skills.forEach(skill => formData.append('skills', skill));
                 }
+                if (requirements.length > 0) {
+                    requirements.forEach(req => formData.append('requirements', req));
+                }
+                
+                // Add optional fields
+                if (startDate) formData.append('startDate', startDate);
+                if (endDate) formData.append('endDate', endDate);
+                if (meetingDate) formData.append('meetingDate', meetingDate);
+                if (zoomLink) formData.append('zoomLink', zoomLink);
+                
+                // Add files
                 selectedFiles.forEach((file) => {
-                    formData.append(`attachments`, file);
+                    formData.append('attachments', file);
                 });
+                
                 submitProjectWithFiles(formData);
                 return;
             }
@@ -343,7 +366,12 @@
                 const data = await response.json();
                 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Failed to create project');
+                    const errorMsg = data.error || 'Failed to create project';
+                    throw new Error(errorMsg);
+                }
+                
+                if (!data.project || !data.project._id) {
+                    throw new Error('Invalid response from server');
                 }
                 
                 showSuccess('Project created successfully!');
@@ -351,7 +379,8 @@
                     window.location.href = `/project-detail.html?id=${data.project._id}`;
                 }, 500);
             } catch (error) {
-                showError(error.message);
+                console.error('Submit error:', error);
+                showError(error.message || 'Failed to create project');
                 btn.disabled = false;
                 btn.textContent = 'Post Project';
             }
@@ -364,6 +393,10 @@
 
             try {
                 const token = getToken();
+                if (!token) {
+                    throw new Error('Not authenticated. Please log in again.');
+                }
+
                 const response = await fetch('/api/projects', {
                     method: 'POST',
                     headers: {
@@ -375,7 +408,12 @@
                 const data = await response.json();
 
                 if (!response.ok) {
-                    throw new Error(data.error || 'Failed to create project');
+                    const errorMsg = data.error || 'Failed to create project';
+                    throw new Error(errorMsg);
+                }
+
+                if (!data.project || !data.project._id) {
+                    throw new Error('Invalid response from server');
                 }
 
                 showSuccess('Project created successfully!');
@@ -383,7 +421,8 @@
                     window.location.href = `/project-detail.html?id=${data.project._id}`;
                 }, 500);
             } catch (error) {
-                showError(error.message);
+                console.error('File upload error:', error);
+                showError(error.message || 'Failed to create project');
                 btn.disabled = false;
                 btn.textContent = 'Post Project';
             }

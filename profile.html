@@ -259,6 +259,58 @@
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                     <!-- Left Sidebar -->
                     <div class="lg:col-span-1 space-y-6">
+                        <!-- Role-Specific Stats for Owners -->
+                        ${profile.role === 'owner' ? `
+                            <div class="bg-white rounded-lg border border-gray-200 p-5">
+                                <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                    </svg>
+                                    Owner Stats
+                                </h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700 font-medium">Projects Posted</span>
+                                        <span class="text-lg font-bold text-gray-900" id="owner-projects">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700 font-medium">Completed</span>
+                                        <span class="text-lg font-bold text-green-600" id="owner-completed">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700 font-medium">Active Contractors</span>
+                                        <span class="text-lg font-bold text-blue-600" id="owner-contractors">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Role-Specific Stats for Vendors -->
+                        ${profile.role === 'vendor' ? `
+                            <div class="bg-white rounded-lg border border-gray-200 p-5">
+                                <h3 class="text-base font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                    </svg>
+                                    Portfolio Stats
+                                </h3>
+                                <div class="space-y-3">
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700 font-medium">Projects Completed</span>
+                                        <span class="text-lg font-bold text-gray-900" id="vendor-completed">0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700 font-medium">Total Earnings</span>
+                                        <span class="text-lg font-bold text-green-600" id="vendor-earnings">$0</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-sm text-gray-700 font-medium">Avg. Rating</span>
+                                        <span class="text-lg font-bold text-yellow-500" id="vendor-rating">—</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : ''}
+
                         <!-- Contact Card -->
                         ${(profile.links && (profile.links.website || profile.links.linkedin || profile.links.github)) ? `
                             <div class="bg-white rounded-lg border border-gray-200 p-5">

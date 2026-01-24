@@ -157,27 +157,125 @@
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <button onclick="openModal('active-projects-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600">Active Projects</p>
-                        <p class="text-3xl font-bold text-gray-900 mt-1" id="active-projects">0</p>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="stats-grid">
+            <!-- For Owners -->
+            <div id="owner-stats" class="hidden contents">
+                <button onclick="openModal('active-projects-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Active Projects</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1" id="active-projects">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                        </div>
                     </div>
-                    <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                    </div>
-                </div>
-            </button>
+                </button>
 
-            <button onclick="openModal('new-bids-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-gray-600">New Bids</p>
-                        <p class="text-3xl font-bold text-gray-900 mt-1" id="new-bids">0</p>
+                <button onclick="openModal('new-bids-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Pending Bids</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1" id="new-bids">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
                     </div>
+                </button>
+
+                <button onclick="openModal('messages-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Unread Messages</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1" id="unread-messages">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </button>
+
+                <button onclick="openModal('completed-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Completed</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1" id="completed-projects">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </button>
+            </div>
+
+            <!-- For Vendors -->
+            <div id="vendor-stats" class="hidden contents">
+                <button onclick="location.href='/browse.html'" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Projects Available</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1" id="vendor-available-projects">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </button>
+
+                <button onclick="openModal('my-bids-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Active Bids</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1" id="vendor-active-bids">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </button>
+
+                <button onclick="openModal('vendor-active-projects-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Work In Progress</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1" id="vendor-active-work">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </button>
+
+                <button onclick="openModal('messages-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Total Earnings</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1" id="vendor-total-earnings">$0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
                     <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
                         <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -553,30 +651,58 @@
         // Load dashboard data
         async function loadDashboard() {
             try {
-                // Load user's projects
-                const projectsRes = await authFetch(`/api/projects?owner=${user.id}`);
-                if (!projectsRes.ok) {
-                    const ct = projectsRes.headers.get('content-type') || '';
-                    const errMsg = ct.includes('application/json') ? (await projectsRes.json()).error || 'Failed to load projects' : `HTTP ${projectsRes.status}`;
-                    throw new Error(errMsg);
+                const role = getActiveRole();
+                const isOwner = role === 'owner';
+                
+                // Show/hide role-specific stats
+                document.getElementById('owner-stats').style.display = isOwner ? 'contents' : 'none';
+                document.getElementById('vendor-stats').style.display = isOwner ? 'none' : 'contents';
+
+                if (isOwner) {
+                    // Load owner dashboard
+                    const projectsRes = await authFetch(`/api/projects?owner=${user.id}`);
+                    if (!projectsRes.ok) {
+                        const ct = projectsRes.headers.get('content-type') || '';
+                        const errMsg = ct.includes('application/json') ? (await projectsRes.json()).error || 'Failed to load projects' : `HTTP ${projectsRes.status}`;
+                        throw new Error(errMsg);
+                    }
+                    const projectsData = await projectsRes.json();
+                    userProjects = projectsData.projects || [];
+                    
+                    // Calculate owner stats
+                    const activeProjects = userProjects.filter(p => p.status === 'open' || p.status === 'in_progress');
+                    const completedProjects = userProjects.filter(p => p.status === 'completed');
+                    
+                    let totalBids = 0;
+                    userProjects.forEach(p => {
+                        totalBids += p.bids?.length || 0;
+                    });
+
+                    document.getElementById('active-projects').textContent = activeProjects.length;
+                    document.getElementById('new-bids').textContent = totalBids;
+                    document.getElementById('completed-projects').textContent = completedProjects.length;
+                } else {
+                    // Load vendor dashboard
+                    try {
+                        // Available projects count
+                        const allProjectsRes = await authFetch('/api/projects');
+                        if (allProjectsRes.ok) {
+                            const allData = await allProjectsRes.json();
+                            const availableProjects = allData.projects?.filter(p => p.status === 'open') || [];
+                            document.getElementById('vendor-available-projects').textContent = availableProjects.length;
+                        }
+                    } catch (err) {
+                        console.error('Error loading available projects:', err);
+                        document.getElementById('vendor-available-projects').textContent = '0';
+                    }
+
+                    // Vendor's bids - would need API endpoint
+                    document.getElementById('vendor-active-bids').textContent = '0';
+                    document.getElementById('vendor-active-work').textContent = '0';
+                    document.getElementById('vendor-total-earnings').textContent = '$0';
                 }
-                const projectsData = await projectsRes.json();
-                userProjects = projectsData.projects || [];
-                
-                // Calculate stats
-                const activeProjects = userProjects.filter(p => p.status === 'open' || p.status === 'in_progress');
-                const completedProjects = userProjects.filter(p => p.status === 'completed');
-                
-                let totalBids = 0;
-                userProjects.forEach(p => {
-                    totalBids += p.bids?.length || 0;
-                });
 
-                document.getElementById('active-projects').textContent = activeProjects.length;
-                document.getElementById('new-bids').textContent = totalBids;
-                document.getElementById('completed-projects').textContent = completedProjects.length;
-
-                // Load messages count
+                // Load messages count (same for both roles)
                 try {
                     const messagesRes = await authFetch('/api/messages/conversations');
                     if (!messagesRes.ok) {
@@ -590,10 +716,12 @@
                     messagesData.forEach(c => {
                         unreadCount += c.unread || 0;
                     });
-                    document.getElementById('unread-messages').textContent = unreadCount;
+                    const unreadElement = document.getElementById('unread-messages');
+                    if (unreadElement) unreadElement.textContent = unreadCount;
                 } catch (err) {
                     console.error('Messages error:', err);
-                    document.getElementById('unread-messages').textContent = '0';
+                    const unreadElement = document.getElementById('unread-messages');
+                    if (unreadElement) unreadElement.textContent = '0';
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
