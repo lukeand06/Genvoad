@@ -104,9 +104,15 @@
 
         <!-- Search -->
         <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-            <div class="flex gap-4">
-                <input type="text" id="search-input" placeholder="Search partners or companies..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                <button id="search-btn" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Search</button>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <input type="text" id="search-input" placeholder="Search companies, skills, or location..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                <div class="flex items-center gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="verified-only" class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900">
+                        <span class="text-sm font-medium text-gray-700">Verified Only</span>
+                    </label>
+                    <button id="search-btn" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Search</button>
+                </div>
             </div>
         </div>
 
@@ -197,10 +203,14 @@
                 if (!res.ok || !ct.includes('application/json')) {
                     let err;
                     try { err = await res.json(); } catch {}
-                    throw new Error((err && (err.error || err.message)) || `Failed to load featured services (HTTP ${res.status})`);
+                    throw new Error((err && (err.error || err.message)) || `Failed to load companies (HTTP ${res.status})`);
                 }
                 const data = await res.json();
-                featuredServices = (data.users || []).filter(u => u.role === 'vendor' || (u.skills && u.skills.length > 0)).slice(0, 12);
+                // Get ALL users with companies or vendor role
+                featuredServices = (data.users || []).filter(u => 
+                    u._id !== user.id && // Exclude current user
+                    (u.company || u.role === 'vendor' || (u.skills && u.skills.length > 0))
+                );
                 displayFeaturedServices();
             } catch (error) {
                 console.error('Error loading companies:', error);
@@ -290,20 +300,41 @@
 
         function displayFeaturedServices() {
             const search = (document.getElementById('search-input').value || '').toLowerCase();
-            const filtered = featuredServices.filter(service => {
+            const verifiedOnly = document.getElementById('verified-only').checked;
+            
+            let filtered = featuredServices.filter(service => {
                 const name = `${service.firstName} ${service.lastName}`.toLowerCase();
                 const company = (service.company || '').toLowerCase();
                 const skills = (service.skills || []).join(' ').toLowerCase();
-                return !search || name.includes(search) || company.includes(search) || skills.includes(search);
+                const location = `${service.city || ''} ${service.state || ''} ${service.location || ''}`.toLowerCase();
+                const bio = (service.bio || '').toLowerCase();
+                
+                // Search filter
+                const matchesSearch = !search || 
+                    name.includes(search) || 
+                    company.includes(search) || 
+                    skills.includes(search) ||
+                    location.includes(search) ||
+                    bio.includes(search);
+                
+                // Verified filter
+                const matchesVerified = !verifiedOnly || (service.registrarId && service.registrarId.trim() !== '');
+                
+                return matchesSearch && matchesVerified;
             });
 
             const container = document.getElementById('network-content');
             if (filtered.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No companies found.</p></div>';
+                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No companies found. Try adjusting your filters.</p></div>';
                 return;
             }
 
-            container.innerHTML = filtered.map(service => `
+            // Show total count
+            const countDisplay = verifiedOnly ? 
+                `<div class="col-span-full mb-4"><p class="text-sm text-gray-600">${filtered.length} verified ${filtered.length === 1 ? 'company' : 'companies'} found</p></div>` :
+                `<div class="col-span-full mb-4"><p class="text-sm text-gray-600">${filtered.length} ${filtered.length === 1 ? 'company' : 'companies'} found</p></div>`;
+
+            container.innerHTML = countDisplay + filtered.map(service => `
                 <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
                     <div class="flex items-start justify-between mb-4">
                         <div class="flex-1">
@@ -457,6 +488,11 @@
             if (e.key === 'Enter') {
                 document.getElementById('search-btn').click();
             }
+        });
+
+        // Verified checkbox filter
+        document.getElementById('verified-only').addEventListener('change', () => {
+            if (currentTab === 'featured') displayFeaturedServices();
         });
 
         // Initial load
