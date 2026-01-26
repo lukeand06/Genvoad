@@ -143,7 +143,7 @@ function renderMilestone(milestone, projectId, canComplete, canApprove) {
       
       <div class="flex items-center gap-2 pt-3 border-t border-gray-100">
         ${canComplete && milestone.status === 'pending' ? `
-          <button onclick="completeMilestone('${projectId}', '${milestone._id}')" 
+          <button onclick="showCompleteMilestoneModal('${milestone._id}')" 
                   class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
             Mark Complete
           </button>

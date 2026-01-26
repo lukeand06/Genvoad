@@ -877,6 +877,39 @@ app.delete('/api/partners/:partnerId', authMiddleware, async (req, res) => {
 
 // ============ PROJECT ROUTES ============
 
+// Download attachment endpoint
+app.get('/api/download/:filename', (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filepath = path.join(uploadDir, filename);
+    
+    // Security check: ensure the file path doesn't escape the upload directory
+    const resolvedPath = path.resolve(filepath);
+    const resolvedUploadDir = path.resolve(uploadDir);
+    if (!resolvedPath.startsWith(resolvedUploadDir)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Check if file exists
+    if (!fs.existsSync(filepath)) {
+      return res.status(404).json({ error: 'File not found' });
+    }
+    
+    // Get original filename from the file (remove timestamp prefix)
+    const originalFilename = filename.includes('-') ? filename.substring(filename.indexOf('-') + 1) : filename;
+    
+    // Set headers for download
+    res.setHeader('Content-Disposition', `attachment; filename="${originalFilename}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    
+    // Send file
+    res.sendFile(filepath);
+  } catch (error) {
+    console.error('Download error:', error);
+    res.status(500).json({ error: 'Failed to download file' });
+  }
+});
+
 // Create project
 app.post('/api/projects', authMiddleware, upload.array('attachments', 10), async (req, res) => {
   try {
@@ -915,11 +948,21 @@ app.post('/api/projects', authMiddleware, upload.array('attachments', 10), async
       description: description.trim(),
       category: category,
       budget: budgetNum,
+      projectSize: req.body.projectSize || 'custom',
+      budgetPublic: req.body.budgetPublic === true || req.body.budgetPublic === 'true',
       location: location.trim(),
       owner: req.user._id,
       requirements: [],
       skills: []
     };
+
+    // Optional target price
+    if (req.body.targetPrice) {
+      const targetNum = parseFloat(req.body.targetPrice);
+      if (!isNaN(targetNum) && targetNum > 0) {
+        projectData.targetPrice = targetNum;
+      }
+    }
 
     // Parse arrays from form data
     if (req.body.requirements) {
@@ -1044,16 +1087,28 @@ app.post('/api/projects/:id/bids', authMiddleware, async (req, res) => {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ error: 'Project not found' });
     
+    // Check if bidding is locked
+    if (project.biddingLocked) {
+      return res.status(400).json({ error: 'Bidding is currently locked for this project' });
+    }
+    
     // Check if already bid
     const existingBid = project.bids.find(b => b.user.toString() === req.user._id.toString());
     if (existingBid) return res.status(400).json({ error: 'Already submitted bid' });
     
-    project.bids.push({
+    const bidData = {
       user: req.user._id,
-      amount: req.body.amount,
       proposal: req.body.proposal,
-      timeline: req.body.timeline
-    });
+      timeline: req.body.timeline,
+      priceRange: req.body.priceRange || 'exact'
+    };
+    
+    // Amount is optional if using price range
+    if (req.body.amount) {
+      bidData.amount = req.body.amount;
+    }
+    
+    project.bids.push(bidData);
     
     await project.save();
     res.json({ success: true, message: 'Bid submitted successfully' });
@@ -1106,6 +1161,11 @@ app.patch('/api/projects/:projectId/bids/:bidId', authMiddleware, async (req, re
   try {
     const project = await Project.findById(req.params.projectId);
     if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    // Check if bidding is locked
+    if (project.biddingLocked) {
+      return res.status(400).json({ error: 'Bidding is locked - cannot edit bids at this time' });
+    }
 
     const bid = project.bids.id(req.params.bidId);
     if (!bid) return res.status(404).json({ error: 'Bid not found' });
@@ -1154,6 +1214,50 @@ app.delete('/api/projects/:projectId/bids/:bidId', authMiddleware, async (req, r
     res.json({ success: true, message: 'Bid withdrawn' });
   } catch (error) {
     res.status(500).json({ error: 'Failed to withdraw bid' });
+  }
+});
+
+// Lock bidding - prevents new bids and bid edits during decision process
+app.post('/api/projects/:id/lock-bidding', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can lock bidding' });
+    }
+    
+    if (project.status !== 'open') {
+      return res.status(400).json({ error: 'Can only lock bidding on open projects' });
+    }
+    
+    project.biddingLocked = true;
+    project.updatedAt = new Date();
+    await project.save();
+    
+    res.json({ success: true, message: 'Bidding locked' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to lock bidding' });
+  }
+});
+
+// Unlock bidding - allows new bids and bid edits again
+app.post('/api/projects/:id/unlock-bidding', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can unlock bidding' });
+    }
+    
+    project.biddingLocked = false;
+    project.updatedAt = new Date();
+    await project.save();
+    
+    res.json({ success: true, message: 'Bidding unlocked' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to unlock bidding' });
   }
 });
 

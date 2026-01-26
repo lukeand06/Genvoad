@@ -82,8 +82,34 @@
             
             <form id="bid-form" class="space-y-4">
                 <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Pricing Method</label>
+                    <div class="flex gap-4 mb-3">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="pricing-method" value="exact" checked class="mr-2">
+                            <span class="text-sm">Exact Amount</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="pricing-method" value="range" class="mr-2">
+                            <span class="text-sm">Price Range</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="exact-price-field">
                     <label class="block text-sm font-medium text-gray-700 mb-1">Bid Amount ($)</label>
-                    <input type="number" id="bid-amount" required min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    <input type="number" id="bid-amount" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                </div>
+
+                <div id="range-price-field" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Price Range</label>
+                    <select id="bid-range" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                        <option value="">Select a range</option>
+                        <option value="small">Small ($0 - $5K)</option>
+                        <option value="medium">Medium ($5K - $25K)</option>
+                        <option value="upper-medium">Upper Medium ($25K - $100K)</option>
+                        <option value="large">Large ($100K+)</option>
+                    </select>
+                    <p class="mt-2 text-xs text-gray-500">💡 Using a range keeps your specific pricing private while showing you're in budget</p>
                 </div>
                 
                 <div>
@@ -104,8 +130,86 @@
         </div>
     </div>
 
+    <!-- Counter Offer Modal -->
+    <div id="counter-offer-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Submit Counter Offer</h2>
+            <form id="counter-offer-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
+                    <input type="number" id="counter-amount" required min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Timeline</label>
+                    <input type="text" id="counter-timeline" required placeholder="e.g., 4-6 weeks" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes (optional)</label>
+                    <textarea id="counter-notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeCounterOfferModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Milestone Modal -->
+    <div id="milestone-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg max-w-lg w-full p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Add Milestone</h2>
+            <form id="milestone-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                    <input type="text" id="milestone-title" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea id="milestone-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                        <input type="date" id="milestone-duedate" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount ($)</label>
+                        <input type="number" id="milestone-amount" min="0" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeMilestoneModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">Add Milestone</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Complete Milestone Modal -->
+    <div id="complete-milestone-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg max-w-lg w-full p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Complete Milestone</h2>
+            <form id="complete-milestone-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Completion Notes</label>
+                    <textarea id="completion-notes" rows="4" placeholder="Describe what was completed..." class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Deliverables (one per line)</label>
+                    <textarea id="completion-deliverables" rows="3" placeholder="File links, documentation URLs, etc." class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeCompleteMilestoneModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Mark Complete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="/public/js/auth.js"></script>
     <script src="/public/js/governance.js"></script>
+    <script src="/public/js/price-ranges.js"></script>
     <script>
         if (!requireAuth()) {
             throw new Error('Not authenticated');
@@ -122,6 +226,38 @@
         const urlParams = new URLSearchParams(window.location.search);
         const projectId = urlParams.get('id');
         let currentProject = null;
+        let currentBidId = null;
+        let currentMilestoneId = null;
+
+        // Helper function to get bid display (exact or range)
+        function getBidDisplay(bid) {
+            if (bid.amount && (!bid.priceRange || bid.priceRange === 'exact')) {
+                return formatCurrency(bid.amount);
+            }
+            
+            if (bid.priceRange && bid.priceRange !== 'exact') {
+                return formatPriceRange(bid.priceRange);
+            }
+            
+            return bid.amount ? formatCurrency(bid.amount) : 'Range not specified';
+        }
+
+        // Helper function to get project budget display
+        function getProjectBudgetDisplay(project) {
+            if (project.budgetPublic) {
+                return formatCurrency(project.budget);
+            }
+            
+            if (project.projectSize && project.projectSize !== 'custom') {
+                return formatPriceRange(project.projectSize);
+            }
+            
+            if (project.targetPrice) {
+                return `Target: ${formatCurrency(project.targetPrice)}`;
+            }
+            
+            return 'Budget not disclosed';
+        }
 
         if (!projectId) {
             window.location.href = '/projects.html';
@@ -236,8 +372,15 @@
                                         Your bid was not selected. Keep bidding on other projects!
                                     </div>
                                 ` : `
-                                    <div class="bg-blue-100 border border-blue-200 rounded px-3 py-2 text-sm text-blue-800">
-                                        Your bid is under review. The client will notify you of their decision.
+                                    <div class="flex items-center justify-between">
+                                        <div class="bg-blue-100 border border-blue-200 rounded px-3 py-2 text-sm text-blue-800 flex-1">
+                                            Your bid is under review. The client will notify you of their decision.
+                                        </div>
+                                        ${!project.biddingLocked ? `
+                                            <button onclick="withdrawBid('${myBid._id}')" class="ml-3 px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200">
+                                                Withdraw Bid
+                                            </button>
+                                        ` : ''}
                                     </div>
                                 `}
                             </div>
@@ -267,8 +410,12 @@
                             </div>
                         ` : ''}
 
-                        ${!isOwner && project.status === 'open' && !userHasBid ? `
+                        ${!isOwner && project.status === 'open' && !userHasBid && !project.biddingLocked ? `
                             <button id="open-bid-modal" class="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 mt-6">Submit Bid</button>
+                        ` : !isOwner && project.biddingLocked ? `
+                            <div class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+                                <p class="text-sm text-yellow-800 font-medium">🔒 Bidding is currently locked while the client makes their decision</p>
+                            </div>
                         ` : ''}
                     </div>
 
@@ -278,12 +425,21 @@
                             <div class="flex items-center justify-between mb-6">
                                 <h2 class="text-xl font-bold text-gray-900">Bids (${project.bids.length})</h2>
                                 ${isOwner ? `
-                                    <div class="flex gap-2">
+                                    <div class="flex gap-2 flex-wrap">
+                                        <button onclick="toggleBiddingLock()" class="px-3 py-1 ${project.biddingLocked ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'} rounded text-sm font-medium hover:opacity-80">
+                                            ${project.biddingLocked ? '🔓 Unlock Bidding' : '🔒 Lock for Decision'}
+                                        </button>
                                         <button id="sort-toggle" onclick="toggleBidSort()" class="px-3 py-1 bg-gray-100 text-gray-900 rounded text-sm font-medium hover:bg-gray-200">Sort: <span id="sort-label">Price ↓</span></button>
                                         <button id="compare-toggle" onclick="toggleBidComparison()" class="px-3 py-1 bg-gray-100 text-gray-900 rounded text-sm font-medium hover:bg-gray-200">Compare</button>
                                     </div>
                                 ` : ''}
                             </div>
+                            
+                            ${isOwner && project.biddingLocked ? `
+                                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <p class="text-sm text-yellow-800">🔒 Bidding is locked. New bids and edits are prevented while you review.</p>
+                                </div>
+                            ` : ''}
                             
                             <!-- Comparison View -->
                             ${isOwner ? `
@@ -304,30 +460,34 @@
                             ` : ''}
                             
                             <div id="bids-list" class="space-y-4">
-                                ${project.bids.map((bid, idx) => `
+                                ${project.bids.map((bid, idx) => {
+                                    const isOwnBid = bid.user._id === user.id;
+                                    const showDetails = isOwner || isOwnBid;
+                                    return `
                                     <div class="bid-card border border-gray-200 rounded-lg p-6 ${bid.status === 'accepted' ? 'bg-green-50 border-green-300' : bid.status === 'rejected' ? 'bg-red-50 border-red-200' : ''}" data-amount="${bid.amount}" data-index="${idx}">
                                         <div class="flex items-start justify-between mb-4">
                                             <div class="flex items-center gap-3 flex-1">
-                                                ${getAvatarHTML(bid.user, 'w-12 h-12')}
+                                                ${showDetails ? getAvatarHTML(bid.user, 'w-12 h-12') : `<div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-semibold">${idx + 1}</div>`}
                                                 <div class="min-w-0 flex-1">
                                                     <div class="flex items-center gap-2 flex-wrap">
                                                         <div class="flex items-center gap-1.5">
-                                                            <h3 class="font-semibold text-gray-900">${bid.user.company || `${bid.user.firstName} ${bid.user.lastName}`}</h3>
-                                                            ${getVerificationBadge(bid.user, 'small')}
+                                                            <h3 class="font-semibold text-gray-900">${showDetails ? (bid.user.company || `${bid.user.firstName} ${bid.user.lastName}`) : `Anonymous Bidder #${idx + 1}`}</h3>
+                                                            ${showDetails ? getVerificationBadge(bid.user, 'small') : ''}
+                                                            ${isOwnBid ? '<span class="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded font-medium">Your Bid</span>' : ''}
                                                         </div>
                                                         ${bid.status === 'accepted' ? '<span class="px-2 py-1 bg-green-500 text-white text-xs rounded font-medium">Accepted</span>' : ''}
                                                         ${bid.status === 'rejected' ? '<span class="px-2 py-1 bg-red-500 text-white text-xs rounded font-medium">Rejected</span>' : ''}
                                                         ${bid.status === 'revision_requested' ? '<span class="px-2 py-1 bg-yellow-500 text-white text-xs rounded font-medium">Revision Requested</span>' : ''}
                                                     </div>
-                                                    ${bid.user.company ? `<p class="text-sm text-gray-600 truncate">${bid.user.firstName} ${bid.user.lastName}</p>` : ''}
+                                                    ${showDetails && bid.user.company ? `<p class="text-sm text-gray-600 truncate">${bid.user.firstName} ${bid.user.lastName}</p>` : ''}
                                                     <div class="flex items-center gap-2 text-sm mt-1">
-                                                        ${bid.user.rating ? `<span class="text-yellow-500">★${bid.user.rating.toFixed(1)}</span>` : ''}
+                                                        ${showDetails && bid.user.rating ? `<span class="text-yellow-500">★${bid.user.rating.toFixed(1)}</span>` : ''}
                                                         ${bid.expiresAt && new Date(bid.expiresAt) < new Date() ? '<span class="text-red-500">Expired</span>' : bid.expiresAt ? `<span class="text-gray-500">Expires ${formatDate(bid.expiresAt)}</span>` : ''}
                                                     </div>
                                                 </div>
                                             </div>
                                             <div class="text-right">
-                                                <p class="text-2xl font-bold text-gray-900">${formatCurrency(bid.amount)}</p>
+                                                <p class="text-2xl font-bold text-gray-900">${getBidDisplay(bid)}</p>
                                                 <p class="text-sm text-gray-500">${bid.timeline}</p>
                                             </div>
                                         </div>
@@ -368,7 +528,8 @@
                                             </div>
                                         </div>
                                     </div>
-                                `).join('')}
+                                `;
+                                }).join('')}
                             </div>
                         </div>
                     ` : ''}
@@ -449,12 +610,27 @@
                             ${project.attachments && project.attachments.length > 0 ? `
                                 <div>
                                     <p class="text-sm font-medium text-gray-900 mb-2">📎 Attachments (${project.attachments.length})</p>
-                                    <div class="space-y-1">
-                                        ${project.attachments.map(att => `
-                                            <a href="${att.url}" target="_blank" download class="block text-blue-600 hover:text-blue-700 text-sm truncate">
-                                                ${att.filename}
-                                            </a>
-                                        `).join('')}
+                                    <div class="space-y-2">
+                                        ${project.attachments.map(att => {
+                                            const ext = att.filename.split('.').pop().toLowerCase();
+                                            const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+                                            const isPdf = ext === 'pdf';
+                                            const icon = isImage ? '🖼️' : isPdf ? '📄' : '📎';
+                                            // Extract filename from URL (remove /uploads/ prefix)
+                                            const urlFilename = att.url.split('/').pop();
+                                            const downloadUrl = `/api/download/${urlFilename}`;
+                                            return `
+                                                <div class="flex items-center justify-between gap-2 p-2 bg-gray-50 rounded hover:bg-gray-100 transition">
+                                                    <a href="${att.url}" target="_blank" class="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm truncate flex-1 min-w-0">
+                                                        <span class="text-base flex-shrink-0">${icon}</span>
+                                                        <span class="truncate">${att.filename}</span>
+                                                    </a>
+                                                    <a href="${downloadUrl}" class="flex-shrink-0 px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition" title="Download ${att.filename}">
+                                                        ⬇️
+                                                    </a>
+                                                </div>
+                                            `;
+                                        }).join('')}
                                     </div>
                                 </div>
                             ` : ''}
@@ -527,21 +703,67 @@
             document.getElementById('bid-modal').classList.add('hidden');
         });
 
+        // Pricing method toggle
+        document.querySelectorAll('input[name="pricing-method"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const exactField = document.getElementById('exact-price-field');
+                const rangeField = document.getElementById('range-price-field');
+                const amountInput = document.getElementById('bid-amount');
+                const rangeInput = document.getElementById('bid-range');
+                
+                if (this.value === 'exact') {
+                    exactField.classList.remove('hidden');
+                    rangeField.classList.add('hidden');
+                    amountInput.required = true;
+                    rangeInput.required = false;
+                } else {
+                    exactField.classList.add('hidden');
+                    rangeField.classList.remove('hidden');
+                    amountInput.required = false;
+                    rangeInput.required = true;
+                }
+            });
+        });
+
         document.getElementById('bid-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const amount = document.getElementById('bid-amount').value;
+            const pricingMethod = document.querySelector('input[name="pricing-method"]:checked').value;
+            const amount = pricingMethod === 'exact' ? Number(document.getElementById('bid-amount').value) : null;
+            const priceRange = pricingMethod === 'range' ? document.getElementById('bid-range').value : 'exact';
             const proposal = document.getElementById('bid-proposal').value;
             const timeline = document.getElementById('bid-timeline').value;
+            
+            // Validation
+            if (pricingMethod === 'exact' && (!amount || amount <= 0)) {
+                document.getElementById('bid-error').textContent = 'Please enter a valid bid amount';
+                document.getElementById('bid-error').classList.remove('hidden');
+                return;
+            }
+            if (pricingMethod === 'range' && !priceRange) {
+                document.getElementById('bid-error').textContent = 'Please select a price range';
+                document.getElementById('bid-error').classList.remove('hidden');
+                return;
+            }
             
             const btn = document.getElementById('submit-bid-btn');
             btn.disabled = true;
             btn.textContent = 'Submitting...';
             
             try {
+                const bidData = {
+                    proposal,
+                    timeline,
+                    priceRange
+                };
+                
+                if (pricingMethod === 'exact') {
+                    bidData.amount = amount;
+                }
+                
                 const res = await authFetch(`/api/projects/${projectId}/bids`, {
                     method: 'POST',
-                    body: JSON.stringify({ amount, proposal, timeline })
+                    body: JSON.stringify(bidData)
                 });
                 const ct = res.headers.get('content-type') || '';
                 const data = ct.includes('application/json') ? await res.json() : {};
@@ -636,16 +858,25 @@
         }
 
         function showCounterOfferModal(bidId) {
-            const amount = prompt('Counter offer amount (USD):');
-            if (amount === null) return;
-            
-            const timeline = prompt('Timeline:');
-            if (timeline === null) return;
-            
-            const notes = prompt('Additional notes (optional):') || '';
-            
-            submitCounterOffer(bidId, Number(amount), timeline, notes);
+            currentBidId = bidId;
+            document.getElementById('counter-offer-modal').classList.remove('hidden');
+            document.getElementById('counter-offer-form').reset();
         }
+
+        function closeCounterOfferModal() {
+            document.getElementById('counter-offer-modal').classList.add('hidden');
+            currentBidId = null;
+        }
+
+        document.getElementById('counter-offer-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amount = Number(document.getElementById('counter-amount').value);
+            const timeline = document.getElementById('counter-timeline').value;
+            const notes = document.getElementById('counter-notes').value;
+            
+            await submitCounterOffer(currentBidId, amount, timeline, notes);
+            closeCounterOfferModal();
+        });
 
         async function submitCounterOffer(bidId, amount, timeline, notes) {
             try {
@@ -677,6 +908,50 @@
                 if (!res.ok) throw new Error(data.error || 'Failed to accept counter-offer');
                 
                 alert('Counter-offer accepted!');
+                loadProject();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        // Withdraw bid functionality
+        async function withdrawBid(bidId) {
+            if (!confirm('Are you sure you want to withdraw your bid? This action cannot be undone.')) return;
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                
+                if (!res.ok) throw new Error(data.error || 'Failed to withdraw bid');
+                
+                alert('Bid withdrawn successfully');
+                loadProject();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
+
+        // Lock/unlock bidding
+        async function toggleBiddingLock() {
+            const project = globalProject || currentProject;
+            const action = project.biddingLocked ? 'unlock' : 'lock';
+            const message = project.biddingLocked ? 
+                'Unlock bidding? Vendors will be able to submit and modify bids again.' :
+                'Lock bidding? This will prevent new bids and edits while you review existing offers.';
+            
+            if (!confirm(message)) return;
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/${action}-bidding`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                
+                if (!res.ok) throw new Error(data.error || `Failed to ${action} bidding`);
+                
+                alert(`Bidding ${action}ed successfully`);
                 loadProject();
             } catch (e) {
                 alert(e.message);
@@ -727,19 +1002,26 @@
         function populateComparison() {
             const project_data = globalProject || project;
             const tbody = document.getElementById('comparison-table-body');
-            tbody.innerHTML = (project_data.bids || []).map(bid => `
+            const currentUser = getUser();
+            const isProjectOwner = project_data.owner._id === currentUser.id;
+            
+            tbody.innerHTML = (project_data.bids || []).map((bid, idx) => {
+                const isOwnBid = bid.user._id === currentUser.id;
+                const showDetails = isProjectOwner || isOwnBid;
+                return `
                 <tr class="border-b border-gray-200 hover:bg-gray-50">
-                    <td class="px-4 py-2 font-medium">${bid.user.firstName} ${bid.user.lastName}</td>
-                    <td class="px-4 py-2 font-bold">${formatCurrency(bid.amount)}</td>
+                    <td class="px-4 py-2 font-medium">${showDetails ? `${bid.user.firstName} ${bid.user.lastName}` : `Anonymous Bidder #${idx + 1}`}</td>
+                    <td class="px-4 py-2 font-bold">${getBidDisplay(bid)}</td>
                     <td class="px-4 py-2">${bid.timeline}</td>
-                    <td class="px-4 py-2">${bid.user.rating ? `${bid.user.rating.toFixed(1)} ★` : 'N/A'}</td>
+                    <td class="px-4 py-2">${showDetails && bid.user.rating ? `${bid.user.rating.toFixed(1)} ★` : '-'}</td>
                     <td class="px-4 py-2"><span class="px-2 py-1 rounded text-xs font-medium ${
                         bid.status === 'accepted' ? 'bg-green-100 text-green-800' :
                         bid.status === 'rejected' ? 'bg-red-100 text-red-800' :
                         'bg-gray-100 text-gray-800'
                     }">${bid.status}</span></td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
         }
 
         loadProject();
@@ -842,29 +1124,78 @@
         }
         
         function showAddMilestoneModal() {
-            const modal = prompt('Milestone Title:');
-            if (!modal) return;
-            
-            const description = prompt('Description (optional):');
-            const amount = prompt('Payment Amount ($):');
-            const dueDate = prompt('Due Date (YYYY-MM-DD):');
-            
-            authFetch(`/api/projects/${projectId}/milestones`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    title: modal,
-                    description,
-                    amount: amount ? parseFloat(amount) : 0,
-                    dueDate: dueDate || null
-                })
-            }).then(res => {
-                if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                alert('Milestone added!');
-                location.reload();
-            }).catch(err => {
-                alert('Failed to add milestone: ' + (err.message || 'Unknown error'));
-            });
+            currentMilestoneId = null;
+            document.getElementById('milestone-modal').classList.remove('hidden');
+            document.getElementById('milestone-form').reset();
         }
+        
+        function closeMilestoneModal() {
+            document.getElementById('milestone-modal').classList.add('hidden');
+            currentMilestoneId = null;
+        }
+        
+        document.getElementById('milestone-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('milestone-title').value;
+            const description = document.getElementById('milestone-description').value;
+            const dueDate = document.getElementById('milestone-duedate').value;
+            const amount = document.getElementById('milestone-amount').value;
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/milestones`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title,
+                        description,
+                        amount: amount ? parseFloat(amount) : 0,
+                        dueDate: dueDate || null
+                    })
+                });
+                
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                
+                alert('Milestone added!');
+                closeMilestoneModal();
+                location.reload();
+            } catch (err) {
+                alert('Failed to add milestone: ' + (err.message || 'Unknown error'));
+            }
+        });
+        
+        function showCompleteMilestoneModal(milestoneId) {
+            currentMilestoneId = milestoneId;
+            document.getElementById('complete-milestone-modal').classList.remove('hidden');
+            document.getElementById('complete-milestone-form').reset();
+        }
+        
+        function closeCompleteMilestoneModal() {
+            document.getElementById('complete-milestone-modal').classList.add('hidden');
+            currentMilestoneId = null;
+        }
+        
+        document.getElementById('complete-milestone-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const notes = document.getElementById('completion-notes').value;
+            const deliverables = document.getElementById('completion-deliverables').value
+                .split('\n')
+                .map(d => d.trim())
+                .filter(d => d);
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/milestones/${currentMilestoneId}/complete`, {
+                    method: 'POST',
+                    body: JSON.stringify({ notes, deliverables })
+                });
+                
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                
+                alert('Milestone marked as complete!');
+                closeCompleteMilestoneModal();
+                location.reload();
+            } catch (err) {
+                alert('Failed to complete milestone: ' + (err.message || 'Unknown error'));
+            }
+        });
         
         function showAddChangeOrderModal() {
             const title = prompt('Change Order Title:');

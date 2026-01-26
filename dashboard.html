@@ -157,9 +157,9 @@
         </div>
 
         <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="stats-grid">
+        <div class="mb-8" id="stats-grid">
             <!-- For Owners -->
-            <div id="owner-stats" class="contents" style="display: none;">
+            <div id="owner-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                 <button onclick="openModal('active-projects-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                     <div class="flex items-center justify-between">
                         <div>
@@ -218,7 +218,7 @@
             </div>
 
             <!-- For Vendors -->
-            <div id="vendor-stats" class="contents" style="display: none;">
+            <div id="vendor-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                 <button onclick="location.href='/browse.html'" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                     <div class="flex items-center justify-between">
                         <div>
@@ -446,12 +446,30 @@
             throw new Error('Not authenticated');
         }
 
-        const user = getCurrentUser();
-        document.getElementById('user-name').textContent = user.firstName;
-        document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
-        
-        // Update current role display
-        document.getElementById('current-role').textContent = getActiveRole();
+        let user = getCurrentUser();
+
+        async function ensureUser() {
+            if (user) return user;
+            try {
+                const res = await authFetch('/api/auth/me');
+                if (!res.ok) throw new Error('Failed to load user');
+                const data = await res.json();
+                user = data.user;
+                setCurrentUser(user);
+                return user;
+            } catch (err) {
+                console.error('Error hydrating user:', err);
+                logout();
+                throw err;
+            }
+        }
+
+        function renderUserHeader() {
+            if (!user) return;
+            document.getElementById('user-name').textContent = user.firstName || '';
+            document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+            document.getElementById('current-role').textContent = getActiveRole();
+        }
         
         // Mobile Menu Handler
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -593,12 +611,12 @@
             });
         }
         
-        initializeRoleSwitcher();
-        
         // Listen for role changes from other tabs/windows
         window.addEventListener('roleChanged', (e) => {
             document.getElementById('current-role').textContent = getActiveRole();
             initializeRoleSwitcher();
+            renderUserHeader();
+            loadDashboard();
         });
         
         // Role-based UI customization
@@ -655,12 +673,15 @@
                 const isOwner = role === 'owner';
                 
                 // Show/hide role-specific stats
-                document.getElementById('owner-stats').style.display = isOwner ? 'contents' : 'none';
-                document.getElementById('vendor-stats').style.display = isOwner ? 'none' : 'contents';
+                const ownerStats = document.getElementById('owner-stats');
+                const vendorStats = document.getElementById('vendor-stats');
+                ownerStats.classList.toggle('hidden', !isOwner);
+                vendorStats.classList.toggle('hidden', isOwner);
 
                 if (isOwner) {
                     // Load owner dashboard
-                    const projectsRes = await authFetch(`/api/projects?owner=${user.id}`);
+                    const ownerId = user.id || user._id;
+                    const projectsRes = await authFetch(`/api/projects?owner=${ownerId}`);
                     if (!projectsRes.ok) {
                         const ct = projectsRes.headers.get('content-type') || '';
                         const errMsg = ct.includes('application/json') ? (await projectsRes.json()).error || 'Failed to load projects' : `HTTP ${projectsRes.status}`;
@@ -880,8 +901,10 @@
                 return;
             }
 
-            // Filter out user's own projects and show max 5
-            const relevantProjects = projects.filter(p => p.owner._id !== currentUser.id).slice(0, 5);
+            // Filter out user's own projects (guard against missing owner) and show max 5
+            const relevantProjects = (projects || [])
+                .filter(p => p.owner && p.owner._id && (!user || !user.id || p.owner._id !== user.id))
+                .slice(0, 5);
 
             if (relevantProjects.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No opportunities match your profile</p><a href="/browse.html" class="text-blue-600 hover:underline text-xs mt-2 block">Browse all</a></div>';
@@ -1146,6 +1169,9 @@
 
         // Initialize dashboard
         (async () => {
+            await ensureUser();
+            renderUserHeader();
+            initializeRoleSwitcher();
             await loadDashboard();
             await loadFeed();
             await loadRecommendations();

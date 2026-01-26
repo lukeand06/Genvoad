@@ -10,7 +10,14 @@ const ProjectSchema = new mongoose.Schema({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   
   // Details
-  budget: { type: Number, required: true },
+  budget: { type: Number, required: true }, // Internal budget for savings calculation
+  budgetPublic: { type: Boolean, default: false }, // Whether to show exact budget publicly
+  targetPrice: { type: Number }, // Optional target price for vendors
+  projectSize: { 
+    type: String, 
+    enum: ['small', 'medium', 'upper-medium', 'large', 'custom'],
+    default: 'custom'
+  }, // Project size category for price ranges
   location: { type: String, required: true },
   startDate: { type: Date },
   endDate: { type: Date },
@@ -39,10 +46,17 @@ const ProjectSchema = new mongoose.Schema({
     default: 'open'
   },
   
+  // Bidding control
+  biddingLocked: { type: Boolean, default: false }, // Lock bidding during decision process
+  
   // Bids
   bids: [{
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    amount: Number,
+    amount: Number, // Exact bid amount (optional if using range)
+    priceRange: { 
+      type: String, 
+      enum: ['small', 'medium', 'upper-medium', 'large', 'exact']
+    }, // Price range category or 'exact' for specific amount
     proposal: String,
     timeline: String,
     createdAt: { type: Date, default: Date.now },
