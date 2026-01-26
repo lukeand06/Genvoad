@@ -769,6 +769,28 @@ app.put('/api/users/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// Upload profile picture
+app.post('/api/users/avatar', authMiddleware, upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const avatarPath = `/uploads/${req.file.filename}`;
+    
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: { avatar: avatarPath } },
+      { new: true }
+    ).select('-password');
+
+    res.json({ success: true, avatar: avatarPath, user });
+  } catch (error) {
+    console.error('Avatar upload error:', error);
+    res.status(500).json({ error: 'Failed to upload profile picture' });
+  }
+});
+
 // Delete (soft-delete) profile
 app.delete('/api/users/profile', authMiddleware, async (req, res) => {
   try {

@@ -102,16 +102,66 @@
             </nav>
         </div>
 
-        <!-- Search -->
+        <!-- Advanced Filters -->
         <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-            <div class="flex flex-col sm:flex-row gap-4">
-                <input type="text" id="search-input" placeholder="Search companies, skills, or location..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                <div class="flex items-center gap-3">
+            <!-- Search Bar -->
+            <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                <input type="text" id="search-input" placeholder="Search by name, company, or skills..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                <button id="toggle-filters-btn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    Filters
+                </button>
+                <button id="search-btn" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Search</button>
+            </div>
+
+            <!-- Expandable Filter Panel -->
+            <div id="filter-panel" class="hidden border-t border-gray-200 pt-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Location Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                        <input type="text" id="filter-location" placeholder="City or State" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                    </div>
+
+                    <!-- Skills Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Skills</label>
+                        <input type="text" id="filter-skills" placeholder="e.g., React, Design, Marketing" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                    </div>
+
+                    <!-- Years Experience Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Min. Experience</label>
+                        <select id="filter-experience" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                            <option value="">Any</option>
+                            <option value="1">1+ years</option>
+                            <option value="3">3+ years</option>
+                            <option value="5">5+ years</option>
+                            <option value="10">10+ years</option>
+                        </select>
+                    </div>
+
+                    <!-- Rating Filter -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Min. Rating</label>
+                        <select id="filter-rating" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                            <option value="">Any</option>
+                            <option value="4">4+ stars</option>
+                            <option value="4.5">4.5+ stars</option>
+                            <option value="5">5 stars</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Additional Options -->
+                <div class="flex flex-wrap gap-4 mt-4">
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="verified-only" class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900">
-                        <span class="text-sm font-medium text-gray-700">Verified Only</span>
+                        <span class="text-sm font-medium text-gray-700">Verified Companies Only</span>
                     </label>
-                    <button id="search-btn" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Search</button>
+                    <button id="clear-filters-btn" class="text-sm font-medium text-gray-600 hover:text-gray-900">Clear All Filters</button>
                 </div>
             </div>
         </div>
@@ -301,15 +351,19 @@
         function displayFeaturedServices() {
             const search = (document.getElementById('search-input').value || '').toLowerCase();
             const verifiedOnly = document.getElementById('verified-only').checked;
+            const locationFilter = (document.getElementById('filter-location')?.value || '').toLowerCase();
+            const skillsFilter = (document.getElementById('filter-skills')?.value || '').toLowerCase();
+            const experienceFilter = parseInt(document.getElementById('filter-experience')?.value || '0');
+            const ratingFilter = parseFloat(document.getElementById('filter-rating')?.value || '0');
             
             let filtered = featuredServices.filter(service => {
+                // Search filter
                 const name = `${service.firstName} ${service.lastName}`.toLowerCase();
                 const company = (service.company || '').toLowerCase();
                 const skills = (service.skills || []).join(' ').toLowerCase();
                 const location = `${service.city || ''} ${service.state || ''} ${service.location || ''}`.toLowerCase();
                 const bio = (service.bio || '').toLowerCase();
                 
-                // Search filter
                 const matchesSearch = !search || 
                     name.includes(search) || 
                     company.includes(search) || 
@@ -320,7 +374,21 @@
                 // Verified filter
                 const matchesVerified = !verifiedOnly || (service.registrarId && service.registrarId.trim() !== '');
                 
-                return matchesSearch && matchesVerified;
+                // Location filter
+                const matchesLocation = !locationFilter || location.includes(locationFilter);
+                
+                // Skills filter
+                const matchesSkills = !skillsFilter || 
+                    skills.includes(skillsFilter) || 
+                    (service.services || []).join(' ').toLowerCase().includes(skillsFilter);
+                
+                // Experience filter
+                const matchesExperience = experienceFilter === 0 || (service.yearsExperience || 0) >= experienceFilter;
+                
+                // Rating filter
+                const matchesRating = ratingFilter === 0 || (service.rating || 0) >= ratingFilter;
+                
+                return matchesSearch && matchesVerified && matchesLocation && matchesSkills && matchesExperience && matchesRating;
             });
 
             const container = document.getElementById('network-content');
@@ -329,10 +397,18 @@
                 return;
             }
 
+            // Build filter summary
+            const activeFilters = [];
+            if (verifiedOnly) activeFilters.push('verified');
+            if (locationFilter) activeFilters.push('location');
+            if (skillsFilter) activeFilters.push('skills');
+            if (experienceFilter > 0) activeFilters.push(`${experienceFilter}+ yrs exp`);
+            if (ratingFilter > 0) activeFilters.push(`${ratingFilter}+ stars`);
+            
+            const filterSummary = activeFilters.length > 0 ? ` (${activeFilters.join(', ')})` : '';
+
             // Show total count
-            const countDisplay = verifiedOnly ? 
-                `<div class="col-span-full mb-4"><p class="text-sm text-gray-600">${filtered.length} verified ${filtered.length === 1 ? 'company' : 'companies'} found</p></div>` :
-                `<div class="col-span-full mb-4"><p class="text-sm text-gray-600">${filtered.length} ${filtered.length === 1 ? 'company' : 'companies'} found</p></div>`;
+            const countDisplay = `<div class="col-span-full mb-4"><p class="text-sm text-gray-600">${filtered.length} ${filtered.length === 1 ? 'company' : 'companies'} found${filterSummary}</p></div>`;
 
             container.innerHTML = countDisplay + filtered.map(service => `
                 <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
@@ -493,6 +569,46 @@
         // Verified checkbox filter
         document.getElementById('verified-only').addEventListener('change', () => {
             if (currentTab === 'featured') displayFeaturedServices();
+        });
+
+        // Toggle filter panel
+        document.getElementById('toggle-filters-btn').addEventListener('click', () => {
+            const panel = document.getElementById('filter-panel');
+            panel.classList.toggle('hidden');
+        });
+
+        // Clear all filters
+        document.getElementById('clear-filters-btn').addEventListener('click', () => {
+            document.getElementById('filter-location').value = '';
+            document.getElementById('filter-skills').value = '';
+            document.getElementById('filter-experience').value = '';
+            document.getElementById('filter-rating').value = '';
+            document.getElementById('verified-only').checked = false;
+            if (currentTab === 'featured') displayFeaturedServices();
+        });
+
+        // Apply filters on change
+        ['filter-experience', 'filter-rating'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('change', () => {
+                    if (currentTab === 'featured') displayFeaturedServices();
+                });
+            }
+        });
+
+        // Apply location and skills filters on input (with debounce)
+        let filterTimeout;
+        ['filter-location', 'filter-skills'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('input', () => {
+                    clearTimeout(filterTimeout);
+                    filterTimeout = setTimeout(() => {
+                        if (currentTab === 'featured') displayFeaturedServices();
+                    }, 300);
+                });
+            }
         });
 
         // Initial load
