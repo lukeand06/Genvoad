@@ -59,6 +59,8 @@ const ProjectSchema = new mongoose.Schema({
     }, // Price range category or 'exact' for specific amount
     proposal: String,
     timeline: String,
+    phone: String, // Optional contact phone
+    siteWalkTime: String, // Optional site walk availability
     createdAt: { type: Date, default: Date.now },
     expiresAt: { type: Date }, // Bid expiration time (e.g., 7 days from creation)
     status: { type: String, enum: ['pending', 'accepted', 'rejected', 'expired', 'revision_requested'], default: 'pending' },

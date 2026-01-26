@@ -629,7 +629,7 @@
 
         async function saveSettings(updates, successMsg) {
             try {
-                const response = await authFetch('/users/profile', {
+                const response = await authFetch('/api/users/profile', {
                     method: 'PUT',
                     body: JSON.stringify(updates)
                 });
@@ -659,7 +659,7 @@
             if (!doubleConfirm) return;
             
             try {
-                const res = await authFetch('/users/profile', { method: 'DELETE' });
+                const res = await authFetch('/api/users/profile', { method: 'DELETE' });
                 if (!res.ok) throw new Error('Failed to delete');
                 alert('Your account has been deleted.');
                 logout();

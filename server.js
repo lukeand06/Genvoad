@@ -1081,6 +1081,76 @@ app.patch('/api/projects/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Update project meeting and resources (owner only)
+app.post('/api/projects/:id/update-meeting', authMiddleware, upload.array('attachments', 10), async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    // Verify ownership
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can update this project' });
+    }
+    
+    // Update meeting details
+    if (req.body.meetingDate) project.meetingDate = req.body.meetingDate;
+    if (req.body.zoomLink) project.zoomLink = req.body.zoomLink;
+    
+    // Handle new file uploads
+    if (req.files && req.files.length > 0) {
+      const newAttachments = req.files.map(file => ({
+        filename: file.originalname,
+        url: `/uploads/${file.filename}`,
+        uploadedAt: new Date()
+      }));
+      
+      // Append to existing attachments instead of replacing
+      project.attachments = [...(project.attachments || []), ...newAttachments];
+    }
+    
+    await project.save();
+    res.json({ success: true, message: 'Meeting and resources updated successfully', project });
+  } catch (error) {
+    console.error('Update meeting error:', error);
+    res.status(500).json({ error: 'Failed to update meeting details' });
+  }
+});
+
+// Delete project attachment
+app.delete('/api/projects/:id/attachments/:filename', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    // Verify ownership
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can delete attachments' });
+    }
+    
+    const filename = req.params.filename;
+    
+    // Remove from attachments array
+    const initialLength = project.attachments.length;
+    project.attachments = project.attachments.filter(att => att.url !== `/uploads/${filename}`);
+    
+    if (project.attachments.length === initialLength) {
+      return res.status(404).json({ error: 'Attachment not found' });
+    }
+    
+    // Delete file from disk
+    const filepath = path.join(uploadDir, filename);
+    if (fs.existsSync(filepath)) {
+      fs.unlinkSync(filepath);
+    }
+    
+    await project.save();
+    res.json({ success: true, message: 'Attachment deleted successfully' });
+  } catch (error) {
+    console.error('Delete attachment error:', error);
+    res.status(500).json({ error: 'Failed to delete attachment' });
+  }
+});
+
 // Submit bid
 app.post('/api/projects/:id/bids', authMiddleware, async (req, res) => {
   try {
@@ -1100,7 +1170,9 @@ app.post('/api/projects/:id/bids', authMiddleware, async (req, res) => {
       user: req.user._id,
       proposal: req.body.proposal,
       timeline: req.body.timeline,
-      priceRange: req.body.priceRange || 'exact'
+      priceRange: req.body.priceRange || 'exact',
+      phone: req.body.phone || '',
+      siteWalkTime: req.body.siteWalkTime || ''
     };
     
     // Amount is optional if using price range
