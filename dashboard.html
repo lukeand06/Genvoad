@@ -260,6 +260,20 @@
                         </div>
                     </div>
                 </button>
+
+                <button onclick="openModal('vendor-completed-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm text-gray-600">Completed Projects</p>
+                            <p class="text-3xl font-bold text-gray-900 mt-1" id="vendor-completed-projects">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </button>
             </div>
         </div>
 
@@ -385,6 +399,23 @@
                 </button>
             </div>
             <div id="completed-content" class="p-6">
+                <p class="text-gray-500">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Completed Projects Modal -->
+    <div id="vendor-completed-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+                <h2 class="text-xl font-semibold text-gray-900">Completed Projects</h2>
+                <button onclick="closeModal('vendor-completed-modal')" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div id="vendor-completed-content" class="p-6">
                 <p class="text-gray-500">Loading...</p>
             </div>
         </div>
@@ -603,6 +634,7 @@
             if (modalId === 'new-bids-modal') loadNewBidsModal();
             if (modalId === 'messages-modal') loadMessagesModal();
             if (modalId === 'completed-modal') loadCompletedModal();
+            if (modalId === 'vendor-completed-modal') loadVendorCompletedModal();
         }
 
         function closeModal(modalId) {
@@ -667,10 +699,10 @@
                         document.getElementById('vendor-available-projects').textContent = '0';
                     }
 
-                    // Vendor's bids - would need API endpoint
-                    document.getElementById('vendor-active-bids').textContent = '0';
-                    document.getElementById('vendor-active-work').textContent = '0';
-                    document.getElementById('vendor-total-earnings').textContent = '$0';
+                    // Vendor's bids and completed projects
+                    document.getElementById('vendor-active-bids').textContent = userProjects.filter(p => p.bids && p.bids.some(b => b.user._id === user.id)).length;
+                    document.getElementById('vendor-active-work').textContent = userProjects.filter(p => p.status === 'in_progress' && p.acceptedContractor && p.acceptedContractor._id === user.id).length;
+                    document.getElementById('vendor-completed-projects').textContent = userProjects.filter(p => p.status === 'completed' && p.acceptedContractor && p.acceptedContractor._id === user.id).length;
                 }
 
                 // Load messages count (same for both roles)
@@ -1004,6 +1036,35 @@
         function loadCompletedModal() {
             const completedProjects = userProjects.filter(p => p.status === 'completed');
             const content = document.getElementById('completed-content');
+            
+            if (completedProjects.length === 0) {
+                content.innerHTML = '<p class="text-gray-500 text-center">No completed projects yet</p>';
+                return;
+            }
+
+            content.innerHTML = '<div class="space-y-4">' + completedProjects.map(project => `
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-3">
+                        <div class="flex-1">
+                            <a href="/project-detail.html?id=${project._id}" class="font-semibold text-gray-900 hover:text-blue-600">${project.title}</a>
+                            <p class="text-sm text-gray-600 mt-1">${project.description.substring(0, 150)}...</p>
+                        </div>
+                        <span class="px-3 py-1 text-xs font-medium rounded-full bg-green-50 text-green-700">Completed</span>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                        <span>${formatCurrency(project.budget)}</span>
+                        <span>•</span>
+                        <span>${project.location}</span>
+                    </div>
+                    <a href="/project-detail.html?id=${project._id}" class="inline-block px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">View Details</a>
+                </div>
+            `).join('') + '</div>';
+        }
+
+        function loadVendorCompletedModal() {
+            // For vendors, get projects where they have an accepted bid and status is completed
+            const completedProjects = userProjects.filter(p => p.status === 'completed' && p.acceptedContractor && p.acceptedContractor._id === user.id);
+            const content = document.getElementById('vendor-completed-content');
             
             if (completedProjects.length === 0) {
                 content.innerHTML = '<p class="text-gray-500 text-center">No completed projects yet</p>';
