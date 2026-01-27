@@ -334,36 +334,100 @@
             document.getElementById('new-thread-modal').classList.add('hidden');
         });
 
-        // Recipient Search
+        // Recipient Search with Partner Suggestions
+        let searchTimeout;
         document.getElementById('recipient-search').addEventListener('input', async (e) => {
+            clearTimeout(searchTimeout);
             const query = e.target.value.trim();
-            if (query.length < 2) {
-                document.getElementById('search-results').classList.add('hidden');
+            const resultsContainer = document.getElementById('search-results');
+            
+            if (query.length === 0) {
+                resultsContainer.classList.add('hidden');
                 return;
             }
 
-            try {
-                const res = await authFetch(`/api/users/search?q=${encodeURIComponent(query)}`);
-                const data = await res.json();
-                const resultsContainer = document.getElementById('search-results');
-                
-                if (data.length === 0) {
-                    resultsContainer.innerHTML = '<div class="p-4 text-center text-gray-500">No users found</div>';
-                } else {
-                    resultsContainer.innerHTML = data.map(u => `
-                        <div class="p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer" onclick="selectRecipient('${u._id || ''}', '${u.name}', '${u.email}', ${u.isRegistered})">
-                            <div class="flex items-center gap-2">
-                                <div class="font-medium text-gray-900">${u.name}</div>
-                                ${!u.isRegistered ? '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-medium rounded">Not on Genovad</span>' : ''}
+            // Debounce search
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const isEmail = query.includes('@');
+                    let results = [];
+                    
+                    // If query is less than 2 chars and not an email, show partner suggestions
+                    if (query.length < 2 && !isEmail) {
+                        results = partners.filter(p => 
+                            `${p.firstName} ${p.lastName}`.toLowerCase().includes(query.toLowerCase()) ||
+                            (p.company && p.company.toLowerCase().includes(query.toLowerCase()))
+                        );
+                    } else {
+                        // Search via API
+                        const res = await authFetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+                        const data = await res.json();
+                        results = data || [];
+                    }
+                    
+                    if (results.length === 0) {
+                        resultsContainer.innerHTML = `
+                            <div class="p-4 text-center text-gray-500">
+                                <p class="text-sm mb-2">No users found</p>
+                                ${query.includes('@') ? `<p class="text-xs text-gray-400">We'll send an email invite to ${query}</p>` : ''}
                             </div>
-                            <div class="text-xs text-gray-600">${u.email}</div>
-                            ${u.company ? `<div class="text-xs text-gray-500">${u.company}</div>` : ''}
-                        </div>
-                    `).join('');
+                        `;
+                    } else {
+                        resultsContainer.innerHTML = results.map(u => {
+                            const safeName = (u.name || `${u.firstName} ${u.lastName}` || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                            const safeEmail = (u.email || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                            const displayName = u.name || `${u.firstName} ${u.lastName}`;
+                            const isPartner = partners.some(p => p._id === u._id);
+                            return `
+                                <div class="p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer transition" onclick="selectRecipient('${u._id || ''}', '${safeName}', '${safeEmail}', ${u.isRegistered})">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <div class="font-medium text-gray-900">${displayName}</div>
+                                                ${isPartner ? '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">Partner</span>' : ''}
+                                                ${!u.isRegistered ? '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-medium rounded">Not on Genovad</span>' : ''}
+                                            </div>
+                                            <div class="text-xs text-gray-600 mt-0.5">${u.email}</div>
+                                            ${u.company ? `<div class="text-xs text-gray-500">${u.company}</div>` : ''}
+                                        </div>
+                                        <div class="text-blue-500 text-lg ml-2">→</div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                    resultsContainer.classList.remove('hidden');
+                } catch (err) {
+                    console.error('Error searching users:', err);
+                    resultsContainer.innerHTML = '<div class="p-4 text-center text-red-500">Error searching users</div>';
+                    resultsContainer.classList.remove('hidden');
                 }
+            }, 300); // 300ms debounce
+        });
+        
+        // Show partner suggestions when recipient search is focused
+        document.getElementById('recipient-search').addEventListener('focus', () => {
+            if (partners && partners.length > 0) {
+                const resultsContainer = document.getElementById('search-results');
+                resultsContainer.innerHTML = `
+                    <div class="p-3 text-xs font-semibold text-gray-700 bg-gray-50 border-b border-gray-100">Your Partners</div>
+                    ${partners.slice(0, 5).map(p => {
+                        const safeName = `${p.firstName} ${p.lastName}`.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                        return `
+                            <div class="p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer transition" onclick="selectRecipient('${p._id}', '${safeName}', '${p.email || ''}', true)">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <div class="font-medium text-gray-900">${p.firstName} ${p.lastName}</div>
+                                        ${p.company ? `<div class="text-xs text-gray-500 mt-0.5">${p.company}</div>` : ''}
+                                    </div>
+                                    <span class="text-blue-100">✓</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')}
+                    ${partners.length > 5 ? `<div class="p-2 text-center text-xs text-gray-500">+${partners.length - 5} more partners</div>` : ''}
+                `;
                 resultsContainer.classList.remove('hidden');
-            } catch (err) {
-                console.error('Error searching users:', err);
             }
         });
 
@@ -371,19 +435,35 @@
             document.getElementById('selected-recipient-id').value = id || '';
             document.getElementById('selected-recipient-id').dataset.email = email;
             document.getElementById('selected-recipient-id').dataset.isRegistered = isRegistered;
-            const displayName = isRegistered ? name : `${name} (will receive email invite)`;
-            document.getElementById('selected-recipient-name').textContent = displayName;
+            const displayName = isRegistered ? name : `${name} (email invite)`;
+            const statusText = isRegistered ? '✓ On Genovad' : '📧 Will receive email';
+            const displayHtml = `
+                <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-blue-900">${displayName}</div>
+                        <div class="text-xs text-blue-700">${statusText}</div>
+                    </div>
+                    <button type="button" id="clear-recipient" class="text-blue-600 hover:text-blue-700 text-lg">✕</button>
+                </div>
+            `;
+            document.getElementById('selected-recipient-display').innerHTML = displayHtml;
             document.getElementById('selected-recipient-display').classList.remove('hidden');
+            
+            // Re-attach clear recipient listener
+            document.getElementById('clear-recipient').addEventListener('click', (e) => {
+                e.preventDefault();
+                document.getElementById('selected-recipient-id').value = '';
+                document.getElementById('selected-recipient-display').classList.add('hidden');
+                document.getElementById('selected-recipient-display').innerHTML = '';
+                document.getElementById('recipient-search').value = '';
+                document.getElementById('recipient-search').focus();
+            });
+            
             document.getElementById('search-results').classList.add('hidden');
             document.getElementById('recipient-search').value = '';
         }
 
-        document.getElementById('clear-recipient').addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('selected-recipient-id').value = '';
-            document.getElementById('selected-recipient-display').classList.add('hidden');
-            document.getElementById('recipient-search').value = '';
-        });
+
 
         // Filter Tabs
         document.querySelectorAll('.filter-tab').forEach(tab => {
