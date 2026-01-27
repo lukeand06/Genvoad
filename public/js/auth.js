@@ -210,7 +210,8 @@ function getInitials(firstName, lastName) {
 // Generate avatar URL or initials
 function getAvatarHTML(user, size = 'w-10 h-10') {
   if (user.avatar) {
-    return `<img src="${user.avatar}" alt="${user.firstName}" class="${size} rounded-full object-cover">`;
+    const fallback = `${getInitials(user.firstName, user.lastName)}`;
+    return `<img src="${user.avatar}" alt="${user.firstName || 'User'}" class="${size} rounded-full object-cover" onerror="this.onerror=null;this.replaceWith('<div class=\'${size} rounded-full bg-gray-700 text-white flex items-center justify-center font-medium\'>${fallback}</div>');">`;
   }
   const initials = getInitials(user.firstName, user.lastName);
   return `<div class="${size} rounded-full bg-gray-700 text-white flex items-center justify-center font-medium">${initials}</div>`;
