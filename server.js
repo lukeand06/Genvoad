@@ -3320,7 +3320,7 @@ app.post('/api/admin/companies/:id/reject', authMiddleware, async (req, res) => 
 // Invite team member to company
 app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
   try {
-    const { email, role } = req.body;
+    const { email, role, message } = req.body;
     
     if (!email || !['admin', 'member'].includes(role)) {
       return res.status(400).json({ error: 'Invalid email or role' });
@@ -3357,6 +3357,7 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
       email,
       role,
       token,
+      message: message || null,
       invitedBy: req.user._id,
       invitedAt: new Date(),
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
@@ -3381,6 +3382,8 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
           <p><strong>${inviter.firstName} ${inviter.lastName}</strong> has invited you to join <strong>${company.name}</strong> as a ${role}.</p>
           
           ${company.verified ? '<p style="color: #059669;">✓ This is a verified company</p>' : ''}
+          
+          ${message ? `<div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1a1a1a;"><p style="margin: 0;"><strong>Message from ${inviter.firstName}:</strong></p><p style="margin: 10px 0 0 0;">${message}</p></div>` : ''}
           
           <div style="margin: 30px 0;">
             <a href="${inviteUrl}" style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">
