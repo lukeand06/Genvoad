@@ -412,6 +412,12 @@
 
             container.innerHTML = countDisplay + filtered.map(service => {
                 const locationLabel = [service.city, service.state].filter(Boolean).join(', ') || service.location || '';
+                const skillsHTML = service.skills && service.skills.length > 0 ? `
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    ${service.skills.slice(0, 3).map(skill => '<span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">' + skill + '</span>').join('')}
+                                    ${service.skills.length > 3 ? '<span class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded">+' + (service.skills.length - 3) + '</span>' : ''}
+                                </div>
+                            ` : '';
                 return `
                 <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg transition-all duration-150 flex flex-col gap-4 min-h-[260px]">
                     <div class="flex items-start justify-between mb-4">
@@ -439,12 +445,7 @@
                                 </p>
                             ` : ''}
                             
-                            ${service.skills && service.skills.length > 0 ? `
-                                <div class="flex flex-wrap gap-2 mb-3">
-                                    ${service.skills.slice(0, 3).map(skill => `<span class=\"px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded\">${skill}</span>`).join('')}
-                                    ${service.skills.length > 3 ? `<span class=\"px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded\">+${service.skills.length - 3}</span>` : ''}
-                                </div>
-                            ` : ''}
+                            ${skillsHTML}
                             
                             ${(service.rating || service.reviewCount) ? `
                                 <div class="flex items-center gap-1 mb-3">
