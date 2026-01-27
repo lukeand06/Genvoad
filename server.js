@@ -700,8 +700,10 @@ app.get('/api/users/:id', authMiddleware, async (req, res) => {
 app.get('/api/users/search', authMiddleware, async (req, res) => {
   try {
     const query = req.query.q || '';
+    const roleFilter = req.query.role; // Optional role filter: 'vendor' or 'owner'
+    
     if (query.length < 2) {
-      return res.json([]);
+      return res.json({ users: [] });
     }
     
     // Check if it's an email format
@@ -709,30 +711,37 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     
     if (isEmail) {
       // Search for registered user with this email
-      const user = await User.findOne({ email: query, verified: true, deletedAt: null }).select('-password -verificationCode');
+      const searchQuery = { email: query, verified: true, deletedAt: null };
+      if (roleFilter) {
+        searchQuery.role = roleFilter;
+      }
+      const user = await User.findOne(searchQuery).select('-password -verificationCode');
       if (user) {
-        return res.json([{
+        return res.json({ users: [{
           _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
           name: `${user.firstName} ${user.lastName}`,
           email: user.email,
           company: user.company,
+          role: user.role,
           isRegistered: true
-        }]);
+        }] });
       } else {
         // Allow inviting by email even if not registered
-        return res.json([{
+        return res.json({ users: [{
           _id: null,
           name: query,
           email: query,
           company: null,
           isRegistered: false
-        }]);
+        }] });
       }
     }
     
     // Text search by name or company
     const searchRegex = new RegExp(query, 'i');
-    const users = await User.find({
+    const searchQuery = {
       verified: true,
       deletedAt: null,
       $or: [
@@ -740,20 +749,31 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
         { lastName: searchRegex },
         { company: searchRegex }
       ]
-    })
+    };
+    
+    // Add role filter if specified
+    if (roleFilter) {
+      searchQuery.role = roleFilter;
+    }
+    
+    const users = await User.find(searchQuery)
     .select('-password -verificationCode')
     .limit(10);
     
     const results = users.map(u => ({
       _id: u._id,
+      firstName: u.firstName,
+      lastName: u.lastName,
       name: `${u.firstName} ${u.lastName}`,
       email: u.email,
       company: u.company,
+      role: u.role,
       isRegistered: true
     }));
     
-    res.json(results);
+    res.json({ users: results });
   } catch (error) {
+    console.error('User search error:', error);
     res.status(500).json({ error: 'Failed to search users' });
   }
 });
@@ -1692,23 +1712,29 @@ app.post('/api/projects/:projectId/bids/:bidId/request-revision', authMiddleware
     }
 
     bid.status = 'revision_requested';
-    bid.revisionNotes = req.body.notes;
+    bid.revisionNotes = req.body.notes || 'Please revise your bid';
     project.updatedAt = new Date();
     await project.save();
 
     // Send message to vendor
-    const message = new Message({
-      sender: req.user._id,
-      recipient: bid.user,
-      content: `I'd like you to revise your bid for "${project.title}". ${req.body.notes}`,
-      type: 'bid_revision_request',
-      project: project._id
-    });
-    await message.save();
+    try {
+      const message = new Message({
+        sender: req.user._id,
+        recipient: bid.user,
+        content: `I'd like you to revise your bid for "${project.title}". ${req.body.notes || 'Please see project details for more information.'}`,
+        type: 'bid_revision_request',
+        project: project._id
+      });
+      await message.save();
+    } catch (msgError) {
+      console.error('Failed to send revision message:', msgError);
+      // Continue even if message fails - the bid status is updated
+    }
 
     res.json({ success: true, message: 'Revision requested, vendor notified' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to request revision' });
+    console.error('Request revision error:', error);
+    res.status(500).json({ error: 'Failed to request revision: ' + error.message });
   }
 });
 

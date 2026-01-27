@@ -1149,7 +1149,11 @@
 
         // Lock/unlock project for decision
         async function toggleBiddingLock() {
-            const project = globalProject || currentProject;
+            const project = currentProject;
+            if (!project) {
+                alert('Project not loaded yet');
+                return;
+            }
             const action = project.biddingLocked ? 'unlock' : 'lock-for-decision';
             const message = project.biddingLocked ? 
                 'Unlock the project? Vendors will be able to submit and modify bids again.' :
@@ -1214,7 +1218,11 @@
         }
 
         function populateComparison() {
-            const project_data = globalProject || project;
+            const project_data = currentProject;
+            if (!project_data) {
+                console.error('Project not loaded');
+                return;
+            }
             const tbody = document.getElementById('comparison-table-body');
             const currentUser = getUser();
             const isProjectOwner = project_data.owner._id === currentUser.id;
