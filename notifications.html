@@ -8,6 +8,9 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        .touch-manipulation { touch-action: manipulation; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -96,20 +99,20 @@
 
         <!-- Filter Tabs -->
         <div class="bg-white rounded-lg border border-gray-200 mb-6">
-            <nav class="flex border-b border-gray-200">
-                <button onclick="filterNotifications('all')" id="tab-all" class="notification-tab px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900">
+            <nav class="flex overflow-x-auto border-b border-gray-200 scrollbar-hide">
+                <button onclick="filterNotifications('all')" id="tab-all" class="notification-tab flex-shrink-0 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900 whitespace-nowrap">
                     All
                 </button>
-                <button onclick="filterNotifications('unread')" id="tab-unread" class="notification-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">
+                <button onclick="filterNotifications('unread')" id="tab-unread" class="notification-tab flex-shrink-0 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900 whitespace-nowrap">
                     Unread
                 </button>
-                <button onclick="filterNotifications('partnerships')" id="tab-partnerships" class="notification-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">
+                <button onclick="filterNotifications('partnerships')" id="tab-partnerships" class="notification-tab flex-shrink-0 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900 whitespace-nowrap">
                     Partnerships
                 </button>
-                <button onclick="filterNotifications('projects')" id="tab-projects" class="notification-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">
+                <button onclick="filterNotifications('projects')" id="tab-projects" class="notification-tab flex-shrink-0 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900 whitespace-nowrap">
                     Projects
                 </button>
-                <button onclick="filterNotifications('messages')" id="tab-messages" class="notification-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">
+                <button onclick="filterNotifications('messages')" id="tab-messages" class="notification-tab flex-shrink-0 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900 whitespace-nowrap">
                     Messages
                 </button>
             </nav>
@@ -211,9 +214,9 @@
                     </div>`;
                     content = `<p class="text-sm text-gray-900"><strong>${notif.data.userName}</strong> ${notif.data.userCompany ? `from <strong>${notif.data.userCompany}</strong>` : ''} wants to add you as a partner</p>`;
                     actions = `
-                        <div class="flex gap-2 mt-3">
-                            <button onclick="acceptPartnership('${notif.data.userId}', ${notif.id})" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Accept</button>
-                            <button onclick="declinePartnership('${notif.data.userId}', ${notif.id})" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">Decline</button>
+                        <div class="flex flex-col sm:flex-row gap-2 mt-3">
+                            <button onclick="event.stopPropagation(); acceptPartnership('${notif.data.userId}', '${notif.id}')" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 active:bg-gray-700 touch-manipulation">Accept</button>
+                            <button onclick="event.stopPropagation(); declinePartnership('${notif.data.userId}', '${notif.id}')" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 active:bg-gray-100 touch-manipulation">Decline</button>
                         </div>
                     `;
                     break;
@@ -268,15 +271,15 @@
             }
             
             return `
-                <div class="${bgClass} p-6 hover:bg-gray-50 transition cursor-pointer" onclick="markAsRead(${notif.id})">
-                    <div class="flex items-start gap-4">
-                        ${icon}
+                <div class="${bgClass} p-4 sm:p-6 hover:bg-gray-50 transition active:bg-gray-100 cursor-pointer" onclick="markAsRead('${notif.id}')">
+                    <div class="flex items-start gap-3 sm:gap-4">
+                        <div class="flex-shrink-0">${icon}</div>
                         <div class="flex-1 min-w-0">
                             ${content}
                             ${actions}
                             <p class="text-xs text-gray-500 mt-2">${formatDate(notif.timestamp)}</p>
                         </div>
-                        <div class="flex-shrink-0">
+                        <div class="flex-shrink-0 pt-1">
                             <span class="w-2 h-2 bg-blue-600 rounded-full inline-block ${indicatorClass}"></span>
                         </div>
                     </div>
@@ -312,12 +315,14 @@
         }
 
         function markAsRead(notificationId) {
-            const notif = allNotifications.find(n => n.id === notificationId);
+            // Convert to string for comparison since ID comes from onclick
+            const idStr = String(notificationId);
+            const notif = allNotifications.find(n => String(n.id) === idStr);
             if (notif && !notif.read) {
                 notif.read = true;
                 
                 // Call API to mark as read
-                authFetch(`/api/notifications/${notificationId}/read`, { method: 'PATCH' })
+                authFetch(`/api/notifications/${idStr}/read`, { method: 'PATCH' })
                     .catch(err => console.error('Failed to mark as read:', err));
                 
                 filterNotifications(currentFilter);
@@ -339,16 +344,19 @@
         async function acceptPartnership(userId, notificationId) {
             try {
                 await authFetch(`/partners/${userId}`, { method: 'POST' });
-                markAsRead(notificationId);
+                markAsRead(String(notificationId));
                 alert('Partnership accepted!');
+                await loadNotifications(); // Refresh notifications
             } catch (err) {
+                console.error('Partnership error:', err);
                 alert('Failed to accept partnership');
             }
         }
 
         async function declinePartnership(userId, notificationId) {
-            markAsRead(notificationId);
+            markAsRead(String(notificationId));
             alert('Partnership declined');
+            await loadNotifications(); // Refresh notifications
         }
 
         function updateBadge() {

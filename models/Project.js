@@ -29,6 +29,17 @@ const ProjectSchema = new mongoose.Schema({
   // Meeting & Attachments
   zoomLink: { type: String, default: '' },
   meetingDate: { type: Date },
+  // Site Visit Scheduling
+  siteVisit: {
+    ownerAvailability: [{ type: String }],
+    ownerContactForMoreInfo: { type: Boolean, default: false },
+    vendorAvailabilities: [{
+      vendor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      slots: [{ type: String }],
+      contactForMoreInfo: { type: Boolean, default: false },
+      submittedAt: { type: Date, default: Date.now }
+    }]
+  },
   attachments: [{
     filename: String,
     url: String,
@@ -133,6 +144,15 @@ const ProjectSchema = new mongoose.Schema({
     action: { type: String, required: true },
     details: String,
     timestamp: { type: Date, default: Date.now }
+  }],
+  
+  // Owner Comments for Project Updates
+  ownerComments: [{
+    author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    text: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+    edited: { type: Boolean, default: false },
+    editedAt: { type: Date }
   }],
   
   // Timestamps

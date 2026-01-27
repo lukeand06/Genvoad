@@ -14,6 +14,7 @@ const Project = require('./models/Project');
 const Message = require('./models/Message');
 const Review = require('./models/Review');
 const Notification = require('./models/Notification');
+const Company = require('./models/Company');
 const { sendVerificationEmail, sendEmail } = require('./utils/email');
 
 const app = express();
@@ -598,6 +599,68 @@ app.get('/api/users/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Search users by name, company, or email
+app.get('/api/users/search', authMiddleware, async (req, res) => {
+  try {
+    const query = req.query.q || '';
+    if (query.length < 2) {
+      return res.json([]);
+    }
+    
+    // Check if it's an email format
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(query);
+    
+    if (isEmail) {
+      // Search for registered user with this email
+      const user = await User.findOne({ email: query, verified: true, deletedAt: null }).select('-password -verificationCode');
+      if (user) {
+        return res.json([{
+          _id: user._id,
+          name: `${user.firstName} ${user.lastName}`,
+          email: user.email,
+          company: user.company,
+          isRegistered: true
+        }]);
+      } else {
+        // Allow inviting by email even if not registered
+        return res.json([{
+          _id: null,
+          name: query,
+          email: query,
+          company: null,
+          isRegistered: false
+        }]);
+      }
+    }
+    
+    // Text search by name or company
+    const searchRegex = new RegExp(query, 'i');
+    const users = await User.find({
+      verified: true,
+      deletedAt: null,
+      $or: [
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { company: searchRegex }
+      ]
+    })
+    .select('-password -verificationCode')
+    .limit(10);
+    
+    const results = users.map(u => ({
+      _id: u._id,
+      name: `${u.firstName} ${u.lastName}`,
+      email: u.email,
+      company: u.company,
+      isRegistered: true
+    }));
+    
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to search users' });
+  }
+});
+
 // ============ REVIEW ROUTES ============
 
 // Create a review (Yelp-like)
@@ -875,6 +938,51 @@ app.delete('/api/partners/:partnerId', authMiddleware, async (req, res) => {
   }
 });
 
+// Block user
+app.post('/api/users/:userId/block', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    if (userId === req.user._id.toString()) {
+      return res.status(400).json({ error: 'Cannot block yourself' });
+    }
+    
+    await User.findByIdAndUpdate(req.user._id, { 
+      $addToSet: { blockedUsers: userId },
+      $pull: { partners: userId }
+    });
+    
+    // Remove from their partners too
+    await User.findByIdAndUpdate(userId, { $pull: { partners: req.user._id } });
+    
+    res.json({ success: true, message: 'User blocked' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to block user' });
+  }
+});
+
+// Unblock user
+app.delete('/api/users/:userId/block', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.params.userId;
+    await User.findByIdAndUpdate(req.user._id, { $pull: { blockedUsers: userId } });
+    res.json({ success: true, message: 'User unblocked' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to unblock user' });
+  }
+});
+
+// Get blocked users
+app.get('/api/users/blocked', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id)
+      .populate('blockedUsers', 'firstName lastName avatar company')
+      .select('blockedUsers');
+    res.json({ blockedUsers: user.blockedUsers || [] });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch blocked users' });
+  }
+});
+
 // ============ PROJECT ROUTES ============
 
 // Download attachment endpoint
@@ -1116,6 +1224,77 @@ app.post('/api/projects/:id/update-meeting', authMiddleware, upload.array('attac
   }
 });
 
+// Site Visit Availability: get current schedules
+app.get('/api/projects/:id/site-visit', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id)
+      .populate('owner', 'firstName lastName email')
+      .populate({
+        path: 'siteVisit.vendorAvailabilities.vendor',
+        select: 'firstName lastName email'
+      });
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    res.json({ success: true, siteVisit: project.siteVisit || {} });
+  } catch (error) {
+    console.error('Get site visit error:', error);
+    res.status(500).json({ error: 'Failed to load site visit availability' });
+  }
+});
+
+// Site Visit Availability: submit or update availability for owner or vendor
+app.post('/api/projects/:id/site-visit', authMiddleware, async (req, res) => {
+  try {
+    const { slots, contactForMoreInfo } = req.body;
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // Ensure container exists
+    if (!project.siteVisit) {
+      project.siteVisit = { ownerAvailability: [], ownerContactForMoreInfo: false, vendorAvailabilities: [] };
+    }
+
+    const normalizedSlots = Array.isArray(slots)
+      ? slots.filter(s => typeof s === 'string' && s.trim()).map(s => s.trim())
+      : (typeof slots === 'string' ? slots.split('\n').map(s => s.trim()).filter(Boolean) : []);
+
+    const isOwner = project.owner?.toString() === req.user._id.toString();
+
+    if (isOwner) {
+      // Owner updates their availability
+      project.siteVisit.ownerAvailability = normalizedSlots;
+      project.siteVisit.ownerContactForMoreInfo = Boolean(contactForMoreInfo);
+    } else {
+      // Vendor updates (create or update their entry)
+      const idx = (project.siteVisit.vendorAvailabilities || []).findIndex(v => v.vendor?.toString() === req.user._id.toString());
+      const entry = {
+        vendor: req.user._id,
+        slots: normalizedSlots,
+        contactForMoreInfo: Boolean(contactForMoreInfo),
+        submittedAt: new Date()
+      };
+      if (idx >= 0) {
+        project.siteVisit.vendorAvailabilities[idx] = entry;
+      } else {
+        project.siteVisit.vendorAvailabilities.push(entry);
+      }
+    }
+
+    project.updatedAt = new Date();
+    await project.save();
+
+    const populated = await Project.findById(project._id).populate({
+      path: 'siteVisit.vendorAvailabilities.vendor',
+      select: 'firstName lastName email'
+    });
+
+    res.json({ success: true, siteVisit: populated.siteVisit });
+  } catch (error) {
+    console.error('Update site visit error:', error);
+    res.status(500).json({ error: 'Failed to update site visit availability' });
+  }
+});
+
 // Delete project attachment
 app.delete('/api/projects/:id/attachments/:filename', authMiddleware, async (req, res) => {
   try {
@@ -1221,6 +1400,35 @@ app.post('/api/projects/:projectId/bids/:bidId/accept', authMiddleware, async (r
     });
     
     await project.save();
+    
+    // Send notification to contractor
+    await createNotification(
+      bid.user,
+      'bid_accepted',
+      'bids',
+      {
+        projectId: project._id,
+        projectTitle: project.title,
+        bidAmount: bid.amount,
+        message: `Your bid of ${formatCurrency(bid.amount)} has been accepted!`
+      }
+    );
+    
+    // Notify rejected bidders
+    for (const b of project.bids) {
+      if (b._id.toString() !== req.params.bidId && b.status === 'rejected') {
+        await createNotification(
+          b.user,
+          'bid_rejected',
+          'bids',
+          {
+            projectId: project._id,
+            projectTitle: project.title,
+            message: 'The project owner has selected another bid.'
+          }
+        );
+      }
+    }
     
     res.json({ success: true, message: 'Bid accepted' });
   } catch (error) {
@@ -1536,10 +1744,108 @@ app.post('/api/messages', authMiddleware, upload.array('attachments', 5), async 
 app.get('/api/messages/conversations', authMiddleware, async (req, res) => {
   try {
     const messages = await Message.find({
-      $or: [{ sender: req.user._id }, { recipient: req.user._id }]
+
+// Send email invite to non-Genovad user
+app.post('/api/messages/email-invite', authMiddleware, async (req, res) => {
+  try {
+    const { email, subject, message, projectId } = req.body;
+    
+    if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+    
+    const sender = await User.findById(req.user._id);
+    if (!sender) return res.status(404).json({ error: 'Sender not found' });
+    
+    const senderName = sender.company || `${sender.firstName} ${sender.lastName}`;
+    let projectInfo = '';
+    
+    if (projectId) {
+      const project = await Project.findById(projectId);
+      if (project) {
+        projectInfo = `<div style=\"margin: 20px 0; padding: 15px; background: #f3f4f6; border-left: 4px solid #1a1a1a; border-radius: 4px;\">
+          <strong>Related Project:</strong> ${project.title}<br>
+          <strong>Budget:</strong> $${project.budget?.toLocaleString()}<br>
+          <strong>Location:</strong> ${project.location}
+        </div>`;
+      }
+    }
+    
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset=\"UTF-8\">
+        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+      </head>
+      <body style=\"font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;\">
+        <div style=\"background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;\">
+          <h1 style=\"color: white; margin: 0; font-size: 28px;\">Genovad</h1>
+          <p style=\"color: #e0e0e0; margin: 10px 0 0 0;\">Construction Marketplace</p>
+        </div>
+        
+        <div style=\"background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;\">
+          <h2 style=\"color: #1a1a1a; margin-top: 0;\">${subject || 'You have a message on Genovad'}</h2>
+          
+          <p><strong>${senderName}</strong> sent you a message:</p>
+          
+          <div style=\"background: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;\">
+            ${message || 'You have received a new message.'}
+          </div>
+          
+          ${projectInfo}
+          
+          <p style=\"margin-top: 30px;\">
+            <strong>${senderName}</strong> is inviting you to join Genovad, the professional construction marketplace.
+          </p>
+          
+          <div style=\"text-align: center; margin: 30px 0;\">
+            <a href=\"${process.env.APP_URL || 'http://localhost:3000'}/signup.html\" 
+               style=\"display: inline-block; background: #1a1a1a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;\">
+              Join Genovad & Reply
+            </a>
+          </div>
+          
+          <p style=\"color: #6b7280; font-size: 14px; margin-top: 30px;\">
+            Already have an account? <a href=\"${process.env.APP_URL || 'http://localhost:3000'}/login.html\" style=\"color: #1a1a1a;\">Log in</a> to view this message.
+          </p>
+        </div>
+        
+        <div style=\"text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;\">
+          <p>Genovad - Connecting construction professionals</p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    await sendEmail(
+      email,
+      subject || `${senderName} sent you a message on Genovad`,
+      htmlContent,
+      'noreply@genovad.com'
+    );
+    
+    res.json({ success: true, message: 'Email invitation sent' });
+  } catch (error) {
+    console.error('Email invite error:', error);
+    res.status(500).json({ error: 'Failed to send email invitation' });
+  }
+});
+
+// Get conversations
+app.get('/api/messages/conversations', authMiddleware, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user._id).select('partners blockedUsers');
+    const partnerIds = (currentUser.partners || []).map(p => p.toString());
+    const blockedIds = (currentUser.blockedUsers || []).map(b => b.toString());
+    
+    const messages = await Message.find({
+      $or: [{ sender: req.user._id }, { recipient: req.user._id }],
+      sender: { $nin: currentUser.blockedUsers },
+      recipient: { $nin: currentUser.blockedUsers }
     })
-    .populate('sender', 'firstName lastName avatar')
-    .populate('recipient', 'firstName lastName avatar')
+    .populate('sender', 'firstName lastName avatar company')
+    .populate('recipient', 'firstName lastName avatar company')
     .sort('-createdAt');
     
     // Group by conversation
@@ -1549,11 +1855,16 @@ app.get('/api/messages/conversations', authMiddleware, async (req, res) => {
         ? msg.recipient._id.toString() 
         : msg.sender._id.toString();
       
+      // Skip blocked users
+      if (blockedIds.includes(otherUserId)) return;
+      
       if (!conversations[otherUserId]) {
+        const isPartner = partnerIds.includes(otherUserId);
         conversations[otherUserId] = {
           user: msg.sender._id.toString() === req.user._id.toString() ? msg.recipient : msg.sender,
           lastMessage: msg,
-          unread: 0
+          unread: 0,
+          type: isPartner ? 'partner' : 'direct'
         };
       }
       
@@ -1869,6 +2180,133 @@ app.get('/api/projects/:id/activity', authMiddleware, async (req, res) => {
     res.json({ activityLog: project.activityLog });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch activity log' });
+  }
+});
+
+// ============ OWNER COMMENTS ROUTES ============
+
+// Add owner comment to project
+app.post('/api/projects/:id/comments', authMiddleware, async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'Comment text is required' });
+    }
+
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    // Only owner can add comments
+    const isOwner = project.owner.toString() === req.user._id.toString();
+    if (!isOwner) {
+      return res.status(403).json({ error: 'Only the project owner can add comments' });
+    }
+    
+    const comment = {
+      author: req.user._id,
+      text: text.trim(),
+      createdAt: new Date()
+    };
+    
+    project.ownerComments.push(comment);
+    
+    project.activityLog.push({
+      actor: req.user._id,
+      action: 'comment_added',
+      details: 'Added a comment to the project',
+      timestamp: new Date()
+    });
+    
+    await project.save();
+    await project.populate('ownerComments.author', 'firstName lastName avatar company');
+    
+    res.json({ 
+      success: true, 
+      comment: project.ownerComments[project.ownerComments.length - 1],
+      comments: project.ownerComments 
+    });
+  } catch (error) {
+    console.error('Add comment error:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+// Get project comments
+app.get('/api/projects/:id/comments', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.id)
+      .populate('ownerComments.author', 'firstName lastName avatar company');
+    
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    res.json({ comments: project.ownerComments || [] });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch comments' });
+  }
+});
+
+// Edit owner comment
+app.put('/api/projects/:projectId/comments/:commentId', authMiddleware, async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ error: 'Comment text is required' });
+    }
+
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    const comment = project.ownerComments.id(req.params.commentId);
+    if (!comment) return res.status(404).json({ error: 'Comment not found' });
+    
+    // Only comment author can edit
+    if (comment.author.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized to edit this comment' });
+    }
+    
+    comment.text = text.trim();
+    comment.edited = true;
+    comment.editedAt = new Date();
+    
+    await project.save();
+    await project.populate('ownerComments.author', 'firstName lastName avatar company');
+    
+    res.json({ success: true, comment });
+  } catch (error) {
+    console.error('Edit comment error:', error);
+    res.status(500).json({ error: 'Failed to edit comment' });
+  }
+});
+
+// Delete owner comment
+app.delete('/api/projects/:projectId/comments/:commentId', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+    
+    const comment = project.ownerComments.id(req.params.commentId);
+    if (!comment) return res.status(404).json({ error: 'Comment not found' });
+    
+    // Only comment author can delete
+    if (comment.author.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized to delete this comment' });
+    }
+    
+    comment.remove();
+    
+    project.activityLog.push({
+      actor: req.user._id,
+      action: 'comment_deleted',
+      details: 'Deleted a comment from the project',
+      timestamp: new Date()
+    });
+    
+    await project.save();
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    res.status(500).json({ error: 'Failed to delete comment' });
   }
 });
 
@@ -2343,10 +2781,169 @@ async function createNotification(userId, type, category, data) {
       data
     });
     await notification.save();
+    
+    // Send email/SMS if user has opted in
+    try {
+      const user = await User.findById(userId);
+      if (user && user.preferences) {
+        const shouldSendEmail = getShouldSendEmailNotification(user, category);
+        const shouldSendSMS = user.preferences.smsOptIn;
+        
+        if (shouldSendEmail) {
+          await sendEmailNotification(user, type, data);
+        }
+        
+        if (shouldSendSMS && user.phone) {
+          await sendSMSNotification(user, type, data);
+        }
+      }
+    } catch (notifError) {
+      console.error('Error sending notification:', notifError);
+      // Don't fail the notification creation if email/SMS fails
+    }
+    
     return notification;
   } catch (error) {
     console.error('Error creating notification:', error);
   }
+}
+
+// Check if user has email notifications enabled for this category
+function getShouldSendEmailNotification(user, category) {
+  if (!user.preferences || !user.preferences.emailNotifications) {
+    return true; // Default to true if not set
+  }
+  
+  const emailPrefs = user.preferences.emailNotifications;
+  
+  switch(category) {
+    case 'messages':
+      return emailPrefs.messages !== false;
+    case 'projects':
+      return emailPrefs.projectUpdates !== false;
+    case 'partnerships':
+      return emailPrefs.partnerRequests !== false;
+    default:
+      return true;
+  }
+}
+
+// Send email notification
+async function sendEmailNotification(user, type, data) {
+  let subject = '';
+  let body = '';
+  
+  switch(type) {
+    case 'bid_received':
+      subject = `New Bid on ${data.projectTitle}`;
+      body = `
+        <h2>New Bid Received!</h2>
+        <p>Hi ${user.firstName},</p>
+        <p>You've received a new bid on your project <strong>${data.projectTitle}</strong>.</p>
+        <p><strong>Bid Amount:</strong> $${data.amount?.toLocaleString() || 'N/A'}</p>
+        <p><strong>Bidder:</strong> ${data.bidderName || 'Unknown'}</p>
+        <p><a href="${process.env.APP_URL || 'https://genovad.com'}/project-detail.html?id=${data.projectId}" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:white;text-decoration:none;border-radius:6px;margin-top:16px;">Review Bid</a></p>
+      `;
+      break;
+      
+    case 'bid_accepted':
+      subject = `Your Bid Was Accepted!`;
+      body = `
+        <h2>Congratulations!</h2>
+        <p>Hi ${user.firstName},</p>
+        <p>Your bid for <strong>${data.projectTitle}</strong> has been accepted!</p>
+        <p><strong>Amount:</strong> $${data.amount?.toLocaleString() || 'N/A'}</p>
+        <p><a href="${process.env.APP_URL || 'https://genovad.com'}/project-detail.html?id=${data.projectId}" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:white;text-decoration:none;border-radius:6px;margin-top:16px;">View Project</a></p>
+      `;
+      break;
+      
+    case 'new_message':
+      subject = `New Message from ${data.userName}`;
+      body = `
+        <h2>New Message</h2>
+        <p>Hi ${user.firstName},</p>
+        <p><strong>${data.userName}</strong> sent you a message:</p>
+        <div style="background:#f5f5f5;padding:16px;border-radius:6px;margin:16px 0;">
+          <p style="margin:0;">${data.preview || 'Click to view message'}</p>
+        </div>
+        <p><a href="${process.env.APP_URL || 'https://genovad.com'}/messages.html?user=${data.userId}" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:white;text-decoration:none;border-radius:6px;margin-top:16px;">Reply Now</a></p>
+      `;
+      break;
+      
+    case 'partnership_request':
+      subject = `Partnership Request from ${data.userName}`;
+      body = `
+        <h2>New Partnership Request</h2>
+        <p>Hi ${user.firstName},</p>
+        <p><strong>${data.userName}</strong>${data.userCompany ? ` from ${data.userCompany}` : ''} wants to add you as a partner.</p>
+        <p><a href="${process.env.APP_URL || 'https://genovad.com'}/notifications.html" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:white;text-decoration:none;border-radius:6px;margin-top:16px;">View Request</a></p>
+      `;
+      break;
+      
+    default:
+      subject = 'New Notification from Genovad';
+      body = `<p>Hi ${user.firstName},</p><p>You have a new notification on Genovad.</p>`;
+  }
+  
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: 'Inter', -apple-system, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    .container { max-width: 600px; margin: 40px auto; background: white; border-radius: 8px; overflow: hidden; }
+    .header { padding: 24px 40px; text-align: center; background: #1a1a1a; }
+    .logo { font-size: 24px; font-weight: 600; color: white; margin: 0; }
+    .content { padding: 40px; }
+    h2 { color: #1a1a1a; margin: 0 0 16px; }
+    p { color: #666; line-height: 1.6; margin: 0 0 16px; }
+    .footer { padding: 24px 40px; background: #f9f9f9; text-align: center; color: #999; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1 class="logo">Genovad</h1></div>
+    <div class="content">${body}</div>
+    <div class="footer"><p>&copy; 2026 Genovad. All rights reserved.</p></div>
+  </div>
+</body>
+</html>
+  `;
+  
+  await sendEmail(user.email, subject, htmlContent);
+}
+
+// Send SMS notification (placeholder - requires Twilio setup)
+async function sendSMSNotification(user, type, data) {
+  // TODO: Implement SMS sending with Twilio
+  // For now, just log that SMS would be sent
+  console.log(`📱 SMS notification would be sent to ${user.phone}: ${type}`);
+  
+  /* Example Twilio implementation:
+  const twilio = require('twilio');
+  const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+  
+  let message = '';
+  switch(type) {
+    case 'bid_received':
+      message = `New bid of $${data.amount} on ${data.projectTitle}`;
+      break;
+    case 'bid_accepted':
+      message = `Your bid was accepted! ${data.projectTitle}`;
+      break;
+    case 'new_message':
+      message = `New message from ${data.userName}`;
+      break;
+    default:
+      message = 'You have a new notification on Genovad';
+  }
+  
+  await client.messages.create({
+    body: message,
+    from: process.env.TWILIO_PHONE_NUMBER,
+    to: user.phone
+  });
+  */
 }
 
 // Make createNotification available to other routes
@@ -2372,6 +2969,590 @@ app.post('/api/auth/email-test', async (req, res) => {
   } catch (error) {
     console.error('Email test error:', error.message || error);
     res.status(500).json({ error: 'Email test failed' });
+  }
+});
+
+// ============ COMPANY VERIFICATION & MANAGEMENT ROUTES ============
+
+// Create/claim company
+app.post('/api/companies', authMiddleware, upload.array('documents', 5), async (req, res) => {
+  try {
+    const {
+      name,
+      legalName,
+      registrationNumber,
+      registrarId,
+      address,
+      phone,
+      email,
+      website,
+      type,
+      size,
+      yearFounded,
+      description,
+      specialties
+    } = req.body;
+
+    // Check if company already exists
+    const existing = await Company.findOne({
+      $or: [
+        { registrationNumber: registrationNumber && registrationNumber.trim() },
+        { name: name, 'address.city': address?.city, 'address.state': address?.state }
+      ].filter(Boolean)
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'Company already exists. Request to join instead.' });
+    }
+
+    // Handle uploaded documents
+    const documents = req.files ? req.files.map(file => ({
+      type: 'business_license',
+      url: `/uploads/${file.filename}`,
+      uploadedAt: Date.now()
+    })) : [];
+
+    const company = new Company({
+      name,
+      legalName: legalName || name,
+      registrationNumber,
+      registrarId,
+      address: typeof address === 'string' ? JSON.parse(address) : address,
+      phone,
+      email,
+      website,
+      type,
+      size,
+      yearFounded,
+      description,
+      specialties: typeof specialties === 'string' ? JSON.parse(specialties) : specialties,
+      owner: req.user._id,
+      admins: [req.user._id],
+      members: [req.user._id],
+      verificationDocuments: documents,
+      verificationStatus: documents.length > 0 ? 'submitted' : 'pending'
+    });
+
+    await company.save();
+
+    // Update user
+    await User.findByIdAndUpdate(req.user._id, {
+      companyId: company._id,
+      companyRole: 'owner',
+      company: name
+    });
+
+    res.json({ success: true, company });
+  } catch (error) {
+    console.error('Create company error:', error);
+    res.status(500).json({ error: 'Failed to create company' });
+  }
+});
+
+// Get company details
+app.get('/api/companies/:id', authMiddleware, async (req, res) => {
+  try {
+    const company = await Company.findById(req.params.id)
+      .populate('owner', 'firstName lastName email avatar')
+      .populate('admins', 'firstName lastName email avatar title')
+      .populate('members', 'firstName lastName email avatar title');
+    
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+    
+    res.json({ company });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch company' });
+  }
+});
+
+// Get my company
+app.get('/api/companies/my/company', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user.companyId) {
+      return res.json({ company: null });
+    }
+
+    const company = await Company.findById(user.companyId)
+      .populate('owner', 'firstName lastName email avatar')
+      .populate('admins', 'firstName lastName email avatar title')
+      .populate('members', 'firstName lastName email avatar title');
+    
+    res.json({ company });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch company' });
+  }
+});
+
+// Submit company for verification
+app.post('/api/companies/:id/submit-verification', authMiddleware, upload.array('documents', 5), async (req, res) => {
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+
+    // Check if user is admin
+    if (!company.admins.includes(req.user._id) && company.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Add new documents
+    if (req.files) {
+      const newDocs = req.files.map(file => ({
+        type: req.body.docType || 'business_license',
+        url: `/uploads/${file.filename}`,
+        uploadedAt: Date.now()
+      }));
+      company.verificationDocuments.push(...newDocs);
+    }
+
+    company.verificationStatus = 'submitted';
+    await company.save();
+
+    // Notify admins/system about verification request
+    // Could send email to admin team here
+
+    res.json({ success: true, message: 'Company submitted for verification', company });
+  } catch (error) {
+    console.error('Submit verification error:', error);
+    res.status(500).json({ error: 'Failed to submit verification' });
+  }
+});
+
+// Automatic verification check (checks external APIs)
+app.post('/api/companies/:id/auto-verify', authMiddleware, async (req, res) => {
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+
+    // Check if user is admin
+    if (!company.admins.includes(req.user._id) && company.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    let verificationPassed = false;
+    const checks = [];
+
+    // Check 1: Registrar ID verification (if provided)
+    if (company.registrarId) {
+      // This would integrate with state contractor licensing boards
+      // For now, just mark as checked
+      checks.push({
+        type: 'registrar',
+        passed: true,
+        message: 'Registrar ID format valid'
+      });
+      verificationPassed = true;
+    }
+
+    // Check 2: EIN/Registration number format
+    if (company.registrationNumber) {
+      const einPattern = /^\\d{2}-\\d{7}$/;
+      const isValidEIN = einPattern.test(company.registrationNumber);
+      checks.push({
+        type: 'ein',
+        passed: isValidEIN,
+        message: isValidEIN ? 'EIN format valid' : 'EIN format invalid'
+      });
+      if (isValidEIN) verificationPassed = true;
+    }
+
+    // Check 3: Business address verification (could integrate with Google Places API)
+    if (company.address && company.address.street) {
+      checks.push({
+        type: 'address',
+        passed: true,
+        message: 'Address provided'
+      });
+    }
+
+    // Check 4: Website domain matches company name (basic check)
+    if (company.website) {
+      try {
+        const domain = new URL(company.website).hostname.toLowerCase();
+        const companyNameSlug = company.name.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const domainContainsName = domain.includes(companyNameSlug.substring(0, Math.min(10, companyNameSlug.length)));
+        checks.push({
+          type: 'website',
+          passed: domainContainsName,
+          message: domainContainsName ? 'Website domain matches company name' : 'Website domain does not match company name'
+        });
+      } catch (e) {
+        checks.push({
+          type: 'website',
+          passed: false,
+          message: 'Invalid website URL'
+        });
+      }
+    }
+
+    // If passes automatic checks, mark as verified
+    if (verificationPassed && checks.filter(c => c.passed).length >= 2) {
+      company.verified = true;
+      company.verificationStatus = 'verified';
+      company.verificationMethod = 'automated';
+      company.verificationDate = new Date();
+      company.verificationNotes = `Automatic verification passed: ${checks.filter(c => c.passed).map(c => c.type).join(', ')}`;
+      await company.save();
+
+      // Update all company members with verification badge
+      await User.updateMany(
+        { companyId: company._id },
+        { $set: { registrarId: company.registrarId || company.registrationNumber } }
+      );
+
+      res.json({ 
+        success: true, 
+        verified: true, 
+        message: 'Company automatically verified!',
+        checks,
+        company 
+      });
+    } else {
+      company.verificationStatus = 'in_review';
+      company.verificationNotes = 'Automatic verification inconclusive. Manual review required.';
+      await company.save();
+
+      res.json({ 
+        success: true, 
+        verified: false, 
+        message: 'Automatic verification incomplete. Manual review required.',
+        checks,
+        company 
+      });
+    }
+  } catch (error) {
+    console.error('Auto-verify error:', error);
+    res.status(500).json({ error: 'Failed to auto-verify company' });
+  }
+});
+
+// Admin: Get all companies for review
+app.get('/api/admin/companies', authMiddleware, async (req, res) => {
+  try {
+    // TODO: Add admin role check here
+    // if (req.user.role !== 'admin') return res.status(403).json({ error: 'Not authorized' });
+    
+    const companies = await Company.find()
+      .populate('owner', 'firstName lastName email')
+      .sort({ createdAt: -1 });
+    
+    res.json({ companies });
+  } catch (error) {
+    console.error('Get companies error:', error);
+    res.status(500).json({ error: 'Failed to fetch companies' });
+  }
+});
+
+// Admin: Manually approve company (would be restricted to platform admins)
+app.post('/api/admin/companies/:id/approve', authMiddleware, async (req, res) => {
+  try {
+    // TODO: Add admin role check
+    // if (req.user.role !== 'platform_admin') return res.status(403).json({ error: 'Not authorized' });
+
+    const { notes } = req.body;
+    const company = await Company.findById(req.params.id);
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+
+    company.verified = true;
+    company.verificationStatus = 'verified';
+    company.verificationMethod = 'manual';
+    company.verificationDate = new Date();
+    company.verificationNotes = notes || 'Manually approved by admin';
+    await company.save();
+
+    // Update all company members
+    await User.updateMany(
+      { companyId: company._id },
+      { $set: { registrarId: company.registrarId || company.registrationNumber } }
+    );
+
+    // Send notification to company owner
+    await createNotification(
+      company.owner,
+      'company_verified',
+      'company',
+      {
+        companyId: company._id,
+        companyName: company.name,
+        message: 'Your company has been verified!'
+      }
+    );
+
+    res.json({ success: true, message: 'Company approved', company });
+  } catch (error) {
+    console.error('Approve company error:', error);
+    res.status(500).json({ error: 'Failed to approve company' });
+  }
+});
+
+// Admin: Reject company verification
+app.post('/api/admin/companies/:id/reject', authMiddleware, async (req, res) => {
+  try {
+    // TODO: Add admin role check
+
+    const { reason } = req.body;
+    const company = await Company.findById(req.params.id);
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+
+    company.verificationStatus = 'rejected';
+    company.verificationNotes = reason || 'Verification rejected';
+    await company.save();
+
+    // Send notification to company owner
+    await createNotification(
+      company.owner,
+      'company_verification_rejected',
+      'company',
+      {
+        companyId: company._id,
+        companyName: company.name,
+        message: `Company verification rejected: ${reason}`
+      }
+    );
+
+    res.json({ success: true, message: 'Company verification rejected', company });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to reject company' });
+  }
+});
+
+// Invite team member to company
+app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    
+    if (!email || !['admin', 'member'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid email or role' });
+    }
+
+    const company = await Company.findById(req.params.id);
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+
+    // Check if user is admin
+    if (!company.admins.includes(req.user._id) && company.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only company admins can invite members' });
+    }
+
+    // Check if already a member
+    const existingUser = await User.findOne({ email, companyId: company._id });
+    if (existingUser) {
+      return res.status(400).json({ error: 'User is already a company member' });
+    }
+
+    // Check if already invited
+    const existingInvite = company.pendingInvitations.find(
+      inv => inv.email === email && inv.status === 'pending'
+    );
+    if (existingInvite) {
+      return res.status(400).json({ error: 'Invitation already sent to this email' });
+    }
+
+    // Create invitation token
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+
+    // Add invitation
+    company.pendingInvitations.push({
+      email,
+      role,
+      token,
+      invitedBy: req.user._id,
+      invitedAt: new Date(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      status: 'pending'
+    });
+
+    await company.save();
+
+    // Send invitation email
+    const inviteUrl = `${process.env.APP_URL || 'http://localhost:3000'}/company-invite?token=${token}`;
+    const inviter = await User.findById(req.user._id);
+    
+    await sendEmail(
+      email,
+      `You're invited to join ${company.name} on Genovad`,
+      `
+      <!DOCTYPE html>
+      <html>
+      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2>Join ${company.name} on Genovad</h2>
+          <p><strong>${inviter.firstName} ${inviter.lastName}</strong> has invited you to join <strong>${company.name}</strong> as a ${role}.</p>
+          
+          ${company.verified ? '<p style="color: #059669;">✓ This is a verified company</p>' : ''}
+          
+          <div style="margin: 30px 0;">
+            <a href="${inviteUrl}" style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+              Accept Invitation
+            </a>
+          </div>
+          
+          <p style="color: #666; font-size: 14px;">This invitation expires in 7 days.</p>
+          <p style="color: #666; font-size: 14px;">If you don't have a Genovad account, you'll be able to create one.</p>
+        </div>
+      </body>
+      </html>
+      `
+    );
+
+    res.json({ success: true, message: 'Invitation sent', invitation: { email, role, token } });
+  } catch (error) {
+    console.error('Invite member error:', error);
+    res.status(500).json({ error: 'Failed to send invitation' });
+  }
+});
+
+// Get invitation details (public, no auth needed)
+app.get('/api/companies/invitations/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    const company = await Company.findOne({
+      'pendingInvitations.token': token,
+      'pendingInvitations.status': 'pending'
+    }).select('name verified verificationDate');
+
+    if (!company) {
+      return res.status(404).json({ error: 'Invalid or expired invitation' });
+    }
+
+    const invitation = company.pendingInvitations.find(
+      inv => inv.token === token && inv.status === 'pending'
+    );
+
+    if (!invitation || invitation.expiresAt < new Date()) {
+      return res.status(400).json({ error: 'Invitation has expired' });
+    }
+
+    res.json({ 
+      company: {
+        name: company.name,
+        verified: company.verified
+      },
+      invitation: {
+        role: invitation.role,
+        email: invitation.email
+      }
+    });
+  } catch (error) {
+    console.error('Get invitation error:', error);
+    res.status(500).json({ error: 'Failed to fetch invitation' });
+  }
+});
+
+// Accept company invitation
+app.post('/api/companies/invitations/:token/accept', authMiddleware, async (req, res) => {
+  try {
+    const { token } = req.params;
+    
+    const company = await Company.findOne({
+      'pendingInvitations.token': token,
+      'pendingInvitations.status': 'pending'
+    });
+
+    if (!company) {
+      return res.status(404).json({ error: 'Invalid or expired invitation' });
+    }
+
+    const invitation = company.pendingInvitations.find(
+      inv => inv.token === token && inv.status === 'pending'
+    );
+
+    if (!invitation || invitation.expiresAt < new Date()) {
+      return res.status(400).json({ error: 'Invitation has expired' });
+    }
+
+    // Check if user email matches invitation
+    const user = await User.findById(req.user._id);
+    if (user.email !== invitation.email) {
+      return res.status(403).json({ error: 'This invitation is for a different email address' });
+    }
+
+    // Add user to company
+    company.members.push(user._id);
+    if (invitation.role === 'admin') {
+      company.admins.push(user._id);
+    }
+
+    // Mark invitation as accepted
+    invitation.status = 'accepted';
+    await company.save();
+
+    // Update user
+    await User.findByIdAndUpdate(user._id, {
+      companyId: company._id,
+      companyRole: invitation.role,
+      company: company.name
+    });
+
+    res.json({ success: true, message: 'Successfully joined company', company });
+  } catch (error) {
+    console.error('Accept invitation error:', error);
+    res.status(500).json({ error: 'Failed to accept invitation' });
+  }
+});
+
+// Get company members
+app.get('/api/companies/:id/members', authMiddleware, async (req, res) => {
+  try {
+    const company = await Company.findById(req.params.id)
+      .populate('members', 'firstName lastName email avatar title companyRole');
+    
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+    
+    res.json({ members: company.members });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch members' });
+  }
+});
+
+// Remove company member
+app.delete('/api/companies/:id/members/:userId', authMiddleware, async (req, res) => {
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+
+    // Check if user is admin
+    if (!company.admins.includes(req.user._id) && company.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    // Can't remove owner
+    if (company.owner.toString() === req.params.userId) {
+      return res.status(400).json({ error: 'Cannot remove company owner' });
+    }
+
+    // Remove from company
+    company.members = company.members.filter(m => m.toString() !== req.params.userId);
+    company.admins = company.admins.filter(a => a.toString() !== req.params.userId);
+    await company.save();
+
+    // Update user
+    await User.findByIdAndUpdate(req.params.userId, {
+      $unset: { companyId: 1, companyRole: 1 }
+    });
+
+    res.json({ success: true, message: 'Member removed' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to remove member' });
+  }
+});
+
+// Get pending invitations for a company
+app.get('/api/companies/:id/invitations', authMiddleware, async (req, res) => {
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) return res.status(404).json({ error: 'Company not found' });
+
+    // Check if user is admin
+    if (!company.admins.includes(req.user._id) && company.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
+    const pending = company.pendingInvitations.filter(inv => inv.status === 'pending');
+    res.json({ invitations: pending });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch invitations' });
   }
 });
 

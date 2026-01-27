@@ -8,9 +8,45 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
+        
+        /* Loading Overlay */
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #loading-overlay.active {
+            display: flex;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #1a1a1a;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p id="loading-message" class="text-white mt-4 text-lg font-medium"></p>
+    </div>
+    
     <!-- Navigation -->
     <nav class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -239,6 +275,19 @@
         let currentBidId = null;
         let currentMilestoneId = null;
 
+        // Loading overlay helpers
+        function showLoadingOverlay(message = 'Loading...') {
+            const overlay = document.getElementById('loading-overlay');
+            const messageEl = document.getElementById('loading-message');
+            messageEl.textContent = message;
+            overlay.classList.add('active');
+        }
+
+        function hideLoadingOverlay() {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.classList.remove('active');
+        }
+
         // Helper function to get bid display (exact or range)
         function getBidDisplay(bid) {
             if (bid.amount && (!bid.priceRange || bid.priceRange === 'exact')) {
@@ -401,6 +450,29 @@
                             <h3 class="text-lg font-semibold text-gray-900 mb-2">Description</h3>
                             <p class="text-gray-700">${project.description}</p>
                         </div>
+
+                        <!-- Owner Comments Section -->
+                        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4 sm:p-6 mb-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">Project Updates</h3>
+                                ${isOwner ? `<button onclick="showAddCommentForm()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-900 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-800">Add Update</button>` : ''}
+                            </div>
+                            
+                            <div id="add-comment-form" class="hidden mb-4 bg-white rounded-lg border border-gray-200 p-4">
+                                <textarea id="comment-text" rows="3" placeholder="Share an update about the project..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent mb-2"></textarea>
+                                <div class="flex gap-2 justify-end">
+                                    <button onclick="cancelAddComment()" class="px-3 py-1.5 sm:px-4 sm:py-2 border border-gray-300 text-gray-700 rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-50">Cancel</button>
+                                    <button onclick="submitComment()" class="px-3 py-1.5 sm:px-4 sm:py-2 bg-gray-900 text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-800">Post Update</button>
+                                </div>
+                            </div>
+                            
+                            <div id="comments-container">
+                                <!-- Comments loaded dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Site Visit Availability -->
+                        <div id="site-visit-section" class="bg-white rounded-lg border border-gray-200 p-6"></div>
 
                         ${project.requirements && project.requirements.length > 0 ? `
                             <div class="mb-6">
@@ -705,10 +777,50 @@
             // Attach event listeners
             const bidBtn = document.getElementById('open-bid-modal');
             if (bidBtn) {
-                bidBtn.addEventListener('click', () => {
-                    document.getElementById('bid-modal').classList.remove('hidden');
+                bidBtn.addEventListener('click', async () => {
+                    // Check if user is in owner role and needs to switch
+                    const currentUser = getCurrentUser();
+                    if (currentUser.role === 'owner') {
+                        // Show confirmation modal
+                        if (confirm('You are currently in Project Owner mode. Would you like to switch to Vendor mode to submit a bid?')) {
+                            // Show loading overlay
+                            showLoadingOverlay('Switching to Vendor mode...');
+                            try {
+                                // Switch role to vendor
+                                const response = await authFetch('/api/users/profile', {
+                                    method: 'PUT',
+                                    body: JSON.stringify({ role: 'vendor' })
+                                });
+                                
+                                if (!response.ok) {
+                                    throw new Error('Failed to switch role');
+                                }
+                                
+                                const data = await response.json();
+                                setCurrentUser(data.user);
+                                
+                                hideLoadingOverlay();
+                                
+                                // Open bid modal
+                                document.getElementById('bid-modal').classList.remove('hidden');
+                                
+                                // Show success message
+                                alert('You are now in Vendor mode! You can submit your bid.');
+                            } catch (error) {
+                                hideLoadingOverlay();
+                                alert('Failed to switch role: ' + error.message);
+                            }
+                        }
+                    } else {
+                        // User is already a vendor, just open the modal
+                        document.getElementById('bid-modal').classList.remove('hidden');
+                    }
                 });
             }
+
+            // Load dynamic sections
+            loadAndRenderSiteVisit(project, isOwner);
+            loadComments();
         }
 
         // Bid modal handlers
@@ -1045,7 +1157,255 @@
             }).join('');
         }
 
+        async function loadAndRenderSiteVisit(project, isOwner) {
+            try {
+                const res = await authFetch(`/api/projects/${project._id}/site-visit`);
+                const data = await res.json();
+                const sv = data.siteVisit || { ownerAvailability: [], ownerContactForMoreInfo: false, vendorAvailabilities: [] };
+
+                const myEntry = (sv.vendorAvailabilities || []).find(v => v.vendor && (v.vendor._id === user.id || v.vendor === user.id));
+                const ownerList = (sv.ownerAvailability || []).map(s => `<li class="text-sm text-gray-700">${escapeHtml(s)}</li>`).join('');
+                const vendorsList = (sv.vendorAvailabilities || []).map(v => `
+                    <li class="py-2">
+                        <div class="text-sm font-medium text-gray-900">${escapeHtml(v.vendor?.firstName || '')} ${escapeHtml(v.vendor?.lastName || '')}</div>
+                        ${v.contactForMoreInfo ? `<div class="text-xs text-gray-600">Prefers contact for more information</div>` : ''}
+                        ${(v.slots || []).length ? `<ul class="list-disc list-inside mt-1">${v.slots.map(s => `<li class=\"text-sm text-gray-700\">${escapeHtml(s)}</li>`).join('')}</ul>` : (!v.contactForMoreInfo ? `<div class="text-xs text-gray-600">No availability provided</div>` : '')}
+                    </li>
+                `).join('');
+
+                const ownerView = `
+                    <h2 class="text-xl font-semibold text-gray-900 mb-3">Site Visit Availability</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Your Availability</h3>
+                            <form id="owner-site-visit-form" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Time slots (one per line)</label>
+                                    <textarea id="owner-slots" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="e.g., 01/30 2-4pm\n02/01 morning\nWeekdays 9-11am">${(sv.ownerAvailability || []).join('\n')}</textarea>
+                                </div>
+                                <label class="inline-flex items-center text-sm">
+                                    <input type="checkbox" id="owner-contact" class="mr-2" ${sv.ownerContactForMoreInfo ? 'checked' : ''}>
+                                    <span>Prefer to be contacted for more information</span>
+                                </label>
+                                <div>
+                                    <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Save Availability</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Vendor Availability</h3>
+                            ${vendorsList ? `<ul class="divide-y divide-gray-100">${vendorsList}</ul>` : `<div class="text-sm text-gray-600">No vendor availability yet</div>`}
+                        </div>
+                    </div>
+                `;
+
+                const vendorView = `
+                    <h2 class="text-xl font-semibold text-gray-900 mb-3">Site Visit Availability</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Client Availability</h3>
+                            ${(sv.ownerContactForMoreInfo) ? `<div class="text-sm text-gray-700">Client prefers to be contacted for more information.</div>` : ((sv.ownerAvailability || []).length ? `<ul class="list-disc list-inside">${ownerList}</ul>` : `<div class="text-sm text-gray-600">No availability provided</div>`)}
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Your Availability</h3>
+                            <form id="vendor-site-visit-form" class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Time slots (one per line)</label>
+                                    <textarea id="vendor-slots" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="e.g., 01/30 2-4pm\n02/01 morning\nWeekdays 9-11am">${(myEntry?.slots || []).join('\n')}</textarea>
+                                </div>
+                                <label class="inline-flex items-center text-sm">
+                                    <input type="checkbox" id="vendor-contact" class="mr-2" ${myEntry?.contactForMoreInfo ? 'checked' : ''}>
+                                    <span>Prefer to be contacted for more information</span>
+                                </label>
+                                <div>
+                                    <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Save Availability</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('site-visit-section').innerHTML = isOwner ? ownerView : vendorView;
+
+                // Hook up submit handlers
+                if (isOwner) {
+                    const form = document.getElementById('owner-site-visit-form');
+                    form.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const slots = document.getElementById('owner-slots').value.split('\n').map(s => s.trim()).filter(Boolean);
+                        const contact = document.getElementById('owner-contact').checked;
+                        await submitSiteVisit(project._id, slots, contact);
+                        await loadAndRenderSiteVisit(project, isOwner);
+                    });
+                } else {
+                    const form = document.getElementById('vendor-site-visit-form');
+                    form.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const slots = document.getElementById('vendor-slots').value.split('\n').map(s => s.trim()).filter(Boolean);
+                        const contact = document.getElementById('vendor-contact').checked;
+                        await submitSiteVisit(project._id, slots, contact);
+                        await loadAndRenderSiteVisit(project, isOwner);
+                    });
+                }
+            } catch (err) {
+                console.error('Site visit load error:', err);
+                document.getElementById('site-visit-section').innerHTML = `<div class="text-sm text-red-600">Failed to load site visit availability</div>`;
+            }
+        }
+
+        async function submitSiteVisit(projectId, slots, contactForMoreInfo) {
+            const res = await authFetch(`/api/projects/${projectId}/site-visit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ slots, contactForMoreInfo })
+            });
+            const ct = res.headers.get('content-type') || '';
+            if (!res.ok || !ct.includes('application/json')) {
+                let err; try { err = await res.json(); } catch {}
+                throw new Error((err && (err.error || err.message)) || 'Failed to save availability');
+            }
+            return res.json();
+        }
+
+        function escapeHtml(str) {
+            if (typeof str !== 'string') return '';
+            return str.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+        }
+
         loadProject();
+        
+        // ============ OWNER COMMENTS ============
+        
+        async function loadComments() {
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/comments`);
+                const data = await res.json();
+                
+                const container = document.getElementById('comments-container');
+                if (!data.comments || data.comments.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-gray-500 text-center py-4">No updates yet. Check back for project updates from the owner.</p>';
+                    return;
+                }
+                
+                container.innerHTML = data.comments.map(comment => {
+                    const isAuthor = comment.author._id === user.id;
+                    const displayName = comment.author.company || `${comment.author.firstName} ${comment.author.lastName}`;
+                    
+                    return `
+                        <div class="bg-white rounded-lg border border-gray-200 p-4 mb-3 last:mb-0">
+                            <div class="flex items-start gap-3">
+                                ${getAvatarHTML(comment.author, 'w-10 h-10 flex-shrink-0')}
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-2 mb-2">
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <span class="font-semibold text-gray-900 text-sm">${displayName}</span>
+                                            <span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs rounded font-medium">Owner</span>
+                                        </div>
+                                        ${isAuthor ? `
+                                            <div class="flex gap-1">
+                                                <button onclick="editComment('${comment._id}', \`${comment.text.replace(/`/g, '\\`').replace(/"/g, '&quot;')}\`)" class="text-gray-500 hover:text-gray-700 p-1" title="Edit">
+                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                                    </svg>
+                                                </button>
+                                                <button onclick="deleteComment('${comment._id}')" class="text-red-500 hover:text-red-700 p-1" title="Delete">
+                                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                    <p class="text-sm text-gray-700 whitespace-pre-wrap">${escapeHtml(comment.text)}</p>
+                                    <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+                                        <span>${formatDate(new Date(comment.createdAt))}</span>
+                                        ${comment.edited ? '<span>• Edited</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Load comments error:', error);
+                document.getElementById('comments-container').innerHTML = '<p class="text-sm text-red-500 text-center py-4">Failed to load updates</p>';
+            }
+        }
+        
+        function showAddCommentForm() {
+            document.getElementById('add-comment-form').classList.remove('hidden');
+            document.getElementById('comment-text').focus();
+        }
+        
+        function cancelAddComment() {
+            document.getElementById('add-comment-form').classList.add('hidden');
+            document.getElementById('comment-text').value = '';
+        }
+        
+        async function submitComment() {
+            const text = document.getElementById('comment-text').value.trim();
+            if (!text) {
+                alert('Please enter a comment');
+                return;
+            }
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/comments`, {
+                    method: 'POST',
+                    body: JSON.stringify({ text })
+                });
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || 'Failed to post comment');
+                }
+                
+                cancelAddComment();
+                await loadComments();
+            } catch (error) {
+                alert(error.message || 'Failed to post comment');
+            }
+        }
+        
+        async function editComment(commentId, currentText) {
+            const newText = prompt('Edit your update:', currentText);
+            if (!newText || newText.trim() === currentText.trim()) return;
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/comments/${commentId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ text: newText.trim() })
+                });
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || 'Failed to edit comment');
+                }
+                
+                await loadComments();
+            } catch (error) {
+                alert(error.message || 'Failed to edit comment');
+            }
+        }
+        
+        async function deleteComment(commentId) {
+            if (!confirm('Are you sure you want to delete this update?')) return;
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/comments/${commentId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || 'Failed to delete comment');
+                }
+                
+                await loadComments();
+            } catch (error) {
+                alert(error.message || 'Failed to delete comment');
+            }
+        }
         
         // Open Governance Tab Management
         let currentGovernanceTab = 'milestones';

@@ -24,6 +24,12 @@ function getCurrentUser() {
   return userStr ? JSON.parse(userStr) : null;
 }
 
+// Get current user ID (handles both _id and id)
+function getUserId() {
+  const user = getCurrentUser();
+  return user?._id || user?.id;
+}
+
 // Save current user
 function setCurrentUser(user) {
   localStorage.setItem('user', JSON.stringify(user));
@@ -225,6 +231,18 @@ function getVerificationBadge(user, size = 'small') {
   return `<svg class="${sizeClass} text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" title="Verified Business">
     <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
   </svg>`;
+}
+
+// Get company verification badge HTML
+function getCompanyVerificationBadge(company, size = 'small') {
+  if (!company || !company.verified) return '';
+  
+  const badgeText = size === 'small' ? '✓' : '✓ Verified Company';
+  const sizeClass = size === 'small' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
+  
+  return `<span class="${sizeClass} bg-green-100 text-green-800 font-medium rounded-full" title="Verified Company">
+    ${badgeText}
+  </span>`;
 }
 
 // Get name with company first if available

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accept Company Invitation - Genovad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg border border-gray-200 p-8 max-w-md w-full">
+            <div id="loading" class="text-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                <p class="text-gray-600">Loading invitation...</p>
+            </div>
+
+            <div id="invitation-details" class="hidden">
+                <div class="text-center mb-6">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Company Invitation</h1>
+                    <p class="text-gray-600">You've been invited to join a company on Genovad</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                    <p class="text-sm text-gray-600 mb-1">Company Name</p>
+                    <p id="company-name" class="font-semibold text-gray-900"></p>
+                    <p class="text-sm text-gray-600 mt-3 mb-1">Your Role</p>
+                    <p id="role" class="font-semibold text-gray-900"></p>
+                </div>
+
+                <div id="login-prompt" class="hidden mb-6">
+                    <p class="text-sm text-gray-600 text-center mb-4">You need to sign in to accept this invitation</p>
+                    <a href="/login.html" class="block w-full px-4 py-3 bg-gray-900 text-white text-center rounded-lg font-medium hover:bg-gray-800">Sign In</a>
+                    <p class="text-sm text-gray-600 text-center mt-3">Don't have an account? <a href="/signup.html" class="text-blue-600 hover:underline">Sign up</a></p>
+                </div>
+
+                <div id="accept-section" class="hidden">
+                    <button id="accept-btn" class="w-full px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 mb-3">Accept Invitation</button>
+                    <button id="decline-btn" class="w-full px-4 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50">Decline</button>
+                </div>
+            </div>
+
+            <div id="error-message" class="hidden text-center py-8">
+                <svg class="w-16 h-16 mx-auto mb-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Invalid Invitation</h2>
+                <p id="error-text" class="text-gray-600 mb-4"></p>
+                <a href="/login.html" class="text-blue-600 hover:underline">Go to Login</a>
+            </div>
+
+            <div id="success-message" class="hidden text-center py-8">
+                <svg class="w-16 h-16 mx-auto mb-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Welcome to the Team!</h2>
+                <p class="text-gray-600 mb-4">You've successfully joined <span id="success-company-name" class="font-semibold"></span></p>
+                <a href="/company.html" class="inline-block px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Go to Company Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        const user = getCurrentUser();
+
+        if (!token) {
+            showError('No invitation token provided');
+        } else {
+            loadInvitation();
+        }
+
+        async function loadInvitation() {
+            try {
+                const res = await fetch(`/api/companies/invitations/${token}`);
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || 'Invalid invitation');
+
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('invitation-details').classList.remove('hidden');
+                document.getElementById('company-name').textContent = data.company.name;
+                document.getElementById('role').textContent = data.invitation.role;
+
+                if (!user) {
+                    // Not logged in - show login prompt
+                    document.getElementById('login-prompt').classList.remove('hidden');
+                } else {
+                    // Logged in - show accept/decline buttons
+                    document.getElementById('accept-section').classList.remove('hidden');
+                }
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        document.getElementById('accept-btn')?.addEventListener('click', async () => {
+            try {
+                const res = await authFetch(`/api/companies/invitations/${token}/accept`, {
+                    method: 'POST'
+                });
+
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || 'Failed to accept invitation');
+                }
+
+                const data = await res.json();
+                
+                // Update localStorage user
+                const updatedUser = getCurrentUser();
+                updatedUser.companyId = data.company._id;
+                updatedUser.companyRole = data.invitation.role;
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+
+                // Show success
+                document.getElementById('invitation-details').classList.add('hidden');
+                document.getElementById('success-message').classList.remove('hidden');
+                document.getElementById('success-company-name').textContent = data.company.name;
+            } catch (error) {
+                alert('Failed to accept invitation: ' + error.message);
+            }
+        });
+
+        document.getElementById('decline-btn')?.addEventListener('click', () => {
+            if (confirm('Are you sure you want to decline this invitation?')) {
+                window.location.href = '/dashboard.html';
+            }
+        });
+
+        function showError(message) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error-message').classList.remove('hidden');
+            document.getElementById('error-text').textContent = message;
+        }
+    </script>
+</body>
+</html>

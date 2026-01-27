@@ -80,6 +80,7 @@
         }
 
         const currentUser = getCurrentUser();
+        const currentUserId = currentUser._id || currentUser.id;
         document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
         
         document.getElementById('user-menu-btn').addEventListener('click', () => {
@@ -88,8 +89,8 @@
         document.getElementById('logout-btn').addEventListener('click', logout);
 
         const urlParams = new URLSearchParams(window.location.search);
-        const profileUserId = urlParams.get('id') || currentUser.id;
-        const isOwnProfile = profileUserId === currentUser.id;
+        const profileUserId = urlParams.get('id') || currentUserId;
+        const isOwnProfile = profileUserId === currentUserId;
 
         let globalProfile = null;
 
@@ -704,7 +705,7 @@
                 }
                 
                 list.innerHTML = `<div class="space-y-4">` + data.reviews.map(r => {
-                    const isMyReview = r.reviewer && (r.reviewer._id || r.reviewer) === currentUser.id;
+                    const isMyReview = r.reviewer && (r.reviewer._id || r.reviewer) === currentUserId;
                     return `
                         <div class="border border-gray-200 rounded-lg p-5 hover:shadow-sm transition ${isMyReview ? 'bg-blue-50/30 border-blue-200' : 'bg-white'}">
                             <div class="flex items-start gap-3">
@@ -817,7 +818,7 @@
                     const projectsRes = await authFetch(`/api/projects?status=completed`);
                     const projectsData = await projectsRes.json();
                     const eligible = (projectsData.projects || []).find(p => {
-                        const me = currentUser.id;
+                        const me = currentUserId;
                         const other = profile._id;
                         const ownerIsMe = p.owner && (p.owner._id ? p.owner._id : p.owner) === me;
                         const contractorIsMe = p.acceptedContractor && (p.acceptedContractor._id ? p.acceptedContractor._id : p.acceptedContractor) === me;

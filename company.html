@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Management - Genovad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+                            <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                            <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-xl font-semibold text-gray-900">Genovad</span>
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard.html" class="text-gray-600 hover:text-gray-900 text-sm font-medium">Dashboard</a>
+                    <div class="relative">
+                        <button id="user-menu-btn">
+                            <div id="user-avatar"></div>
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                            <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div id="no-company-section" class="hidden">
+            <div class="bg-white rounded-lg border border-gray-200 p-8 text-center">
+                <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                <h2 class="text-2xl font-bold text-gray-900 mb-2">Register Your Company</h2>
+                <p class="text-gray-600 mb-6">Get verified and unlock team collaboration features</p>
+                <button id="show-create-form-btn" class="px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Register Company</button>
+            </div>
+        </div>
+
+        <div id="create-company-section" class="hidden">
+            <div class="bg-white rounded-lg border border-gray-200 p-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Register Your Company</h2>
+                <form id="create-company-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
+                            <input type="text" id="company-name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Legal Name</label>
+                            <input type="text" id="legal-name" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">EIN / Registration Number</label>
+                            <input type="text" id="registration-number" placeholder="XX-XXXXXXX" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Contractor License # (if applicable)</label>
+                            <input type="text" id="registrar-id" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="tel" id="company-phone" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="company-email" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                        <input type="url" id="website" placeholder="https://" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Company Type</label>
+                            <select id="company-type" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="general_contractor">General Contractor</option>
+                                <option value="subcontractor">Subcontractor</option>
+                                <option value="architect">Architect</option>
+                                <option value="engineer">Engineer</option>
+                                <option value="supplier">Supplier</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
+                            <select id="company-size" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="1-10">1-10 employees</option>
+                                <option value="11-50">11-50 employees</option>
+                                <option value="51-200">51-200 employees</option>
+                                <option value="201-500">201-500 employees</option>
+                                <option value="500+">500+ employees</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Year Founded</label>
+                            <input type="number" id="year-founded" min="1800" max="2026" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Company Description</label>
+                        <textarea id="description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Verification Documents (Business License, EIN Letter, etc.)</label>
+                        <input type="file" id="documents" multiple accept=".pdf,.jpg,.jpeg,.png" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <p class="text-xs text-gray-500 mt-1">Upload documents to speed up verification</p>
+                    </div>
+
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" id="cancel-create-btn" class="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                        <button type="submit" class="px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Register Company</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="company-dashboard" class="hidden space-y-6">
+            <!-- Company Header -->
+            <div class="bg-white rounded-lg border border-gray-200 p-8">
+                <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <h1 id="company-name-display" class="text-3xl font-bold text-gray-900"></h1>
+                            <span id="verification-badge" class="hidden px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">✓ Verified</span>
+                            <span id="pending-badge" class="hidden px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">⏳ Pending Verification</span>
+                        </div>
+                        <p id="company-description" class="text-gray-600 mb-4"></p>
+                        <div class="flex flex-wrap gap-4 text-sm text-gray-600">
+                            <span id="company-type-display"></span>
+                            <span id="company-size-display"></span>
+                            <span id="company-members-count"></span>
+                        </div>
+                    </div>
+                    <div id="admin-actions" class="hidden space-x-2">
+                        <button id="invite-member-btn" class="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Invite Team Member</button>
+                        <button id="verify-company-btn" class="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">Request Verification</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verification Status -->
+            <div id="verification-section" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 class="text-lg font-semibold text-blue-900 mb-2">Company Verification</h3>
+                <p class="text-blue-800 mb-4">Get your company verified to unlock trust badges and premium features</p>
+                <button id="auto-verify-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Run Automatic Verification</button>
+            </div>
+
+            <!-- Team Members -->
+            <div class="bg-white rounded-lg border border-gray-200 p-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-900">Team Members</h2>
+                </div>
+                <div id="members-list" class="space-y-4">
+                    <p class="text-gray-500 text-center py-8">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Pending Invitations -->
+            <div id="invitations-section" class="hidden bg-white rounded-lg border border-gray-200 p-8">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Pending Invitations</h2>
+                <div id="invitations-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Member Modal -->
+    <div id="invite-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Invite Team Member</h2>
+            <form id="invite-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="invite-email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <select id="invite-role" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        <option value="member">Member</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Admins can invite and manage team members</p>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" id="cancel-invite" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Send Invitation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        if (!requireAuth()) {
+            throw new Error('Not authenticated');
+        }
+
+        const user = getCurrentUser();
+        document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+        
+        document.getElementById('user-menu-btn').addEventListener('click', () => {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
+        let currentCompany = null;
+
+        async function loadCompany() {
+            try {
+                const res = await authFetch('/api/companies/my/company');
+                const data = await res.json();
+                
+                if (!data.company) {
+                    document.getElementById('no-company-section').classList.remove('hidden');
+                } else {
+                    currentCompany = data.company;
+                    displayCompany(data.company);
+                }
+            } catch (error) {
+                console.error('Error loading company:', error);
+                document.getElementById('no-company-section').classList.remove('hidden');
+            }
+        }
+
+        function displayCompany(company) {
+            document.getElementById('company-dashboard').classList.remove('hidden');
+            document.getElementById('company-name-display').textContent = company.name;
+            document.getElementById('company-description').textContent = company.description || 'No description provided';
+            document.getElementById('company-type-display').textContent = company.type?.replace('_', ' ') || '';
+            document.getElementById('company-size-display').textContent = `${company.size} employees`;
+            document.getElementById('company-members-count').textContent = `${company.members.length} team members`;
+
+            if (company.verified) {
+                document.getElementById('verification-badge').classList.remove('hidden');
+            } else {
+                document.getElementById('pending-badge').classList.remove('hidden');
+                if (isAdmin(company)) {
+                    document.getElementById('verification-section').classList.remove('hidden');
+                }
+            }
+
+            if (isAdmin(company)) {
+                document.getElementById('admin-actions').classList.remove('hidden');
+            }
+
+            displayMembers(company.members);
+            if (isAdmin(company)) {
+                loadInvitations(company._id);
+            }
+        }
+
+        function isAdmin(company) {
+            return company.owner._id === user._id || company.owner === user._id || 
+                   company.admins.some(a => (a._id || a) === user._id);
+        }
+
+        function displayMembers(members) {
+            const container = document.getElementById('members-list');
+            container.innerHTML = members.map(member => `
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        ${getAvatarHTML(member, 'w-12 h-12')}
+                        <div>
+                            <p class="font-medium text-gray-900">${member.firstName} ${member.lastName}</p>
+                            <p class="text-sm text-gray-600">${member.title || member.email}</p>
+                            <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">${member.companyRole || 'member'}</span>
+                        </div>
+                    </div>
+                    ${isAdmin(currentCompany) && member._id !== currentCompany.owner._id && member._id !== currentCompany.owner ? `
+                        <button onclick="removeMember('${member._id}')" class="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded">Remove</button>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function loadInvitations(companyId) {
+            try {
+                const res = await authFetch(`/api/companies/${companyId}/invitations`);
+                const data = await res.json();
+                
+                if (data.invitations.length > 0) {
+                    document.getElementById('invitations-section').classList.remove('hidden');
+                    document.getElementById('invitations-list').innerHTML = data.invitations.map(inv => `
+                        <div class="p-4 border border-gray-200 rounded-lg mb-3">
+                            <p class="font-medium text-gray-900">${inv.email}</p>
+                            <p class="text-sm text-gray-600">Role: ${inv.role}</p>
+                            <p class="text-xs text-gray-500">Invited ${new Date(inv.invitedAt).toLocaleDateString()}</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading invitations:', error);
+            }
+        }
+
+        // Show create company form
+        document.getElementById('show-create-form-btn').addEventListener('click', () => {
+            document.getElementById('no-company-section').classList.add('hidden');
+            document.getElementById('create-company-section').classList.remove('hidden');
+        });
+
+        document.getElementById('cancel-create-btn').addEventListener('click', () => {
+            document.getElementById('create-company-section').classList.add('hidden');
+            document.getElementById('no-company-section').classList.remove('hidden');
+        });
+
+        // Create company
+        document.getElementById('create-company-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('name', document.getElementById('company-name').value);
+            formData.append('legalName', document.getElementById('legal-name').value);
+            formData.append('registrationNumber', document.getElementById('registration-number').value);
+            formData.append('registrarId', document.getElementById('registrar-id').value);
+            formData.append('phone', document.getElementById('company-phone').value);
+            formData.append('email', document.getElementById('company-email').value);
+            formData.append('website', document.getElementById('website').value);
+            formData.append('type', document.getElementById('company-type').value);
+            formData.append('size', document.getElementById('company-size').value);
+            formData.append('yearFounded', document.getElementById('year-founded').value);
+            formData.append('description', document.getElementById('description').value);
+
+            const files = document.getElementById('documents').files;
+            for (let i = 0; i < files.length; i++) {
+                formData.append('documents', files[i]);
+            }
+
+            try {
+                const res = await authFetch('/api/companies', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {} // Let browser set Content-Type with boundary
+                });
+
+                if (!res.ok) throw new Error('Failed to create company');
+                
+                alert('Company registered successfully!');
+                location.reload();
+            } catch (error) {
+                alert('Failed to register company: ' + error.message);
+            }
+        });
+
+        // Invite member
+        document.getElementById('invite-member-btn').addEventListener('click', () => {
+            document.getElementById('invite-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('cancel-invite').addEventListener('click', () => {
+            document.getElementById('invite-modal').classList.add('hidden');
+        });
+
+        document.getElementById('invite-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('invite-email').value;
+            const role = document.getElementById('invite-role').value;
+
+            try {
+                const res = await authFetch(`/api/companies/${currentCompany._id}/invite`, {
+                    method: 'POST',
+                    body: JSON.stringify({ email, role })
+                });
+
+                if (!res.ok) throw new Error('Failed to send invitation');
+                
+                alert('Invitation sent successfully!');
+                document.getElementById('invite-modal').classList.add('hidden');
+                document.getElementById('invite-form').reset();
+                loadInvitations(currentCompany._id);
+            } catch (error) {
+                alert('Failed to send invitation: ' + error.message);
+            }
+        });
+
+        // Auto-verify
+        document.getElementById('auto-verify-btn')?.addEventListener('click', async () => {
+            try {
+                const res = await authFetch(`/api/companies/${currentCompany._id}/auto-verify`, {
+                    method: 'POST'
+                });
+
+                const data = await res.json();
+                
+                if (data.verified) {
+                    alert('Company automatically verified!');
+                    location.reload();
+                } else {
+                    alert('Automatic verification incomplete. Manual review required.\n\nChecks performed:\n' + 
+                          data.checks.map(c => `${c.type}: ${c.passed ? '✓' : '✗'} ${c.message}`).join('\n'));
+                }
+            } catch (error) {
+                alert('Verification failed: ' + error.message);
+            }
+        });
+
+        async function removeMember(memberId) {
+            if (!confirm('Are you sure you want to remove this team member?')) return;
+
+            try {
+                const res = await authFetch(`/api/companies/${currentCompany._id}/members/${memberId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) throw new Error('Failed to remove member');
+                
+                alert('Member removed successfully');
+                location.reload();
+            } catch (error) {
+                alert('Failed to remove member: ' + error.message);
+            }
+        }
+
+        loadCompany();
+    </script>
+</body>
+</html>

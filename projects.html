@@ -150,6 +150,7 @@
         }
 
         const user = getCurrentUser();
+        const userId = user._id || user.id;
         document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
         
         // Role-based nav button
@@ -375,8 +376,9 @@
                 const data = await response.json();
                 
                 // Filter projects owned by current user
+                const userId = user._id || user.id;
                 const myProjects = (data.projects || []).filter(p => 
-                    p.owner && (p.owner._id === user.id || p.owner === user.id)
+                    p.owner && (p.owner._id === userId || p.owner === userId)
                 );
                 
                 displayMyProjects(myProjects);
@@ -498,52 +500,69 @@
 
         async function inviteToBid(projectId) {
             try {
-                // Load user's partners
-                const res = await authFetch('/api/partners');
-                const data = await res.json();
-                const partners = data.partners || [];
-                
-                if (partners.length === 0) {
-                    alert('You don\'t have any partners to invite. Build your network first by browsing professionals.');
-                    return;
-                }
-                
-                // Build partner list HTML
-                let partnerList = 'Select vendors to invite:\n\n';
-                partners.forEach((p, i) => {
-                    partnerList += `${i + 1}. ${p.firstName} ${p.lastName}${p.company ? ` (${p.company})` : ''}\n`;
-                });
-                
-                const selected = prompt(partnerList + '\nEnter numbers separated by commas (e.g., 1,2,3):');
-                if (!selected) return;
-                
-                const indices = selected.split(',').map(s => parseInt(s.trim()) - 1).filter(i => i >= 0 && i < partners.length);
-                if (indices.length === 0) {
-                    alert('No valid selections');
-                    return;
-                }
-                
                 const project = allProjects.find(p => p._id === projectId);
                 if (!project) return;
                 
-                // Send invitations
-                for (const idx of indices) {
-                    const partner = partners[idx];
+                // Prompt for email or name
+                const searchQuery = prompt('Enter vendor name or email to invite:');
+                if (!searchQuery || searchQuery.trim().length < 2) return;
+                
+                // Search for user
+                const res = await authFetch(`/api/users/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                const data = await res.json();
+                
+                if (data.length === 0) {
+                    alert('No users found with that name or email.');
+                    return;
+                }
+                
+                // If multiple results, show selection
+                let selectedUser;
+                if (data.length === 1) {
+                    selectedUser = data[0];
+                } else {
+                    let options = 'Multiple users found. Select one:\n\n';
+                    data.forEach((u, i) => {
+                        options += `${i + 1}. ${u.name} (${u.email})${u.company ? ` - ${u.company}` : ''}${!u.isRegistered ? ' [Not on Genovad]' : ''}\n`;
+                    });
+                    const selection = prompt(options + '\nEnter number (1-' + data.length + '):');
+                    const idx = parseInt(selection) - 1;
+                    if (idx < 0 || idx >= data.length) {
+                        alert('Invalid selection');
+                        return;
+                    }
+                    selectedUser = data[idx];
+                }
+                
+                // Send invitation
+                if (!selectedUser.isRegistered) {
+                    // Send email invitation
+                    await authFetch('/api/messages/email-invite', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            email: selectedUser.email,
+                            subject: `Bid Invitation: ${project.title}`,
+                            message: `I'd like to invite you to bid on my project: "${project.title}". Budget: ${formatCurrency(project.budget)}, Location: ${project.location}. Join Genovad to view details and submit your bid!`,
+                            projectId: projectId
+                        })
+                    });
+                    alert(`Email invitation sent to ${selectedUser.email}!`);
+                } else {
+                    // Send in-app message
                     await authFetch('/api/messages', {
                         method: 'POST',
                         body: JSON.stringify({
-                            recipient: partner._id,
+                            recipient: selectedUser._id,
                             content: `I'd like to invite you to bid on my project: "${project.title}". Budget: ${formatCurrency(project.budget)}, Location: ${project.location}. Check it out and submit your bid if interested!`,
                             type: 'bid_invitation',
                             project: projectId
                         })
                     });
+                    alert(`Invitation sent to ${selectedUser.name}!`);
                 }
-                
-                alert(`Invitation(s) sent to ${indices.length} vendor(s)!`);
             } catch (e) {
                 console.error('Invite error:', e);
-                alert('Failed to send invitations');
+                alert('Failed to send invitation: ' + e.message);
             }
         }
 

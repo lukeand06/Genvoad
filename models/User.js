@@ -31,6 +31,8 @@ const UserSchema = new mongoose.Schema({
   
   // Professional Info
   company: { type: String, default: '' },
+  companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' }, // If part of verified company
+  companyRole: { type: String, enum: ['owner', 'admin', 'member'], default: 'member' },
   title: { type: String, default: '' },
   registrarId: { type: String, default: '' },
   city: { type: String, default: '' },
@@ -61,6 +63,7 @@ const UserSchema = new mongoose.Schema({
 
   // Social
   partners: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   
   // Portfolio
   portfolio: [{

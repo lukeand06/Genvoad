@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Company Verification - Genovad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+                            <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                            <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-xl font-semibold text-gray-900">Genovad Admin</span>
+                    </a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/dashboard.html" class="text-gray-600 hover:text-gray-900 text-sm font-medium">Back to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Company Verification Queue</h1>
+            <p class="text-gray-600 mt-2">Review and approve company verification requests</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Pending Review</p>
+                        <p id="pending-count" class="text-3xl font-bold text-yellow-600">0</p>
+                    </div>
+                    <div class="bg-yellow-100 p-3 rounded-lg">
+                        <svg class="w-8 h-8 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Verified Today</p>
+                        <p id="verified-count" class="text-3xl font-bold text-green-600">0</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-lg">
+                        <svg class="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Rejected</p>
+                        <p id="rejected-count" class="text-3xl font-bold text-red-600">0</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-lg">
+                        <svg class="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200">
+            <div class="border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center space-x-4">
+                    <button onclick="filterCompanies('all')" class="filter-btn px-4 py-2 text-sm font-medium rounded-lg bg-gray-900 text-white">All</button>
+                    <button onclick="filterCompanies('pending')" class="filter-btn px-4 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">Pending</button>
+                    <button onclick="filterCompanies('in_review')" class="filter-btn px-4 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">In Review</button>
+                    <button onclick="filterCompanies('verified')" class="filter-btn px-4 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">Verified</button>
+                    <button onclick="filterCompanies('rejected')" class="filter-btn px-4 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50">Rejected</button>
+                </div>
+            </div>
+
+            <div id="companies-list" class="divide-y divide-gray-200">
+                <div class="p-8 text-center text-gray-500">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="review-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-gray-900">Review Company Verification</h2>
+                    <button onclick="closeReviewModal()" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="review-content" class="p-6"></div>
+
+            <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4 flex gap-3">
+                <button onclick="closeReviewModal()" class="flex-1 px-4 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-white">Cancel</button>
+                <button id="reject-btn" class="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700">Reject</button>
+                <button id="approve-btn" class="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700">Approve</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        if (!requireAuth()) throw new Error('Not authenticated');
+
+        let allCompanies = [];
+        let currentFilter = 'all';
+        let selectedCompany = null;
+
+        async function loadCompanies() {
+            try {
+                const res = await authFetch('/api/admin/companies');
+                const data = await res.json();
+                allCompanies = data.companies || [];
+                
+                updateStats();
+                displayCompanies();
+            } catch (error) {
+                console.error('Error loading companies:', error);
+                document.getElementById('companies-list').innerHTML = '<div class="p-8 text-center text-red-500">Failed to load companies</div>';
+            }
+        }
+
+        function updateStats() {
+            const pending = allCompanies.filter(c => c.verificationStatus === 'pending' || c.verificationStatus === 'in_review').length;
+            const verified = allCompanies.filter(c => c.verified && new Date(c.verificationDate).toDateString() === new Date().toDateString()).length;
+            const rejected = allCompanies.filter(c => c.verificationStatus === 'rejected').length;
+
+            document.getElementById('pending-count').textContent = pending;
+            document.getElementById('verified-count').textContent = verified;
+            document.getElementById('rejected-count').textContent = rejected;
+        }
+
+        function filterCompanies(filter) {
+            currentFilter = filter;
+            
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-gray-900', 'text-white');
+                btn.classList.add('text-gray-700', 'hover:bg-gray-50');
+            });
+            event.target.classList.add('bg-gray-900', 'text-white');
+            event.target.classList.remove('text-gray-700', 'hover:bg-gray-50');
+            
+            displayCompanies();
+        }
+
+        function displayCompanies() {
+            let companies = allCompanies;
+            
+            if (currentFilter === 'verified') {
+                companies = companies.filter(c => c.verified);
+            } else if (currentFilter === 'rejected') {
+                companies = companies.filter(c => c.verificationStatus === 'rejected');
+            } else if (currentFilter === 'pending') {
+                companies = companies.filter(c => c.verificationStatus === 'pending');
+            } else if (currentFilter === 'in_review') {
+                companies = companies.filter(c => c.verificationStatus === 'in_review');
+            }
+
+            const container = document.getElementById('companies-list');
+            
+            if (companies.length === 0) {
+                container.innerHTML = '<div class="p-8 text-center text-gray-500">No companies found</div>';
+                return;
+            }
+
+            container.innerHTML = companies.map(company => `
+                <div class="p-6 hover:bg-gray-50 cursor-pointer" onclick="openReviewModal('${company._id}')">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-lg font-semibold text-gray-900">${company.name}</h3>
+                                ${getStatusBadge(company)}
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                                <div><span class="font-medium">EIN:</span> ${company.registrationNumber || 'N/A'}</div>
+                                <div><span class="font-medium">License:</span> ${company.registrarId || 'N/A'}</div>
+                                <div><span class="font-medium">Type:</span> ${company.type?.replace('_', ' ') || 'N/A'}</div>
+                                <div><span class="font-medium">Documents:</span> ${company.verificationDocuments?.length || 0}</div>
+                            </div>
+                            ${company.submittedAt ? `<p class="text-xs text-gray-500 mt-2">Submitted ${new Date(company.submittedAt).toLocaleDateString()}</p>` : ''}
+                        </div>
+                        <svg class="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getStatusBadge(company) {
+            if (company.verified) {
+                return '<span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">✓ Verified</span>';
+            }
+            switch (company.verificationStatus) {
+                case 'pending':
+                    return '<span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Pending</span>';
+                case 'in_review':
+                    return '<span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">In Review</span>';
+                case 'rejected':
+                    return '<span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">Rejected</span>';
+                default:
+                    return '<span class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">Unknown</span>';
+            }
+        }
+
+        async function openReviewModal(companyId) {
+            selectedCompany = allCompanies.find(c => c._id === companyId);
+            if (!selectedCompany) return;
+
+            const content = `
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Company Information</h3>
+                        <dl class="grid grid-cols-2 gap-4">
+                            <div><dt class="text-sm text-gray-600">Legal Name</dt><dd class="font-medium">${selectedCompany.legalName || selectedCompany.name}</dd></div>
+                            <div><dt class="text-sm text-gray-600">EIN</dt><dd class="font-medium">${selectedCompany.registrationNumber || 'N/A'}</dd></div>
+                            <div><dt class="text-sm text-gray-600">License #</dt><dd class="font-medium">${selectedCompany.registrarId || 'N/A'}</dd></div>
+                            <div><dt class="text-sm text-gray-600">Type</dt><dd class="font-medium capitalize">${selectedCompany.type?.replace('_', ' ') || 'N/A'}</dd></div>
+                            <div><dt class="text-sm text-gray-600">Phone</dt><dd class="font-medium">${selectedCompany.phone || 'N/A'}</dd></div>
+                            <div><dt class="text-sm text-gray-600">Email</dt><dd class="font-medium">${selectedCompany.email || 'N/A'}</dd></div>
+                            <div><dt class="text-sm text-gray-600">Website</dt><dd class="font-medium">${selectedCompany.website ? `<a href="${selectedCompany.website}" target="_blank" class="text-blue-600 hover:underline">${selectedCompany.website}</a>` : 'N/A'}</dd></div>
+                            <div><dt class="text-sm text-gray-600">Founded</dt><dd class="font-medium">${selectedCompany.yearFounded || 'N/A'}</dd></div>
+                        </dl>
+                    </div>
+
+                    ${selectedCompany.address ? `
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Address</h3>
+                        <p class="text-sm text-gray-700">
+                            ${selectedCompany.address.street}<br>
+                            ${selectedCompany.address.city}, ${selectedCompany.address.state} ${selectedCompany.address.zipCode}<br>
+                            ${selectedCompany.address.country || 'USA'}
+                        </p>
+                    </div>
+                    ` : ''}
+
+                    ${selectedCompany.description ? `
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+                        <p class="text-sm text-gray-700">${selectedCompany.description}</p>
+                    </div>
+                    ` : ''}
+
+                    ${selectedCompany.verificationDocuments?.length > 0 ? `
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Verification Documents</h3>
+                        <div class="space-y-2">
+                            ${selectedCompany.verificationDocuments.map(doc => `
+                                <a href="${doc.url}" target="_blank" class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                    <svg class="w-5 h-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                    <span class="text-sm font-medium text-gray-900">${doc.type || 'Document'}</span>
+                                    <span class="text-xs text-gray-500 ml-auto">${new Date(doc.uploadedAt).toLocaleDateString()}</span>
+                                </a>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Rejection Reason (Optional)</h3>
+                        <textarea id="rejection-reason" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="Provide a reason if rejecting..."></textarea>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('review-content').innerHTML = content;
+            document.getElementById('review-modal').classList.remove('hidden');
+
+            document.getElementById('approve-btn').onclick = () => approveCompany(selectedCompany._id);
+            document.getElementById('reject-btn').onclick = () => rejectCompany(selectedCompany._id);
+        }
+
+        function closeReviewModal() {
+            document.getElementById('review-modal').classList.add('hidden');
+            selectedCompany = null;
+        }
+
+        async function approveCompany(companyId) {
+            if (!confirm('Are you sure you want to approve this company?')) return;
+
+            try {
+                const res = await authFetch(`/api/admin/companies/${companyId}/approve`, {
+                    method: 'POST'
+                });
+
+                if (!res.ok) throw new Error('Failed to approve company');
+                
+                alert('Company approved successfully!');
+                closeReviewModal();
+                await loadCompanies();
+            } catch (error) {
+                alert('Failed to approve company: ' + error.message);
+            }
+        }
+
+        async function rejectCompany(companyId) {
+            const reason = document.getElementById('rejection-reason').value;
+            if (!reason) {
+                alert('Please provide a reason for rejection');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to reject this company?')) return;
+
+            try {
+                const res = await authFetch(`/api/admin/companies/${companyId}/reject`, {
+                    method: 'POST',
+                    body: JSON.stringify({ reason })
+                });
+
+                if (!res.ok) throw new Error('Failed to reject company');
+                
+                alert('Company rejected');
+                closeReviewModal();
+                await loadCompanies();
+            } catch (error) {
+                alert('Failed to reject company: ' + error.message);
+            }
+        }
+
+        loadCompanies();
+    </script>
+</body>
+</html>

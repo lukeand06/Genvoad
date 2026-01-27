@@ -30,6 +30,7 @@
                         <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Projects</a>
                         <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
                         <a href="/browse.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
+                        <a href="/company.html" id="company-nav-link" class="hidden px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Company</a>
                     </div>
                 </div>
 
@@ -325,9 +326,9 @@
                     <div class="p-6">
                         <h3 class="font-semibold text-gray-900 mb-4">Quick Actions</h3>
                         <div class="space-y-2">
-                            <a href="/create-project.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">+ Post a Project</a>
+                            <a href="/create-project.html" id="quick-post-project" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">+ Post a Project</a>
                             <a href="/browse.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">🔍 Find Contractors</a>
-                            <a href="/profile.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">⚙️ Update Profile</a>
+                            <a href="/settings.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">⚙️ Update Profile</a>
                         </div>
                     </div>
                 </div>
@@ -782,12 +783,12 @@
                 return;
             }
 
-            container.innerHTML = feedItems.map(project => {
+            container.innerHTML = '<div class="grid grid-cols-1 gap-6">' + feedItems.map(project => {
                 const owner = project.owner || {};
                 const timeAgo = getTimeAgo(new Date(project.createdAt));
                 
                 return `
-                    <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
                         <!-- User Header -->
                         <div class="flex items-start gap-3 mb-4">
                             <a href="/profile.html?id=${owner._id}">
@@ -1187,6 +1188,12 @@
             await loadFeed();
             await loadRecommendations();
             await loadRecentNotifications();
+            
+            // Show company link if user has company
+            const user = getCurrentUser();
+            if (user.companyId) {
+                document.getElementById('company-nav-link').classList.remove('hidden');
+            }
         })();
     </script>
 </body>
