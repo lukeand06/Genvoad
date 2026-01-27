@@ -592,6 +592,109 @@ app.post('/api/auth/switch-role', authMiddleware, async (req, res) => {
   }
 });
 
+// Linked accounts: fetch linked owner/vendor accounts
+app.get('/api/auth/linked-accounts', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('linkedAccounts email role activeRole');
+    const linked = user.linkedAccounts || {};
+    const ownerAcc = linked.owner ? await User.findById(linked.owner).select('_id email role activeRole') : null;
+    const vendorAcc = linked.vendor ? await User.findById(linked.vendor).select('_id email role activeRole') : null;
+    res.json({
+      success: true,
+      linked: {
+        owner: ownerAcc ? { id: ownerAcc._id, email: ownerAcc.email } : null,
+        vendor: vendorAcc ? { id: vendorAcc._id, email: vendorAcc.email } : null
+      }
+    });
+  } catch (err) {
+    console.error('Get linked accounts error:', err);
+    res.status(500).json({ error: 'Failed to fetch linked accounts' });
+  }
+});
+
+// Link an existing account (email+password) as owner or vendor
+app.post('/api/auth/link-account', authMiddleware, async (req, res) => {
+  try {
+    const { role, email, password } = req.body;
+    if (!role || !['owner', 'vendor'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password required' });
+    }
+
+    const target = await User.findOne({ email: email.toLowerCase() });
+    if (!target || target.deletedAt) return res.status(404).json({ error: 'Account not found' });
+    if (!target.emailVerified) return res.status(403).json({ error: 'Target account not verified' });
+    const valid = await bcrypt.compare(password, target.password);
+    if (!valid) return res.status(401).json({ error: 'Invalid credentials for target account' });
+    if (String(target._id) === String(req.user._id)) {
+      return res.status(400).json({ error: 'Cannot link to the same account' });
+    }
+    if (target.role !== role && target.activeRole !== role) {
+      return res.status(400).json({ error: `Target account is not a ${role}` });
+    }
+
+    // Link both sides
+    const current = await User.findById(req.user._id);
+    current.linkedAccounts = current.linkedAccounts || {};
+    current.linkedAccounts[role] = target._id;
+    await current.save();
+
+    target.linkedAccounts = target.linkedAccounts || {};
+    const otherRole = (current.activeRole || current.role || 'owner');
+    target.linkedAccounts[otherRole] = current._id;
+    await target.save();
+
+    res.json({ success: true, message: 'Accounts linked', linkedId: target._id });
+  } catch (err) {
+    console.error('Link account error:', err);
+    res.status(500).json({ error: 'Failed to link account' });
+  }
+});
+
+// Switch to a linked account (returns a new token and user payload)
+app.post('/api/auth/switch-account', authMiddleware, async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!role || !['owner', 'vendor'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    const user = await User.findById(req.user._id);
+    const targetId = user.linkedAccounts?.[role];
+    if (!targetId) return res.status(404).json({ error: `No linked ${role} account` });
+    const target = await User.findById(targetId).select('-password');
+    if (!target || target.deletedAt) return res.status(404).json({ error: 'Linked account not found' });
+
+    const token = jwt.sign({ userId: target._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({
+      success: true,
+      token,
+      user: {
+        _id: target._id,
+        id: target._id,
+        firstName: target.firstName,
+        lastName: target.lastName,
+        email: target.email,
+        avatar: target.avatar,
+        bio: target.bio,
+        location: target.location,
+        company: target.company,
+        title: target.title,
+        role: target.role,
+        activeRole: target.activeRole,
+        roles: target.roles,
+        authProvider: target.authProvider,
+        companyId: target.companyId,
+        companyRole: target.companyRole
+      }
+    });
+  } catch (err) {
+    console.error('Switch account error:', err);
+    res.status(500).json({ error: 'Failed to switch account' });
+  }
+});
+
 // ============ USER ROUTES ============
 
 // Get user profile

@@ -85,6 +85,12 @@ const UserSchema = new mongoose.Schema({
 
   // Lifecycle
   deletedAt: { type: Date },
+
+  // Linked accounts (optional): reference separate owner/vendor accounts
+  linkedAccounts: {
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    vendor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+  },
   
   // Timestamps
   createdAt: { type: Date, default: Date.now },

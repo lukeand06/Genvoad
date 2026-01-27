@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In (Owner) - Genovad</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full">
+      <div class="text-center mb-8">
+        <a href="index.html" class="inline-flex items-center space-x-2">
+          <svg class="w-10 h-10" viewBox="0 0 40 40" fill="none">
+            <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+            <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+          <span class="text-2xl font-bold text-gray-900">Genovad</span>
+        </a>
+        <h2 class="mt-6 text-3xl font-bold text-gray-900">Sign in as Project Owner</h2>
+        <p class="mt-2 text-sm text-gray-600">Post projects and manage bids</p>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+        <div id="error-message" class="hidden mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded"></div>
+        <form id="login-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" id="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input type="password" id="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+          </div>
+          <button type="submit" id="login-btn" class="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition">Sign In</button>
+        </form>
+        <div class="mt-6 text-center text-sm">
+          <span class="text-gray-600">Need an owner account?</span>
+          <a href="owner-signup.html" class="text-gray-900 font-medium hover:underline ml-1">Sign up</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/public/js/auth.js"></script>
+  <script>
+    redirectIfAuth();
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+      try {
+        const response = await fetch(`${API_URL}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Login failed');
+        setToken(data.token);
+        // Ensure activeRole is owner (legacy users)
+        try {
+          const roleRes = await authFetch('/api/auth/switch-role', { method: 'POST', body: JSON.stringify({ role: 'owner' }) });
+          const roleData = await roleRes.json();
+          if (roleRes.ok) {
+            setCurrentUser(roleData.user);
+          } else {
+            setCurrentUser(data.user);
+          }
+        } catch {
+          setCurrentUser(data.user);
+        }
+        window.location.href = '/dashboard.html';
+      } catch (err) {
+        showError(err.message);
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    });
+  </script>
+</body>
+</html>

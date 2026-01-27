@@ -317,6 +317,36 @@
                     </div>
                 </div>
 
+                <!-- Linked Accounts Section -->
+                <div id="section-linked" class="settings-section bg-white rounded-lg border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-xl font-bold text-gray-900">Linked Accounts</h2>
+                        <p class="text-sm text-gray-600 mt-1">Use separate Owner and Vendor accounts and switch between them</p>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Owner Account Card -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-semibold text-gray-900">Owner Account</h3>
+                                <span id="owner-linked-status" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">Checking...</span>
+                            </div>
+                            <div id="owner-linked-actions" class="space-y-3">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                        <!-- Vendor Account Card -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="font-semibold text-gray-900">Vendor Account</h3>
+                                <span id="vendor-linked-status" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">Checking...</span>
+                            </div>
+                            <div id="vendor-linked-actions" class="space-y-3">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Privacy Section -->
                 <div id="section-privacy" class="settings-section bg-white rounded-lg border border-gray-200">
                     <div class="p-6 border-b border-gray-200">
@@ -647,6 +677,140 @@
                 showError('Failed to load settings');
             }
         }
+
+        // Linked accounts UI
+        async function loadLinkedAccounts() {
+            try {
+                const res = await authFetch('/api/auth/linked-accounts');
+                const data = await res.json();
+                const linked = data.linked || {};
+
+                const ownerStatus = document.getElementById('owner-linked-status');
+                const vendorStatus = document.getElementById('vendor-linked-status');
+                const ownerActions = document.getElementById('owner-linked-actions');
+                const vendorActions = document.getElementById('vendor-linked-actions');
+
+                if (ownerStatus && vendorStatus && ownerActions && vendorActions) {
+                    // Owner card
+                    if (linked.owner) {
+                        ownerStatus.textContent = 'Linked';
+                        ownerStatus.className = 'text-xs px-2 py-1 rounded bg-green-100 text-green-700';
+                        ownerActions.innerHTML = `
+                            <p class="text-sm text-gray-700">Linked to ${linked.owner.email}</p>
+                            <button id="switch-to-owner" class="px-3 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Switch to Owner</button>
+                        `;
+                        document.getElementById('switch-to-owner').addEventListener('click', async () => {
+                            await switchAccount('owner');
+                        });
+                    } else {
+                        ownerStatus.textContent = 'Not linked';
+                        ownerStatus.className = 'text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-700';
+                        ownerActions.innerHTML = `
+                            <div class="space-y-2">
+                                <p class="text-sm text-gray-700">Link existing Owner account</p>
+                                <input type="email" id="owner-link-email" placeholder="owner@example.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <input type="password" id="owner-link-password" placeholder="Password" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <button id="owner-link-btn" class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Link Owner Account</button>
+                                <div class="text-xs text-gray-500">Or <a href="owner-signup.html" class="text-blue-600 hover:underline">create a new Owner account</a></div>
+                            </div>
+                        `;
+                        document.getElementById('owner-link-btn').addEventListener('click', async () => {
+                            const email = document.getElementById('owner-link-email').value;
+                            const password = document.getElementById('owner-link-password').value;
+                            await linkAccount('owner', email, password);
+                            await loadLinkedAccounts();
+                        });
+                    }
+
+                    // Vendor card
+                    if (linked.vendor) {
+                        vendorStatus.textContent = 'Linked';
+                        vendorStatus.className = 'text-xs px-2 py-1 rounded bg-green-100 text-green-700';
+                        vendorActions.innerHTML = `
+                            <p class="text-sm text-gray-700">Linked to ${linked.vendor.email}</p>
+                            <button id="switch-to-vendor" class="px-3 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Switch to Vendor</button>
+                        `;
+                        document.getElementById('switch-to-vendor').addEventListener('click', async () => {
+                            await switchAccount('vendor');
+                        });
+                    } else {
+                        vendorStatus.textContent = 'Not linked';
+                        vendorStatus.className = 'text-xs px-2 py-1 rounded bg-yellow-100 text-yellow-700';
+                        vendorActions.innerHTML = `
+                            <div class="space-y-2">
+                                <p class="text-sm text-gray-700">Link existing Vendor account</p>
+                                <input type="email" id="vendor-link-email" placeholder="vendor@example.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <input type="password" id="vendor-link-password" placeholder="Password" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <button id="vendor-link-btn" class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Link Vendor Account</button>
+                                <div class="text-xs text-gray-500">Or <a href="vendor-signup.html" class="text-blue-600 hover:underline">create a new Vendor account</a></div>
+                            </div>
+                        `;
+                        document.getElementById('vendor-link-btn').addEventListener('click', async () => {
+                            const email = document.getElementById('vendor-link-email').value;
+                            const password = document.getElementById('vendor-link-password').value;
+                            await linkAccount('vendor', email, password);
+                            await loadLinkedAccounts();
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error('Linked accounts load failed:', err);
+            }
+        }
+
+        async function linkAccount(role, email, password) {
+            const res = await authFetch('/api/auth/link-account', {
+                method: 'POST',
+                body: JSON.stringify({ role, email, password })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showError(data.error || 'Failed to link account');
+                throw new Error(data.error || 'Failed to link account');
+            }
+            showSuccess('Linked successfully');
+            return data;
+        }
+
+        async function switchAccount(role) {
+            const res = await authFetch('/api/auth/switch-account', {
+                method: 'POST',
+                body: JSON.stringify({ role })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                showError(data.error || 'Failed to switch account');
+                return;
+            }
+            setToken(data.token);
+            setCurrentUser(data.user);
+            window.location.href = '/dashboard.html';
+        }
+
+        // Ensure linked accounts section appears in nav
+        const desktopNav = document.getElementById('desktop-nav');
+        if (desktopNav) {
+            const btn = document.createElement('button');
+            btn.onclick = () => showSection('linked');
+            btn.id = 'nav-linked';
+            btn.className = 'settings-nav-item w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-3';
+            btn.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg><span>Linked Accounts</span>';
+            desktopNav.appendChild(btn);
+        }
+
+        const mobileNavBar = document.getElementById('mobile-nav');
+        if (mobileNavBar) {
+            const mbtn = document.createElement('button');
+            mbtn.onclick = () => showSection('linked');
+            mbtn.id = 'mobile-nav-linked';
+            mbtn.dataset.section = 'linked';
+            mbtn.className = 'mobile-nav-item flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50';
+            mbtn.textContent = 'Linked';
+            mobileNavBar.appendChild(mbtn);
+        }
+
+        // Kick off
+        loadLinkedAccounts();
 
         function populateProfileForm() {
             if (!profileData) return;
