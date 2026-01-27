@@ -4,6 +4,7 @@ const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
+const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 const jwksClient = require('jwks-rsa');
@@ -39,6 +40,12 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
+
+// Avatar uploads: use memory storage + resize & persist in DB via data URL
+const avatarUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB for avatars
 });
 
 // Middleware
@@ -942,21 +949,27 @@ app.put('/api/users/profile', authMiddleware, async (req, res) => {
 });
 
 // Upload profile picture
-app.post('/api/users/avatar', authMiddleware, upload.single('avatar'), async (req, res) => {
+app.post('/api/users/avatar', authMiddleware, avatarUpload.single('avatar'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const avatarPath = `/uploads/${req.file.filename}`;
-    
+    // Process image: resize to 256x256 and compress
+    const processed = await sharp(req.file.buffer)
+      .resize(256, 256, { fit: 'cover' })
+      .toFormat('jpeg', { quality: 85 })
+      .toBuffer();
+
+    const avatarDataUrl = `data:image/jpeg;base64,${processed.toString('base64')}`;
+
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { $set: { avatar: avatarPath } },
+      { $set: { avatar: avatarDataUrl } },
       { new: true }
     ).select('-password');
 
-    res.json({ success: true, avatar: avatarPath, user });
+    res.json({ success: true, avatar: avatarDataUrl, user });
   } catch (error) {
     console.error('Avatar upload error:', error);
     res.status(500).json({ error: 'Failed to upload profile picture' });
