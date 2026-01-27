@@ -61,6 +61,16 @@ async function switchRole(role) {
     
     if (!response.ok) {
       const data = await response.json();
+      
+      // If user doesn't have this role, redirect to login for that role
+      if (response.status === 403) {
+        alert(`You don't have a ${role} account. Please log in to your ${role} account or create one.`);
+        // Redirect to the appropriate login page
+        const loginPage = role === 'owner' ? '/owner-login.html' : '/vendor-login.html';
+        window.location.href = loginPage;
+        return;
+      }
+      
       throw new Error(data.error || 'Failed to switch role');
     }
     

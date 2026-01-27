@@ -790,9 +790,24 @@
                 // Render linked accounts in the display area
                 const linkedDisplay = document.getElementById('linked-accounts-display');
                 if (linkedDisplay) {
-                    const ownerAcc = linked.owner ? `<div class="p-3 bg-gray-50 rounded-lg text-sm"><span class="font-medium">Owner:</span> ${linked.owner.email} <button onclick="(async()=>{await switchAccount('owner');})();" class="ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded hover:bg-gray-800">Switch</button></div>` : '<div class="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">No owner account linked</div>';
-                    const vendorAcc = linked.vendor ? `<div class="p-3 bg-gray-50 rounded-lg text-sm"><span class="font-medium">Vendor:</span> ${linked.vendor.email} <button onclick="(async()=>{await switchAccount('vendor');})();" class="ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded hover:bg-gray-800">Switch</button></div>` : '<div class="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">No vendor account linked</div>';
+                    const ownerAcc = linked.owner ? `<div class="p-3 bg-gray-50 rounded-lg text-sm"><span class="font-medium">Owner:</span> ${linked.owner.email} <button class="ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded hover:bg-gray-800 switch-owner-btn">Switch</button></div>` : '<div class="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">No owner account linked</div>';
+                    const vendorAcc = linked.vendor ? `<div class="p-3 bg-gray-50 rounded-lg text-sm"><span class="font-medium">Vendor:</span> ${linked.vendor.email} <button class="ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded hover:bg-gray-800 switch-vendor-btn">Switch</button></div>` : '<div class="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">No vendor account linked</div>';
                     linkedDisplay.innerHTML = `${ownerAcc}${vendorAcc}`;
+                    
+                    // Add event listeners to switch buttons
+                    const switchOwnerBtn = linkedDisplay.querySelector('.switch-owner-btn');
+                    if (switchOwnerBtn) {
+                        switchOwnerBtn.addEventListener('click', async () => {
+                            await switchAccount('owner');
+                        });
+                    }
+                    
+                    const switchVendorBtn = linkedDisplay.querySelector('.switch-vendor-btn');
+                    if (switchVendorBtn) {
+                        switchVendorBtn.addEventListener('click', async () => {
+                            await switchAccount('vendor');
+                        });
+                    }
                 }
             } catch (err) {
                 console.error('Render role workspace failed:', err);
