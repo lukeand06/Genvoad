@@ -139,6 +139,8 @@
             const file = event.target.files[0];
             if (!file) return;
 
+            console.log('Upload started:', file.name, file.type, file.size);
+
             // Validate file type
             if (!file.type.startsWith('image/')) {
                 alert('Please select an image file');
@@ -151,14 +153,25 @@
                 return;
             }
 
+            // Show loading indicator
+            const profileContent = document.getElementById('profile-content');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'upload-loading';
+            loadingDiv.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+            loadingDiv.innerHTML = '<div class="bg-white rounded-lg p-6 text-center"><div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div><p class="text-gray-900 font-medium">Uploading...</p></div>';
+            document.body.appendChild(loadingDiv);
+
             const formData = new FormData();
             formData.append('avatar', file);
 
             try {
+                console.log('Sending upload request...');
                 const response = await authFetch('/api/users/avatar', {
                     method: 'POST',
                     body: formData
                 });
+
+                console.log('Response status:', response.status);
 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -166,6 +179,7 @@
                 }
 
                 const data = await response.json();
+                console.log('Upload successful:', data);
                 
                 // Update local storage
                 const user = getCurrentUser();
@@ -176,6 +190,7 @@
                 location.reload();
             } catch (error) {
                 console.error('Error uploading profile picture:', error);
+                document.getElementById('upload-loading')?.remove();
                 alert('Failed to upload profile picture: ' + error.message);
             }
         }
