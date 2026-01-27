@@ -1203,6 +1203,7 @@ app.post('/api/projects', authMiddleware, upload.array('attachments', 10), async
       projectData.attachments = req.files.map(file => ({
         filename: file.originalname,
         url: `/uploads/${file.filename}`,
+        storedFilename: file.filename,
         uploadedAt: new Date()
       }));
     }
@@ -1312,6 +1313,7 @@ app.post('/api/projects/:id/update-meeting', authMiddleware, upload.array('attac
       const newAttachments = req.files.map(file => ({
         filename: file.originalname,
         url: `/uploads/${file.filename}`,
+        storedFilename: file.filename,
         uploadedAt: new Date()
       }));
       

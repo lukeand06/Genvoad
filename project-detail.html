@@ -711,9 +711,9 @@
                                             const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
                                             const isPdf = ext === 'pdf';
                                             const icon = isImage ? '🖼️' : isPdf ? '📄' : '📎';
-                                            // Extract filename from URL (remove /uploads/ prefix)
-                                            const urlFilename = att.url.split('/').pop();
-                                            const downloadUrl = `/api/download/${urlFilename}`;
+                                            // Use stored filename if available, otherwise extract from URL
+                                            const downloadFilename = att.storedFilename || att.url.split('/').pop();
+                                            const downloadUrl = `/api/download/${downloadFilename}`;
                                             return `
                                                 <div class="flex items-center justify-between gap-2 p-2 bg-gray-50 rounded hover:bg-gray-100 transition">
                                                     <a href="${att.url}" target="_blank" class="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm truncate flex-1 min-w-0">
