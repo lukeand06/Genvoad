@@ -99,29 +99,16 @@
         const currentUserId = currentUser._id || currentUser.id;
         document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
         
-        // Initialize role switcher
+        // Initialize role switcher (link to Role Workspace)
         const roleContainer = document.getElementById('role-switcher');
         const currentRoleLabel = document.getElementById('current-role');
-        const availableRoles = currentUser.roles || [currentUser.role || 'owner'];
         const activeRole = currentUser.activeRole || currentUser.role || 'owner';
-        
         if (currentRoleLabel) currentRoleLabel.textContent = activeRole.charAt(0).toUpperCase() + activeRole.slice(1);
-        
-        if (availableRoles.length > 1 && roleContainer) {
-            roleContainer.innerHTML = availableRoles.map(role => `
-                <button onclick="switchUserRole('${role}')" class="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-50 ${role === activeRole ? 'bg-gray-100 font-medium' : ''}">
-                    Switch to ${role.charAt(0).toUpperCase() + role.slice(1)}
-                </button>
-            `).join('');
-        }
-        
-        async function switchUserRole(role) {
-            try {
-                await switchRole(role);
-                location.reload();
-            } catch (error) {
-                alert('Failed to switch role: ' + error.message);
-            }
+        if (roleContainer) {
+            roleContainer.innerHTML = `
+                <div class="px-3 py-2 text-sm text-gray-700">Active: <span class="font-semibold">${activeRole.charAt(0).toUpperCase() + activeRole.slice(1)}</span></div>
+                <a href="/settings.html#role-ui" class="block w-full px-3 py-2 text-sm font-medium text-gray-700 rounded hover:bg-gray-50">Switch workspace in Settings</a>
+            `;
         }
         
         document.getElementById('user-menu-btn').addEventListener('click', () => {

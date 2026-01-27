@@ -519,78 +519,16 @@
             }
         });
         
-        // Initialize role switcher
+        // Initialize role switcher (now points to Settings > Role Workspace)
         function initializeRoleSwitcher() {
-            const availableRoles = getAvailableRoles();
             const currentRole = getActiveRole();
             const roleSwitcher = document.getElementById('role-switcher');
-            
-            // Clear existing buttons
-            roleSwitcher.innerHTML = '';
-            
-            // Create buttons for each available role
-            availableRoles.forEach(role => {
-                const button = document.createElement('button');
-                const isActive = role === currentRole;
-                button.className = `w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition ${
-                    isActive 
-                        ? 'bg-gray-900 text-white' 
-                        : 'text-gray-700 hover:bg-gray-100'
-                }`;
-                button.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span class="capitalize">${role === 'vendor' ? 'Service Provider' : 'Project Owner'}</span>
-                        ${isActive ? '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>' : ''}
-                    </div>
-                `;
-                
-                button.addEventListener('click', async () => {
-                    if (role === currentRole) return;
-                    
-                    try {
-                        // Show loading overlay
-                        const loadingOverlay = document.getElementById('role-loading-overlay');
-                        loadingOverlay.classList.remove('hidden');
-                        
-                        button.disabled = true;
-                        
-                        await switchRole(role);
-                        
-                        // Update UI
-                        document.getElementById('current-role').textContent = getActiveRole();
-                        initializeRoleSwitcher();
-                        
-                        // Update CTA button
-                        const ctaBtn = document.getElementById('cta-button');
-                        const subtitle = document.getElementById('dashboard-subtitle');
-                        
-                        if (role === 'vendor') {
-                            ctaBtn.textContent = 'Find Work';
-                            ctaBtn.href = '/browse.html';
-                            subtitle.textContent = 'Track your bids and discover new opportunities';
-                        } else {
-                            ctaBtn.textContent = 'Post Project';
-                            ctaBtn.href = '/create-project.html';
-                            subtitle.textContent = "Here's what's happening with your projects";
-                        }
-                        
-                        // Reload dashboard data
-                        loadDashboard();
-                        
-                        // Hide loading overlay after a brief delay
-                        setTimeout(() => {
-                            document.getElementById('role-loading-overlay').classList.add('hidden');
-                        }, 800);
-                    } catch (error) {
-                        showError(error.message);
-                        button.disabled = false;
-                        initializeRoleSwitcher();
-                        document.getElementById('role-loading-overlay').classList.add('hidden');
-                    }
-                });
-                
-                roleSwitcher.appendChild(button);
-            });
+            roleSwitcher.innerHTML = `
+                <div class="px-3 py-2 text-sm text-gray-700">
+                    Active: <span class="font-semibold capitalize">${currentRole}</span>
+                </div>
+                <a href="/settings.html#role-ui" class="block w-full mt-1 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50">Switch workspace in Settings</a>
+            `;
         }
         
         // Listen for role changes from other tabs/windows
