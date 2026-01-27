@@ -262,7 +262,7 @@
                     const response = await fetch(`${API_URL}/auth/login`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password })
+                        body: JSON.stringify({ email, password, role: selectedRole })
                     });
                     
                     const data = await response.json();
@@ -271,17 +271,10 @@
                         throw new Error(data.error || 'Login failed');
                     }
 
-                    // Set token so we can call switch-role
+                    // Set token and user
                     setToken(data.token);
-                    const roleRes = await authFetch('/api/auth/switch-role', {
-                        method: 'POST',
-                        body: JSON.stringify({ role: selectedRole })
-                    });
-                    const roleData = await roleRes.json();
-                    if (!roleRes.ok) throw new Error(roleData.error || 'Failed to switch role');
-
-                    setCurrentUser(roleData.user);
-                    setActiveRole(roleData.user.activeRole || selectedRole);
+                    setCurrentUser(data.user);
+                    setActiveRole(data.user.activeRole || data.user.role || selectedRole);
                     window.location.href = '/dashboard.html';
                 } catch (error) {
                     showError(error.message);
