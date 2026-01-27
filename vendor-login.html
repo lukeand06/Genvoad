@@ -61,23 +61,12 @@
         const response = await fetch(`${API_URL}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ email, password, role: 'vendor' })
         });
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || 'Login failed');
         setToken(data.token);
-        // Ensure activeRole is vendor (legacy users)
-        try {
-          const roleRes = await authFetch('/api/auth/switch-role', { method: 'POST', body: JSON.stringify({ role: 'vendor' }) });
-          const roleData = await roleRes.json();
-          if (roleRes.ok) {
-            setCurrentUser(roleData.user);
-          } else {
-            setCurrentUser(data.user);
-          }
-        } catch {
-          setCurrentUser(data.user);
-        }
+        setCurrentUser(data.user);
         window.location.href = '/dashboard.html';
       } catch (err) {
         showError(err.message);

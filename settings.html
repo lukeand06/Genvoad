@@ -347,6 +347,18 @@
                     </div>
                 </div>
 
+                <!-- Role Workspace Section -->
+                <div id="section-role-ui" class="settings-section bg-white rounded-lg border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-xl font-bold text-gray-900">Role Workspace</h2>
+                        <p class="text-sm text-gray-600 mt-1">Switch between Owner and Vendor workspaces. These are distinct UIs.</p>
+                    </div>
+                    <div class="p-6" id="role-ui-content">
+                        <!-- Populated by JavaScript based on current role and links -->
+                        <div class="text-sm text-gray-600">Loading...</div>
+                    </div>
+                </div>
+
                 <!-- Privacy Section -->
                 <div id="section-privacy" class="settings-section bg-white rounded-lg border border-gray-200">
                     <div class="p-6 border-b border-gray-200">
@@ -796,6 +808,13 @@
             btn.className = 'settings-nav-item w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-3';
             btn.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg><span>Linked Accounts</span>';
             desktopNav.appendChild(btn);
+
+            const btnRole = document.createElement('button');
+            btnRole.onclick = () => showSection('role-ui');
+            btnRole.id = 'nav-role-ui';
+            btnRole.className = 'settings-nav-item w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-3';
+            btnRole.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h10M4 18h6"/></svg><span>Role Workspace</span>';
+            desktopNav.appendChild(btnRole);
         }
 
         const mobileNavBar = document.getElementById('mobile-nav');
@@ -807,10 +826,96 @@
             mbtn.className = 'mobile-nav-item flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50';
             mbtn.textContent = 'Linked';
             mobileNavBar.appendChild(mbtn);
+
+            const mbtnRole = document.createElement('button');
+            mbtnRole.onclick = () => showSection('role-ui');
+            mbtnRole.id = 'mobile-nav-role-ui';
+            mbtnRole.dataset.section = 'role-ui';
+            mbtnRole.className = 'mobile-nav-item flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50';
+            mbtnRole.textContent = 'Workspace';
+            mobileNavBar.appendChild(mbtnRole);
         }
 
         // Kick off
         loadLinkedAccounts();
+        renderRoleWorkspace();
+
+        async function renderRoleWorkspace() {
+            const container = document.getElementById('role-ui-content');
+            if (!container) return;
+            try {
+                const activeRole = getActiveRole();
+                // Fetch linked accounts to decide switch mechanics
+                let linked = {};
+                try {
+                    const res = await authFetch('/api/auth/linked-accounts');
+                    const data = await res.json();
+                    linked = data.linked || {};
+                } catch {}
+
+                const roleTitle = activeRole === 'owner' ? 'Owner Workspace' : 'Vendor Workspace';
+                const desc = activeRole === 'owner'
+                  ? 'Manage projects, invites, and review bids.'
+                  : 'Browse projects, submit bids, and track work.';
+
+                const canSwitchLinked = activeRole === 'owner' ? Boolean(linked.vendor) : Boolean(linked.owner);
+                const hasMultiRole = (getAvailableRoles() || []).includes(activeRole === 'owner' ? 'vendor' : 'owner');
+
+                const targetRole = activeRole === 'owner' ? 'vendor' : 'owner';
+                const switchBtn = canSwitchLinked
+                  ? `<button id="switch-linked" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Switch to ${targetRole.charAt(0).toUpperCase() + targetRole.slice(1)} Workspace</button>`
+                  : hasMultiRole
+                  ? `<button id="switch-role-btn" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Switch to ${targetRole.charAt(0).toUpperCase() + targetRole.slice(1)} Role</button>`
+                  : `<div class="space-y-2">
+                        <p class="text-sm text-gray-700">No ${targetRole} account linked.</p>
+                        <a href="${targetRole}-signup.html" class="inline-block px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Create ${targetRole.charAt(0).toUpperCase() + targetRole.slice(1)} Account</a>
+                        <details class="mt-2">
+                            <summary class="text-sm font-medium text-gray-900 cursor-pointer">Link existing ${targetRole} account</summary>
+                            <div class="mt-2 space-y-2">
+                                <input type="email" id="link-${targetRole}-email" placeholder="${targetRole}@example.com" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <input type="password" id="link-${targetRole}-password" placeholder="Password" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <button id="link-${targetRole}-btn" class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Link ${targetRole.charAt(0).toUpperCase() + targetRole.slice(1)} Account</button>
+                            </div>
+                        </details>
+                    </div>`;
+
+                container.innerHTML = `
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-semibold text-gray-900">${roleTitle}</h3>
+                            <span class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">Active</span>
+                        </div>
+                        <p class="text-sm text-gray-700 mb-4">${desc}</p>
+                        ${switchBtn}
+                    </div>
+                `;
+
+                const btnLinked = document.getElementById('switch-linked');
+                if (btnLinked) {
+                    btnLinked.addEventListener('click', async () => {
+                        await switchAccount(targetRole);
+                    });
+                }
+                const btnRole = document.getElementById('switch-role-btn');
+                if (btnRole) {
+                    btnRole.addEventListener('click', async () => {
+                        await switchRole(targetRole);
+                        location.reload();
+                    });
+                }
+                const btnLink = document.getElementById(`link-${targetRole}-btn`);
+                if (btnLink) {
+                    btnLink.addEventListener('click', async () => {
+                        const email = document.getElementById(`link-${targetRole}-email`).value;
+                        const password = document.getElementById(`link-${targetRole}-password`).value;
+                        await linkAccount(targetRole, email, password);
+                        await renderRoleWorkspace();
+                    });
+                }
+            } catch (err) {
+                console.error('Render role workspace failed:', err);
+            }
+        }
 
         function populateProfileForm() {
             if (!profileData) return;
