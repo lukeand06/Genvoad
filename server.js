@@ -1746,11 +1746,6 @@ app.post('/api/messages', authMiddleware, upload.array('attachments', 5), async 
   }
 });
 
-// Get conversations
-app.get('/api/messages/conversations', authMiddleware, async (req, res) => {
-  try {
-    const messages = await Message.find({
-
 // Send email invite to non-Genovad user
 app.post('/api/messages/email-invite', authMiddleware, async (req, res) => {
   try {
