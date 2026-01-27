@@ -262,37 +262,7 @@
                             <p class="mt-1 text-xs text-gray-500">Email cannot be changed. Contact support if needed.</p>
                         </div>
 
-                        <!-- Info: Role Flexibility -->
-                        <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div class="flex items-start gap-3">
-                                <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-                                </svg>
-                                <div class="text-sm text-blue-800">
-                                    <p class="font-medium mb-1">One Account, Multiple Roles</p>
-                                    <p class="text-blue-700">You can freely switch between Owner and Vendor modes at any time. No need for separate accounts.</p>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Account Type</label>
-                            <p class="text-xs text-gray-500 mb-2">Switch between posting work (Owner) and delivering services (Vendor).</p>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="role-toggle">
-                                <button type="button" data-role="owner" class="role-switch border border-gray-300 rounded-lg p-4 text-left hover:border-gray-400 focus:ring-2 focus:ring-gray-900">
-                                    <p class="font-semibold text-gray-900">Owner</p>
-                                    <p class="text-sm text-gray-600">Create projects, invite bids, and manage delivery.</p>
-                                </button>
-                                <button type="button" data-role="vendor" class="role-switch border border-gray-200 rounded-lg p-4 text-left hover:border-gray-400 focus:ring-2 focus:ring-gray-900">
-                                    <p class="font-semibold text-gray-900">Vendor</p>
-                                    <p class="text-sm text-gray-600">Bid on opportunities and deliver services.</p>
-                                </button>
-                            </div>
-                            <div class="flex items-center justify-between mt-3 text-sm text-gray-600">
-                                <div>Current: <span id="accountRole" class="font-semibold text-gray-900"></span></div>
-                                <button type="button" id="role-save-btn" class="px-3 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Save Account Type</button>
-                            </div>
-                        </div>
 
                         <div class="border-t border-gray-200 pt-6">
                             <h3 class="text-base font-semibold text-gray-900 mb-4">Change Password</h3>
@@ -317,35 +287,7 @@
                     </div>
                 </div>
 
-                <!-- Linked Accounts Section -->
-                <div id="section-linked" class="settings-section bg-white rounded-lg border border-gray-200">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-xl font-bold text-gray-900">Linked Accounts</h2>
-                        <p class="text-sm text-gray-600 mt-1">Use separate Owner and Vendor accounts and switch between them</p>
-                    </div>
-                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Owner Account Card -->
-                        <div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="font-semibold text-gray-900">Owner Account</h3>
-                                <span id="owner-linked-status" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">Checking...</span>
-                            </div>
-                            <div id="owner-linked-actions" class="space-y-3">
-                                <!-- Populated by JS -->
-                            </div>
-                        </div>
-                        <!-- Vendor Account Card -->
-                        <div class="border border-gray-200 rounded-lg p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="font-semibold text-gray-900">Vendor Account</h3>
-                                <span id="vendor-linked-status" class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">Checking...</span>
-                            </div>
-                            <div id="vendor-linked-actions" class="space-y-3">
-                                <!-- Populated by JS -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
 
                 <!-- Role Workspace Section -->
                 <div id="section-role-ui" class="settings-section bg-white rounded-lg border border-gray-200">
@@ -596,51 +538,6 @@
         document.getElementById('logout-btn').addEventListener('click', logout);
 
         let profileData = null;
-        let selectedRole = user?.role || 'owner';
-        const roleButtons = document.querySelectorAll('.role-switch');
-        const roleSaveBtn = document.getElementById('role-save-btn');
-        const roleLabel = document.getElementById('accountRole');
-
-        function setRoleSelection(role) {
-            selectedRole = role;
-            roleButtons.forEach(btn => {
-                const isActive = btn.dataset.role === role;
-                btn.classList.toggle('border-gray-900', isActive);
-                btn.classList.toggle('shadow-sm', isActive);
-                btn.classList.toggle('bg-gray-50', isActive);
-                btn.classList.toggle('border-gray-300', !isActive);
-            });
-            if (roleLabel) {
-                roleLabel.textContent = role === 'owner' ? 'Project Owner' : 'Service Vendor';
-            }
-        }
-
-        setRoleSelection(selectedRole);
-
-        roleButtons.forEach(btn => {
-            btn.addEventListener('click', () => setRoleSelection(btn.dataset.role));
-        });
-
-        if (roleSaveBtn) {
-            roleSaveBtn.addEventListener('click', async () => {
-                if (!profileData) {
-                    showError('Profile not loaded yet');
-                    return;
-                }
-                if (selectedRole === profileData.role) {
-                    showSuccess('Account type already set');
-                    return;
-                }
-                roleSaveBtn.disabled = true;
-                roleSaveBtn.textContent = 'Saving...';
-                try {
-                    await saveSettings({ role: selectedRole }, 'Account type updated');
-                } finally {
-                    roleSaveBtn.disabled = false;
-                    roleSaveBtn.textContent = 'Save Account Type';
-                }
-            });
-        }
 
         // Load profile data
         async function loadProfile() {
@@ -788,16 +685,9 @@
             window.location.href = '/dashboard.html';
         }
 
-        // Ensure linked accounts section appears in nav
+        // Ensure role-ui nav appears
         const desktopNav = document.getElementById('desktop-nav');
         if (desktopNav) {
-            const btn = document.createElement('button');
-            btn.onclick = () => showSection('linked');
-            btn.id = 'nav-linked';
-            btn.className = 'settings-nav-item w-full text-left px-4 py-3 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center gap-3';
-            btn.innerHTML = '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg><span>Linked Accounts</span>';
-            desktopNav.appendChild(btn);
-
             const btnRole = document.createElement('button');
             btnRole.onclick = () => showSection('role-ui');
             btnRole.id = 'nav-role-ui';
@@ -808,14 +698,6 @@
 
         const mobileNavBar = document.getElementById('mobile-nav');
         if (mobileNavBar) {
-            const mbtn = document.createElement('button');
-            mbtn.onclick = () => showSection('linked');
-            mbtn.id = 'mobile-nav-linked';
-            mbtn.dataset.section = 'linked';
-            mbtn.className = 'mobile-nav-item flex-shrink-0 px-3 py-2 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50';
-            mbtn.textContent = 'Linked';
-            mobileNavBar.appendChild(mbtn);
-
             const mbtnRole = document.createElement('button');
             mbtnRole.onclick = () => showSection('role-ui');
             mbtnRole.id = 'mobile-nav-role-ui';
@@ -826,7 +708,6 @@
         }
 
         // Kick off
-        loadLinkedAccounts();
         renderRoleWorkspace();
 
         async function renderRoleWorkspace() {
@@ -869,13 +750,19 @@
                     </div>`;
 
                 container.innerHTML = `
-                    <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="border border-gray-200 rounded-lg p-4 mb-6">
                         <div class="flex items-center justify-between mb-3">
                             <h3 class="font-semibold text-gray-900">${roleTitle}</h3>
                             <span class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-700">Active</span>
                         </div>
                         <p class="text-sm text-gray-700 mb-4">${desc}</p>
                         ${switchBtn}
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-gray-900 mb-4">Linked Accounts</h3>
+                        <div id="linked-accounts-display" class="space-y-3">
+                            <!-- Populated by JS -->
+                        </div>
                     </div>
                 `;
 
@@ -900,6 +787,14 @@
                         await linkAccount(targetRole, email, password);
                         await renderRoleWorkspace();
                     });
+                }
+
+                // Render linked accounts in the display area
+                const linkedDisplay = document.getElementById('linked-accounts-display');
+                if (linkedDisplay) {
+                    const ownerAcc = linked.owner ? `<div class="p-3 bg-gray-50 rounded-lg text-sm"><span class="font-medium">Owner:</span> ${linked.owner.email} <button onclick="(async()=>{await switchAccount('owner');})();" class="ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded hover:bg-gray-800">Switch</button></div>` : '<div class="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">No owner account linked</div>';
+                    const vendorAcc = linked.vendor ? `<div class="p-3 bg-gray-50 rounded-lg text-sm"><span class="font-medium">Vendor:</span> ${linked.vendor.email} <button onclick="(async()=>{await switchAccount('vendor');})();" class="ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded hover:bg-gray-800">Switch</button></div>` : '<div class="p-3 bg-gray-50 rounded-lg text-sm text-gray-600">No vendor account linked</div>';
+                    linkedDisplay.innerHTML = `${ownerAcc}${vendorAcc}`;
                 }
             } catch (err) {
                 console.error('Render role workspace failed:', err);
@@ -927,7 +822,7 @@
             if (!profileData) return;
             const el = id => document.getElementById(id);
             if (el('email')) el('email').value = profileData.email || '';
-            setRoleSelection(profileData.role || 'owner');
+        }
         }
 
         function populatePrivacyForm() {
