@@ -62,10 +62,11 @@ async function switchRole(role) {
     if (!response.ok) {
       const data = await response.json();
       
-      // If user doesn't have this role, redirect to login for that role
+      // If user doesn't have this role, sign them out and redirect to login for that role
       if (response.status === 403) {
-        alert(`You don't have a ${role} account. Please log in to your ${role} account or create one.`);
-        // Redirect to the appropriate login page
+        alert(`You don't have a ${role} account. Signing you out - please log in to your ${role} account or create one.`);
+        // Sign out first, then redirect to the appropriate login page
+        logout();
         const loginPage = role === 'owner' ? '/owner-login.html' : '/vendor-login.html';
         window.location.href = loginPage;
         return;

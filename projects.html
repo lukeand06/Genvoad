@@ -97,8 +97,8 @@
         <!-- Tabs -->
         <div class="bg-white rounded-lg border border-gray-200 mb-6">
             <nav class="flex">
-                <button id="tab-browse" class="project-tab px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900">Browse Projects</button>
-                <button id="tab-my" class="project-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900" style="display:none;">My Projects</button>
+                <button id="tab-my" class="project-tab px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900" style="display:none;">My Projects</button>
+                <button id="tab-browse" class="project-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Browse Projects</button>
             </nav>
         </div>
 
@@ -201,7 +201,7 @@
         });
 
         let allProjects = [];
-        let currentTab = 'browse';
+        let currentTab = 'my';
 
         async function loadProjects() {
             try {
@@ -788,7 +788,13 @@
             }
         }
 
-        loadProjects();
+        // Load appropriate tab on page load
+        if (isVendor) {
+            loadMyBids();
+        } else {
+            loadMyProjects();
+        }
+        updateTabs();
     </script>
 </body>
 </html>
