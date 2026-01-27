@@ -310,6 +310,20 @@
                     </div>
                 </div>
 
+                <!-- Recommendations -->
+                <div class="bg-white rounded-lg border border-gray-200 mb-6">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">For You</h2>
+                        <p class="text-xs text-gray-500 mt-1">Opportunities matching your profile</p>
+                    </div>
+                    <div id="recommendations" class="divide-y divide-gray-200">
+                        <!-- Recommendations will be loaded here -->
+                        <div class="p-6 text-center text-gray-500">
+                            <p class="text-sm">Loading opportunities...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Quick Actions -->
                 <div class="bg-white rounded-lg border border-gray-200">
                     <div class="p-6">
@@ -779,6 +793,7 @@
         // Load relevant projects
         async function loadRecommendations() {
             const container = document.getElementById('recommendations');
+            if (!container) return; // Guard against missing container
             try {
                 // Fetch projects that match user's skills/location
                 const recRes = await authFetch('/api/projects?status=open&limit=5');
@@ -792,19 +807,22 @@
                 displayRecommendations(recData.projects || []);
             } catch (error) {
                 console.error('Error loading projects:', error);
-                container.innerHTML = `
-                    <div class="p-6 text-center">
-                        <p class="text-sm text-gray-600 mb-2">Unable to load opportunities</p>
-                        <button onclick="loadRecommendations()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
-                            Try Again
-                        </button>
-                    </div>
-                `;
+                if (container) {
+                    container.innerHTML = `
+                        <div class="p-6 text-center">
+                            <p class="text-sm text-gray-600 mb-2">Unable to load opportunities</p>
+                            <button onclick="loadRecommendations()" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                Try Again
+                            </button>
+                        </div>
+                    `;
+                }
             }
         }
 
         function displayRecommendations(projects) {
             const container = document.getElementById('recommendations');
+            if (!container) return; // Guard against missing container
             
             if (projects.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-gray-500"><p class="text-sm">No opportunities available right now</p><a href="/browse.html" class="text-blue-600 hover:underline text-xs mt-2 block">Browse all</a></div>';
