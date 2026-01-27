@@ -478,8 +478,7 @@
                             </div>
                         </div>
 
-                        <!-- Site Visit Availability -->
-                        <div id="site-visit-section" class="bg-white rounded-lg border border-gray-200 p-6"></div>
+
 
                         ${project.requirements && project.requirements.length > 0 ? `
                             <div class="mb-6">
@@ -802,7 +801,6 @@
             }
 
             // Load dynamic sections
-            loadAndRenderSiteVisit(project, isOwner);
             loadComments();
         }
 
@@ -1138,116 +1136,6 @@
                 </tr>
                 `;
             }).join('');
-        }
-
-        async function loadAndRenderSiteVisit(project, isOwner) {
-            try {
-                const res = await authFetch(`/api/projects/${project._id}/site-visit`);
-                const data = await res.json();
-                const sv = data.siteVisit || { ownerAvailability: [], ownerContactForMoreInfo: false, vendorAvailabilities: [] };
-
-                const myEntry = (sv.vendorAvailabilities || []).find(v => v.vendor && (v.vendor._id === user.id || v.vendor === user.id));
-                const ownerList = (sv.ownerAvailability || []).map(s => `<li class="text-sm text-gray-700">${escapeHtml(s)}</li>`).join('');
-                const vendorsList = (sv.vendorAvailabilities || []).map(v => `
-                    <li class="py-2">
-                        <div class="text-sm font-medium text-gray-900">${escapeHtml(v.vendor?.firstName || '')} ${escapeHtml(v.vendor?.lastName || '')}</div>
-                        ${v.contactForMoreInfo ? `<div class="text-xs text-gray-600">Prefers contact for more information</div>` : ''}
-                        ${(v.slots || []).length ? `<ul class="list-disc list-inside mt-1">${v.slots.map(s => `<li class=\"text-sm text-gray-700\">${escapeHtml(s)}</li>`).join('')}</ul>` : (!v.contactForMoreInfo ? `<div class="text-xs text-gray-600">No availability provided</div>` : '')}
-                    </li>
-                `).join('');
-
-                const ownerView = `
-                    <h2 class="text-xl font-semibold text-gray-900 mb-3">Site Visit Availability</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Your Availability</h3>
-                            <form id="owner-site-visit-form" class="space-y-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Time slots (one per line)</label>
-                                    <textarea id="owner-slots" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="e.g., 01/30 2-4pm\n02/01 morning\nWeekdays 9-11am">${(sv.ownerAvailability || []).join('\n')}</textarea>
-                                </div>
-                                <label class="inline-flex items-center text-sm">
-                                    <input type="checkbox" id="owner-contact" class="mr-2" ${sv.ownerContactForMoreInfo ? 'checked' : ''}>
-                                    <span>Prefer to be contacted for more information</span>
-                                </label>
-                                <div>
-                                    <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Save Availability</button>
-                                </div>
-                            </form>
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Vendor Availability</h3>
-                            ${vendorsList ? `<ul class="divide-y divide-gray-100">${vendorsList}</ul>` : `<div class="text-sm text-gray-600">No vendor availability yet</div>`}
-                        </div>
-                    </div>
-                `;
-
-                const vendorView = `
-                    <h2 class="text-xl font-semibold text-gray-900 mb-3">Site Visit Availability</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Client Availability</h3>
-                            ${(sv.ownerContactForMoreInfo) ? `<div class="text-sm text-gray-700">Client prefers to be contacted for more information.</div>` : ((sv.ownerAvailability || []).length ? `<ul class="list-disc list-inside">${ownerList}</ul>` : `<div class="text-sm text-gray-600">No availability provided</div>`)}
-                        </div>
-                        <div>
-                            <h3 class="text-sm font-semibold text-gray-800 mb-2">Your Availability</h3>
-                            <form id="vendor-site-visit-form" class="space-y-3">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Time slots (one per line)</label>
-                                    <textarea id="vendor-slots" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg" placeholder="e.g., 01/30 2-4pm\n02/01 morning\nWeekdays 9-11am">${(myEntry?.slots || []).join('\n')}</textarea>
-                                </div>
-                                <label class="inline-flex items-center text-sm">
-                                    <input type="checkbox" id="vendor-contact" class="mr-2" ${myEntry?.contactForMoreInfo ? 'checked' : ''}>
-                                    <span>Prefer to be contacted for more information</span>
-                                </label>
-                                <div>
-                                    <button type="submit" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Save Availability</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                `;
-
-                document.getElementById('site-visit-section').innerHTML = isOwner ? ownerView : vendorView;
-
-                // Hook up submit handlers
-                if (isOwner) {
-                    const form = document.getElementById('owner-site-visit-form');
-                    form.addEventListener('submit', async (e) => {
-                        e.preventDefault();
-                        const slots = document.getElementById('owner-slots').value.split('\n').map(s => s.trim()).filter(Boolean);
-                        const contact = document.getElementById('owner-contact').checked;
-                        await submitSiteVisit(project._id, slots, contact);
-                        await loadAndRenderSiteVisit(project, isOwner);
-                    });
-                } else {
-                    const form = document.getElementById('vendor-site-visit-form');
-                    form.addEventListener('submit', async (e) => {
-                        e.preventDefault();
-                        const slots = document.getElementById('vendor-slots').value.split('\n').map(s => s.trim()).filter(Boolean);
-                        const contact = document.getElementById('vendor-contact').checked;
-                        await submitSiteVisit(project._id, slots, contact);
-                        await loadAndRenderSiteVisit(project, isOwner);
-                    });
-                }
-            } catch (err) {
-                console.error('Site visit load error:', err);
-                document.getElementById('site-visit-section').innerHTML = `<div class="text-sm text-red-600">Failed to load site visit availability</div>`;
-            }
-        }
-
-        async function submitSiteVisit(projectId, slots, contactForMoreInfo) {
-            const res = await authFetch(`/api/projects/${projectId}/site-visit`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ slots, contactForMoreInfo })
-            });
-            const ct = res.headers.get('content-type') || '';
-            if (!res.ok || !ct.includes('application/json')) {
-                let err; try { err = await res.json(); } catch {}
-                throw new Error((err && (err.error || err.message)) || 'Failed to save availability');
-            }
-            return res.json();
         }
 
         function escapeHtml(str) {
