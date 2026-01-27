@@ -707,9 +707,7 @@
             mobileNavBar.appendChild(mbtnRole);
         }
 
-        // Kick off
-        renderRoleWorkspace();
-
+        // Render Role Workspace
         async function renderRoleWorkspace() {
             const container = document.getElementById('role-ui-content');
             if (!container) return;
@@ -800,6 +798,9 @@
                 console.error('Render role workspace failed:', err);
             }
         }
+
+        // Kick off
+        renderRoleWorkspace();
 
         function populateProfileForm() {
             if (!profileData) return;
