@@ -477,30 +477,39 @@
             logout();
             throw new Error('Invalid user session');
         }
-        // Initialize user menu and role switcher
-        document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
         
-        const roleContainer = document.getElementById('role-switcher');
-        const currentRoleLabel = document.getElementById('current-role');
-        const availableRoles = user.roles || [user.role || 'owner'];
-        const activeRole = user.activeRole || user.role || 'owner';
-        
-        if (currentRoleLabel) currentRoleLabel.textContent = activeRole.charAt(0).toUpperCase() + activeRole.slice(1);
-        
-        if (availableRoles.length > 1 && roleContainer) {
-            roleContainer.innerHTML = availableRoles.map(role => `
-                <button onclick="switchUserRole('${role}')" class="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-50 ${role === activeRole ? 'bg-gray-100 font-medium' : ''}">
-                    Switch to ${role.charAt(0).toUpperCase() + role.slice(1)}
-                </button>
-            `).join('');
-        }
-        
-        async function switchUserRole(role) {
-            try {
-                await switchRole(role);
-                location.reload();
-            } catch (error) {
-                alert('Failed to switch role: ' + error.message);
+        // Navigation function (must be declared before use in onclick attributes)
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+            
+            // Update desktop nav
+            document.querySelectorAll('.settings-nav-item').forEach(n => {
+                n.classList.remove('active', 'bg-gray-100', 'text-gray-900');
+                n.classList.add('text-gray-700');
+            });
+            
+            // Update mobile nav
+            document.querySelectorAll('.mobile-nav-item').forEach(n => {
+                n.classList.remove('bg-gray-100', 'text-gray-900');
+                n.classList.add('text-gray-700');
+            });
+            
+            // Show selected section
+            const sectionEl = document.getElementById(`section-${section}`);
+            if (sectionEl) sectionEl.classList.add('active');
+            
+            // Highlight active nav
+            const desktopNav = document.getElementById(`nav-${section}`);
+            if (desktopNav) {
+                desktopNav.classList.add('active', 'bg-gray-100', 'text-gray-900');
+                desktopNav.classList.remove('text-gray-700');
+            }
+            
+            const mobileNav = document.getElementById(`mobile-nav-${section}`);
+            if (mobileNav) {
+                mobileNav.classList.add('bg-gray-100', 'text-gray-900');
+                mobileNav.classList.remove('text-gray-700');
             }
         }
         
@@ -581,43 +590,6 @@
                     roleSaveBtn.textContent = 'Save Account Type';
                 }
             });
-        }
-
-        // Navigation
-        function showSection(section) {
-            // Hide all sections
-            document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
-            
-            // Update desktop nav
-            document.querySelectorAll('.settings-nav-item').forEach(n => {
-                n.classList.remove('active', 'bg-gray-100', 'text-gray-900');
-                n.classList.add('text-gray-700');
-            });
-            
-            // Update mobile nav
-            document.querySelectorAll('.mobile-nav-item').forEach(n => {
-                n.classList.remove('bg-gray-100', 'text-gray-900');
-                n.classList.add('text-gray-700');
-            });
-            
-            // Show selected section
-            document.getElementById(`section-${section}`).classList.add('active');
-            
-            // Activate desktop nav item
-            const desktopNavItem = document.getElementById(`nav-${section}`);
-            if (desktopNavItem) {
-                desktopNavItem.classList.add('active', 'bg-gray-100', 'text-gray-900');
-                desktopNavItem.classList.remove('text-gray-700');
-            }
-            
-            // Activate mobile nav item
-            const mobileNavItem = document.getElementById(`mobile-nav-${section}`);
-            if (mobileNavItem) {
-                mobileNavItem.classList.add('bg-gray-100', 'text-gray-900');
-                mobileNavItem.classList.remove('text-gray-700');
-                // Scroll into view for mobile
-                mobileNavItem.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-            }
         }
 
         // Load profile data
