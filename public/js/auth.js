@@ -221,9 +221,17 @@ function getInitials(firstName, lastName) {
 // Generate avatar URL or initials
 function getAvatarHTML(user, size = 'w-10 h-10') {
   if (user.avatar) {
+    // Handle different avatar formats
+    let avatarSrc = user.avatar;
+    
+    // If it's not a data URL and doesn't start with http//, prepend /uploads/
+    if (!avatarSrc.startsWith('data:') && !avatarSrc.startsWith('http://') && !avatarSrc.startsWith('https://') && !avatarSrc.startsWith('/')) {
+      avatarSrc = `/uploads/${avatarSrc}`;
+    }
+    
     const fallback = getInitials(user.firstName, user.lastName);
     const safeFallback = fallback.replace(/'/g, "\\'");
-    return `<img src="${user.avatar}" alt="${user.firstName || 'User'}" class="${size} rounded-full object-cover" onerror="this.onerror=null;this.innerHTML='<div class=&quot;${size} rounded-full bg-gray-700 text-white flex items-center justify-center font-medium&quot;>${safeFallback}</div>';this.parentNode.replaceChild(this.parentNode.lastChild, this);">`;
+    return `<img src="${avatarSrc}" alt="${user.firstName || 'User'}" class="${size} rounded-full object-cover" onerror="this.onerror=null;this.innerHTML='<div class=&quot;${size} rounded-full bg-gray-700 text-white flex items-center justify-center font-medium&quot;>${safeFallback}</div>';this.parentNode.replaceChild(this.parentNode.lastChild, this);">`;
   }
   const initials = getInitials(user.firstName, user.lastName);
   return `<div class="${size} rounded-full bg-gray-700 text-white flex items-center justify-center font-medium">${initials}</div>`;
