@@ -200,9 +200,16 @@
             
             <form id="invite-form" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                    <input type="email" id="invite-email" placeholder="member@example.com" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                    <p class="text-xs text-gray-500 mt-1">They'll receive an invitation link via email</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Invite by name or email</label>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-2">
+                        <input type="text" id="invite-search" placeholder="Type a name or email..." class="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent" autocomplete="off">
+                        <div id="invite-pill" class="hidden mt-2 inline-flex items-center gap-2 px-3 py-1 bg-gray-900 text-white text-sm rounded-full">
+                            <span id="invite-pill-text"></span>
+                            <button type="button" id="invite-pill-clear" class="text-xs opacity-80 hover:opacity-100">✕</button>
+                        </div>
+                        <div id="invite-suggestions" class="hidden mt-2 bg-white border border-gray-200 rounded-lg shadow-lg max-h-56 overflow-y-auto"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Choose from existing people or enter an email to invite. Inspired by Microsoft Teams.</p>
                 </div>
                 
                 <div>
@@ -251,6 +258,8 @@
         document.getElementById('logout-btn').addEventListener('click', logout);
 
         let currentCompany = null;
+        let inviteSelected = null;
+        let inviteSearchTimeout = null;
 
         async function loadCompany() {
             try {
@@ -395,6 +404,7 @@
             document.getElementById('invite-form').reset();
             document.getElementById('invite-error').classList.add('hidden');
             document.getElementById('invite-success').classList.add('hidden');
+            clearInviteSelection();
         });
 
         document.getElementById('cancel-invite').addEventListener('click', () => {
@@ -402,12 +412,93 @@
             document.getElementById('invite-form').reset();
             document.getElementById('invite-error').classList.add('hidden');
             document.getElementById('invite-success').classList.add('hidden');
+            clearInviteSelection();
+        });
+
+        // Invite search helpers
+        const inviteSearchInput = document.getElementById('invite-search');
+        const inviteSuggestionsEl = document.getElementById('invite-suggestions');
+        const invitePill = document.getElementById('invite-pill');
+        const invitePillText = document.getElementById('invite-pill-text');
+        const invitePillClear = document.getElementById('invite-pill-clear');
+
+        function clearInviteSelection() {
+            inviteSelected = null;
+            invitePill.classList.add('hidden');
+            invitePillText.textContent = '';
+            inviteSuggestionsEl.classList.add('hidden');
+            inviteSuggestionsEl.innerHTML = '';
+            inviteSearchInput.value = '';
+        }
+
+        function showInviteSuggestions(items) {
+            if (!items || items.length === 0) {
+                inviteSuggestionsEl.classList.add('hidden');
+                inviteSuggestionsEl.innerHTML = '';
+                return;
+            }
+            inviteSuggestionsEl.innerHTML = items.map(item => `
+                <button type="button" class="w-full text-left px-3 py-2 flex items-center gap-3 hover:bg-gray-50" data-email="${item.email}" data-id="${item._id || ''}" data-name="${item.name}" data-registered="${item.isRegistered}">
+                    <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-medium text-gray-700">${(item.name || item.email).charAt(0).toUpperCase()}</div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate">${item.name || item.email}</p>
+                        <p class="text-xs text-gray-600 truncate">${item.email}</p>
+                    </div>
+                    ${item.isRegistered ? '<span class="text-xs px-2 py-1 bg-green-50 text-green-700 rounded-full">On Genovad</span>' : '<span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">Email invite</span>'}
+                </button>
+            `).join('');
+            inviteSuggestionsEl.classList.remove('hidden');
+        }
+
+        async function searchInvites(term) {
+            if (!term || term.length < 2) {
+                showInviteSuggestions([]);
+                return;
+            }
+            try {
+                const res = await authFetch(`/api/users/search?q=${encodeURIComponent(term)}`);
+                if (!res.ok) throw new Error('Search failed');
+                const data = await res.json();
+                showInviteSuggestions(data || []);
+            } catch (err) {
+                console.error('Invite search error', err);
+                showInviteSuggestions([]);
+            }
+        }
+
+        inviteSearchInput.addEventListener('input', (e) => {
+            const term = e.target.value.trim();
+            inviteSelected = null;
+            invitePill.classList.add('hidden');
+            if (inviteSearchTimeout) clearTimeout(inviteSearchTimeout);
+            inviteSearchTimeout = setTimeout(() => searchInvites(term), 200);
+        });
+
+        inviteSuggestionsEl.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-email]');
+            if (!btn) return;
+            inviteSelected = {
+                email: btn.dataset.email,
+                id: btn.dataset.id || null,
+                name: btn.dataset.name,
+                isRegistered: btn.dataset.registered === 'true'
+            };
+            inviteSearchInput.value = inviteSelected.name || inviteSelected.email;
+            invitePillText.textContent = `${inviteSelected.name || inviteSelected.email} • ${inviteSelected.isRegistered ? 'On Genovad' : 'Email invite'}`;
+            invitePill.classList.remove('hidden');
+            inviteSuggestionsEl.classList.add('hidden');
+        });
+
+        invitePillClear.addEventListener('click', () => {
+            clearInviteSelection();
+            inviteSearchInput.focus();
         });
 
         document.getElementById('invite-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const email = document.getElementById('invite-email').value.trim().toLowerCase();
+            const typed = inviteSearchInput.value.trim();
+            const email = (inviteSelected?.email || typed || '').toLowerCase();
             const role = document.getElementById('invite-role').value;
             const message = document.getElementById('invite-message').value.trim();
             const submitBtn = document.getElementById('invite-submit-btn');
@@ -452,12 +543,13 @@
                 // Show success message
                 successDiv.classList.remove('hidden');
                 errorDiv.classList.add('hidden');
-                document.getElementById('invite-email').value = '';
+                clearInviteSelection();
                 
                 // Reload invitations after 1.5 seconds
                 setTimeout(() => {
                     document.getElementById('invite-modal').classList.add('hidden');
                     document.getElementById('invite-form').reset();
+                    clearInviteSelection();
                     loadInvitations(currentCompany._id);
                 }, 1500);
             } catch (error) {
