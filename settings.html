@@ -514,7 +514,10 @@
         }
         
         // Initialize user menu and role switcher
-        document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+        const userAvatarEl = document.getElementById('user-avatar');
+        if (userAvatarEl) {
+            userAvatarEl.innerHTML = getAvatarHTML(user, 'w-10 h-10');
+        }
         
         const roleContainer = document.getElementById('role-switcher');
         const currentRoleLabel = document.getElementById('current-role');
@@ -611,7 +614,10 @@
                 profileData = data.user;
 
                 // Update avatar display
-                document.getElementById('settings-avatar').innerHTML = getAvatarHTML(profileData, 'w-20 h-20');
+                const settingsAvatarEl = document.getElementById('settings-avatar');
+                if (settingsAvatarEl) {
+                    settingsAvatarEl.innerHTML = getAvatarHTML(profileData, 'w-20 h-20');
+                }
 
                 // Populate all forms
                 populateProfileForm();
@@ -627,123 +633,150 @@
         }
 
         function populateProfileForm() {
-            document.getElementById('firstName').value = profileData.firstName || '';
-            document.getElementById('lastName').value = profileData.lastName || '';
-            document.getElementById('bio').value = profileData.bio || '';
-            document.getElementById('company').value = profileData.company || '';
-            document.getElementById('title').value = profileData.title || '';
-            document.getElementById('location').value = profileData.location || '';
-            document.getElementById('phone').value = profileData.phone || '';
-            document.getElementById('city').value = profileData.city || '';
-            document.getElementById('state').value = profileData.state || '';
-            document.getElementById('yearsExperience').value = profileData.yearsExperience || 0;
-            document.getElementById('registrarId').value = profileData.registrarId || '';
-            document.getElementById('skills').value = profileData.skills ? profileData.skills.join(', ') : '';
-            document.getElementById('services').value = profileData.services ? profileData.services.join(', ') : '';
+            if (!profileData) return;
+            const el = id => document.getElementById(id);
+            if (el('firstName')) el('firstName').value = profileData.firstName || '';
+            if (el('lastName')) el('lastName').value = profileData.lastName || '';
+            if (el('bio')) el('bio').value = profileData.bio || '';
+            if (el('company')) el('company').value = profileData.company || '';
+            if (el('title')) el('title').value = profileData.title || '';
+            if (el('location')) el('location').value = profileData.location || '';
+            if (el('phone')) el('phone').value = profileData.phone || '';
+            if (el('city')) el('city').value = profileData.city || '';
+            if (el('state')) el('state').value = profileData.state || '';
+            if (el('yearsExperience')) el('yearsExperience').value = profileData.yearsExperience || 0;
+            if (el('registrarId')) el('registrarId').value = profileData.registrarId || '';
+            if (el('skills')) el('skills').value = profileData.skills ? profileData.skills.join(', ') : '';
+            if (el('services')) el('services').value = profileData.services ? profileData.services.join(', ') : '';
         }
 
         function populateAccountForm() {
-            document.getElementById('email').value = profileData.email || '';
+            if (!profileData) return;
+            const el = id => document.getElementById(id);
+            if (el('email')) el('email').value = profileData.email || '';
             setRoleSelection(profileData.role || 'owner');
         }
 
         function populatePrivacyForm() {
-            document.getElementById('profileVisibility').value = profileData.preferences?.profileVisibility || 'public';
-            document.getElementById('allowMessagesFrom').value = profileData.preferences?.allowMessagesFrom || 'all';
+            if (!profileData) return;
+            const el = id => document.getElementById(id);
+            if (el('profileVisibility')) el('profileVisibility').value = profileData.preferences?.profileVisibility || 'public';
+            if (el('allowMessagesFrom')) el('allowMessagesFrom').value = profileData.preferences?.allowMessagesFrom || 'all';
         }
 
         function populateNotificationsForm() {
-            document.getElementById('notifyMessages').checked = profileData.preferences?.emailNotifications?.messages !== false;
-            document.getElementById('notifyProjects').checked = profileData.preferences?.emailNotifications?.projectUpdates !== false;
-            document.getElementById('notifyPartners').checked = profileData.preferences?.emailNotifications?.partnerRequests !== false;
-            document.getElementById('smsOptIn').checked = profileData.preferences?.smsOptIn || false;
+            if (!profileData) return;
+            const el = id => document.getElementById(id);
+            if (el('notifyMessages')) el('notifyMessages').checked = profileData.preferences?.emailNotifications?.messages ?? true;
+            if (el('notifyProjects')) el('notifyProjects').checked = profileData.preferences?.emailNotifications?.projectUpdates ?? true;
+            if (el('notifyPartners')) el('notifyPartners').checked = profileData.preferences?.emailNotifications?.partnerRequests ?? true;
+            if (el('smsOptIn')) el('smsOptIn').checked = profileData.preferences?.smsOptIn ?? false;
         }
 
         function populatePreferencesForm() {
-            document.getElementById('theme').value = profileData.preferences?.theme || 'system';
-            document.getElementById('language').value = profileData.preferences?.language || 'en';
-            document.getElementById('timezone').value = profileData.preferences?.timezone || 'America/Los_Angeles';
+            if (!profileData) return;
+            const el = id => document.getElementById(id);
+            if (el('theme')) el('theme').value = profileData.preferences?.theme || 'system';
+            if (el('language')) el('language').value = profileData.preferences?.language || 'en';
+            if (el('timezone')) el('timezone').value = profileData.preferences?.timezone || 'America/Los_Angeles';
         }
 
         function populateLinksForm() {
-            document.getElementById('website').value = profileData.links?.website || '';
-            document.getElementById('linkedin').value = profileData.links?.linkedin || '';
-            document.getElementById('github').value = profileData.links?.github || '';
+            if (!profileData) return;
+            const el = id => document.getElementById(id);
+            if (el('website')) el('website').value = profileData.links?.website || '';
+            if (el('linkedin')) el('linkedin').value = profileData.links?.linkedin || '';
+            if (el('github')) el('github').value = profileData.links?.github || '';
         }
 
         // Save handlers
-        document.getElementById('profile-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const updates = {
-                firstName: document.getElementById('firstName').value,
-                lastName: document.getElementById('lastName').value,
-                bio: document.getElementById('bio').value,
-                company: document.getElementById('company').value,
-                title: document.getElementById('title').value,
-                location: document.getElementById('location').value,
-                phone: document.getElementById('phone').value,
-                city: document.getElementById('city').value,
-                state: document.getElementById('state').value,
-                yearsExperience: parseInt(document.getElementById('yearsExperience').value) || 0,
-                registrarId: document.getElementById('registrarId').value,
-                skills: document.getElementById('skills').value.split(',').map(s => s.trim()).filter(s => s),
-                services: document.getElementById('services').value.split(',').map(s => s.trim()).filter(s => s)
-            };
-            await saveSettings(updates, 'Profile updated successfully!');
-        });
+        const profileForm = document.getElementById('profile-form');
+        if (profileForm) {
+            profileForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const updates = {
+                    firstName: document.getElementById('firstName').value,
+                    lastName: document.getElementById('lastName').value,
+                    bio: document.getElementById('bio').value,
+                    company: document.getElementById('company').value,
+                    title: document.getElementById('title').value,
+                    location: document.getElementById('location').value,
+                    phone: document.getElementById('phone').value,
+                    city: document.getElementById('city').value,
+                    state: document.getElementById('state').value,
+                    yearsExperience: parseInt(document.getElementById('yearsExperience').value) || 0,
+                    registrarId: document.getElementById('registrarId').value,
+                    skills: document.getElementById('skills').value.split(',').map(s => s.trim()).filter(s => s),
+                    services: document.getElementById('services').value.split(',').map(s => s.trim()).filter(s => s)
+                };
+                await saveSettings(updates, 'Profile updated successfully!');
+            });
+        }
 
-        document.getElementById('privacy-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const updates = {
-                preferences: {
-                    ...profileData.preferences,
-                    profileVisibility: document.getElementById('profileVisibility').value,
-                    allowMessagesFrom: document.getElementById('allowMessagesFrom').value
-                }
-            };
-            await saveSettings(updates, 'Privacy settings saved!');
-        });
+        const privacyForm = document.getElementById('privacy-form');
+        if (privacyForm) {
+            privacyForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const updates = {
+                    preferences: {
+                        ...profileData.preferences,
+                        profileVisibility: document.getElementById('profileVisibility').value,
+                        allowMessagesFrom: document.getElementById('allowMessagesFrom').value
+                    }
+                };
+                await saveSettings(updates, 'Privacy settings saved!');
+            });
+        }
 
-        document.getElementById('notifications-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const updates = {
-                preferences: {
-                    ...profileData.preferences,
-                    emailNotifications: {
-                        messages: document.getElementById('notifyMessages').checked,
-                        projectUpdates: document.getElementById('notifyProjects').checked,
-                        partnerRequests: document.getElementById('notifyPartners').checked
-                    },
-                    smsOptIn: document.getElementById('smsOptIn').checked
-                }
-            };
-            await saveSettings(updates, 'Notification settings saved!');
-        });
+        const notificationsForm = document.getElementById('notifications-form');
+        if (notificationsForm) {
+            notificationsForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const updates = {
+                    preferences: {
+                        ...profileData.preferences,
+                        emailNotifications: {
+                            messages: document.getElementById('notifyMessages').checked,
+                            projectUpdates: document.getElementById('notifyProjects').checked,
+                            partnerRequests: document.getElementById('notifyPartners').checked
+                        },
+                        smsOptIn: document.getElementById('smsOptIn').checked
+                    }
+                };
+                await saveSettings(updates, 'Notification settings saved!');
+            });
+        }
 
-        document.getElementById('preferences-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const updates = {
-                preferences: {
-                    ...profileData.preferences,
-                    theme: document.getElementById('theme').value,
-                    language: document.getElementById('language').value,
-                    timezone: document.getElementById('timezone').value
-                }
-            };
-            await saveSettings(updates, 'Preferences saved!');
-        });
+        const preferencesForm = document.getElementById('preferences-form');
+        if (preferencesForm) {
+            preferencesForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const updates = {
+                    preferences: {
+                        ...profileData.preferences,
+                        theme: document.getElementById('theme').value,
+                        language: document.getElementById('language').value,
+                        timezone: document.getElementById('timezone').value
+                    }
+                };
+                await saveSettings(updates, 'Preferences saved!');
+            });
+        }
 
-        document.getElementById('links-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const updates = {
-                links: {
-                    website: document.getElementById('website').value,
-                    linkedin: document.getElementById('linkedin').value,
-                    github: document.getElementById('github').value
-                }
-            };
-            await saveSettings(updates, 'Links saved!');
-        });
+        const linksForm = document.getElementById('links-form');
+        if (linksForm) {
+            linksForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const updates = {
+                    links: {
+                        website: document.getElementById('website').value,
+                        linkedin: document.getElementById('linkedin').value,
+                        github: document.getElementById('github').value
+                    }
+                };
+                await saveSettings(updates, 'Links updated!');
+            });
+        }
 
         async function saveSettings(updates, successMsg) {
             try {
@@ -818,7 +851,10 @@
                 localStorage.setItem('user', JSON.stringify(user));
 
                 // Update avatar display
-                document.getElementById('settings-avatar').innerHTML = getAvatarHTML(user, 'w-20 h-20');
+                const settingsAvatarEl = document.getElementById('settings-avatar');
+                if (settingsAvatarEl) {
+                    settingsAvatarEl.innerHTML = getAvatarHTML(user, 'w-20 h-20');
+                }
                 showSuccess('Profile picture updated successfully');
             } catch (error) {
                 console.error('Error uploading profile picture:', error);
