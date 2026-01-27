@@ -50,6 +50,21 @@
                         <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
                     </a>
                     <a href="/profile.html" class="text-gray-600 hover:text-gray-900 text-sm font-medium">View Profile</a>
+                    <div class="relative" id="user-menu">
+                        <button id="user-menu-btn" class="p-2 hover:bg-gray-50 rounded-lg">
+                            <div id="user-avatar"></div>
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                            <div class="px-4 py-3 border-b border-gray-200">
+                                <p class="text-sm font-medium text-gray-900">Signed in as</p>
+                                <p id="user-name" class="text-sm text-gray-600"></p>
+                            </div>
+                            <div id="role-switcher" class="border-b border-gray-200"></div>
+                            <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">View Profile</a>
+                            <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
+                            <button id="logout-btn" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Sign Out</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -517,6 +532,11 @@
         const userAvatarEl = document.getElementById('user-avatar');
         if (userAvatarEl) {
             userAvatarEl.innerHTML = getAvatarHTML(user, 'w-10 h-10');
+        }
+        
+        const userNameEl = document.getElementById('user-name');
+        if (userNameEl) {
+            userNameEl.textContent = user.email || 'User';
         }
         
         const roleContainer = document.getElementById('role-switcher');
