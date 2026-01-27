@@ -1845,6 +1845,225 @@ app.post('/api/messages', authMiddleware, upload.array('attachments', 5), async 
   }
 });
 
+// Lock bid for decision
+app.post('/api/projects/:projectId/bids/:bidId/lock-for-decision', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // Check if user is project owner
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can lock bids' });
+    }
+
+    const bid = project.bids.id(req.params.bidId);
+    if (!bid) return res.status(404).json({ error: 'Bid not found' });
+
+    const { notes } = req.body;
+
+    // Update bid status
+    bid.status = 'locked_for_decision';
+    
+    // Log activity
+    project.activityLog.push({
+      actor: req.user._id,
+      action: 'locked_bid_for_decision',
+      details: `Locked bid from ${bid.user} for evaluation${notes ? ': ' + notes : ''}`,
+      timestamp: new Date()
+    });
+
+    await project.save();
+
+    // Create notification for all other bidders
+    const otherBidders = project.bids
+      .filter(b => b._id.toString() !== bid._id.toString())
+      .map(b => b.user);
+
+    for (const bidderId of otherBidders) {
+      await Notification.create({
+        user: bidderId,
+        type: 'bid_locked',
+        title: 'Bid Evaluation',
+        message: `The ${project.title} project owner is evaluating a competing bid. Keep an eye on this project for updates.`,
+        relatedProject: project._id,
+        relatedBid: bid._id
+      });
+    }
+
+    res.json({ success: true, message: 'Bid locked for decision' });
+  } catch (error) {
+    console.error('Lock bid error:', error);
+    res.status(500).json({ error: 'Failed to lock bid' });
+  }
+});
+
+// Unlock bid
+app.post('/api/projects/:projectId/bids/:bidId/unlock', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // Check if user is project owner
+    if (project.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can unlock bids' });
+    }
+
+    const bid = project.bids.id(req.params.bidId);
+    if (!bid) return res.status(404).json({ error: 'Bid not found' });
+
+    if (bid.status !== 'locked_for_decision') {
+      return res.status(400).json({ error: 'Bid is not locked' });
+    }
+
+    // Revert to pending status
+    bid.status = 'pending';
+
+    // Log activity
+    project.activityLog.push({
+      actor: req.user._id,
+      action: 'unlocked_bid',
+      details: 'Unlocked bid - decision still open',
+      timestamp: new Date()
+    });
+
+    await project.save();
+
+    // Notify other bidders that bidding is open again
+    const otherBidders = project.bids
+      .filter(b => b._id.toString() !== bid._id.toString())
+      .map(b => b.user);
+
+    for (const bidderId of otherBidders) {
+      await Notification.create({
+        user: bidderId,
+        type: 'bid_unlocked',
+        title: 'Bidding Still Open',
+        message: `The project owner is still evaluating bids for ${project.title}. The decision is still open.`,
+        relatedProject: project._id
+      });
+    }
+
+    res.json({ success: true, message: 'Bid unlocked' });
+  } catch (error) {
+    console.error('Unlock bid error:', error);
+    res.status(500).json({ error: 'Failed to unlock bid' });
+  }
+});
+
+// Invite vendor to bid on project
+app.post('/api/projects/:projectId/invite-vendor', authMiddleware, async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId).populate('owner');
+    if (!project) return res.status(404).json({ error: 'Project not found' });
+
+    // Check if user is project owner
+    if (project.owner._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Only project owner can invite vendors' });
+    }
+
+    const { vendorId, email, message } = req.body;
+
+    if (!vendorId && !email) {
+      return res.status(400).json({ error: 'Vendor ID or email is required' });
+    }
+
+    let vendor = null;
+    if (vendorId) {
+      vendor = await User.findById(vendorId);
+      if (!vendor) return res.status(404).json({ error: 'Vendor not found' });
+    }
+
+    // Check if already bid
+    if (vendor && project.bids.some(b => b.user.toString() === vendor._id.toString())) {
+      return res.status(400).json({ error: 'Vendor has already bid on this project' });
+    }
+
+    const ownerName = project.owner.company || `${project.owner.firstName} ${project.owner.lastName}`;
+
+    if (vendor) {
+      // Send in-app notification
+      await Notification.create({
+        user: vendor._id,
+        type: 'vendor_invite',
+        title: 'You\'re Invited to Bid',
+        message: `${ownerName} invited you to bid on ${project.title}. Budget: $${project.budget?.toLocaleString() || 'TBD'}`,
+        relatedProject: project._id
+      });
+
+      res.json({ success: true, message: 'Vendor invited to bid' });
+    } else if (email) {
+      // Send email invite
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">Genovad</h1>
+            <p style="color: #e0e0e0; margin: 10px 0 0 0;">Construction Marketplace</p>
+          </div>
+          
+          <div style="background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+            <h2 style="color: #1a1a1a; margin-top: 0;">You're Invited to Bid!</h2>
+            
+            <p><strong>${ownerName}</strong> has invited you to bid on a construction project:</p>
+            
+            <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1a1a1a;">
+              <h3 style="color: #1a1a1a; margin-top: 0;">${project.title}</h3>
+              <p><strong>Budget:</strong> $${project.budget?.toLocaleString() || 'TBD'}</p>
+              <p><strong>Location:</strong> ${project.location}</p>
+              <p><strong>Category:</strong> ${project.category}</p>
+              ${project.description ? `<p><strong>Details:</strong> ${project.description}</p>` : ''}
+            </div>
+            
+            ${message ? `
+              <div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1a1a1a;">
+                <p style="margin: 0;"><strong>Message from ${ownerName}:</strong></p>
+                <p style="margin: 10px 0 0 0;">${message}</p>
+              </div>
+            ` : ''}
+            
+            <p style="margin-top: 30px;">
+              Ready to bid? Join Genovad and start bidding on projects that match your expertise.
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.APP_URL || 'http://localhost:3000'}/signup.html" 
+                 style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                Join & Bid Now
+              </a>
+            </div>
+            
+            <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+              Already have an account? <a href="${process.env.APP_URL || 'http://localhost:3000'}/vendor-login.html" style="color: #1a1a1a;">Log in</a> to bid immediately.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
+            <p>Genovad - Connecting construction professionals</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await sendEmail(
+        email,
+        `${ownerName} invited you to bid on ${project.title}`,
+        htmlContent,
+        'noreply@genovad.com'
+      );
+
+      res.json({ success: true, message: 'Email invitation sent to vendor' });
+    }
+  } catch (error) {
+    console.error('Invite vendor error:', error);
+    res.status(500).json({ error: 'Failed to invite vendor' });
+  }
+});
+
 // Send email invite to non-Genovad user
 app.post('/api/messages/email-invite', authMiddleware, async (req, res) => {
   try {

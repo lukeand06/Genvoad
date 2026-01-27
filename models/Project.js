@@ -74,7 +74,7 @@ const ProjectSchema = new mongoose.Schema({
     siteWalkTime: String, // Optional site walk availability
     createdAt: { type: Date, default: Date.now },
     expiresAt: { type: Date }, // Bid expiration time (e.g., 7 days from creation)
-    status: { type: String, enum: ['pending', 'accepted', 'rejected', 'expired', 'revision_requested'], default: 'pending' },
+    status: { type: String, enum: ['pending', 'accepted', 'rejected', 'expired', 'revision_requested', 'locked_for_decision'], default: 'pending' },
     rejectionReason: { type: String }, // Why it was rejected
     revisionNotes: { type: String }, // What changes owner is requesting
     counterOffers: [{ // Track counter-offer history for negotiation
