@@ -1846,107 +1846,96 @@ app.post('/api/messages', authMiddleware, upload.array('attachments', 5), async 
 });
 
 // Lock bid for decision
-app.post('/api/projects/:projectId/bids/:bidId/lock-for-decision', authMiddleware, async (req, res) => {
+app.post('/api/projects/:projectId/lock-for-decision', authMiddleware, async (req, res) => {
   try {
     const project = await Project.findById(req.params.projectId);
     if (!project) return res.status(404).json({ error: 'Project not found' });
 
     // Check if user is project owner
     if (project.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'Only project owner can lock bids' });
+      return res.status(403).json({ error: 'Only project owner can lock project' });
     }
-
-    const bid = project.bids.id(req.params.bidId);
-    if (!bid) return res.status(404).json({ error: 'Bid not found' });
 
     const { notes } = req.body;
 
-    // Update bid status
-    bid.status = 'locked_for_decision';
+    // Lock the entire project for decision
+    project.biddingLocked = true;
     
     // Log activity
     project.activityLog.push({
       actor: req.user._id,
-      action: 'locked_bid_for_decision',
-      details: `Locked bid from ${bid.user} for evaluation${notes ? ': ' + notes : ''}`,
+      action: 'locked_project_for_decision',
+      details: `Locked project for final decision${notes ? ': ' + notes : ''}`,
       timestamp: new Date()
     });
 
     await project.save();
 
-    // Create notification for all other bidders
-    const otherBidders = project.bids
-      .filter(b => b._id.toString() !== bid._id.toString())
-      .map(b => b.user);
+    // Create notification for all bidders
+    const allBidders = project.bids.map(b => b.user);
 
-    for (const bidderId of otherBidders) {
+    for (const bidderId of allBidders) {
       await Notification.create({
         user: bidderId,
-        type: 'bid_locked',
-        title: 'Bid Evaluation',
-        message: `The ${project.title} project owner is evaluating a competing bid. Keep an eye on this project for updates.`,
-        relatedProject: project._id,
-        relatedBid: bid._id
+        type: 'project_locked',
+        title: 'Project Locked for Decision',
+        message: `The owner of ${project.title} has locked the project for final decision. No new bids can be submitted.`,
+        relatedProject: project._id
       });
     }
 
-    res.json({ success: true, message: 'Bid locked for decision' });
+    res.json({ success: true, message: 'Project locked for decision' });
   } catch (error) {
-    console.error('Lock bid error:', error);
-    res.status(500).json({ error: 'Failed to lock bid' });
+    console.error('Lock project error:', error);
+    res.status(500).json({ error: 'Failed to lock project' });
   }
 });
 
-// Unlock bid
-app.post('/api/projects/:projectId/bids/:bidId/unlock', authMiddleware, async (req, res) => {
+// Unlock project
+app.post('/api/projects/:projectId/unlock', authMiddleware, async (req, res) => {
   try {
     const project = await Project.findById(req.params.projectId);
     if (!project) return res.status(404).json({ error: 'Project not found' });
 
     // Check if user is project owner
     if (project.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ error: 'Only project owner can unlock bids' });
+      return res.status(403).json({ error: 'Only project owner can unlock project' });
     }
 
-    const bid = project.bids.id(req.params.bidId);
-    if (!bid) return res.status(404).json({ error: 'Bid not found' });
-
-    if (bid.status !== 'locked_for_decision') {
-      return res.status(400).json({ error: 'Bid is not locked' });
+    if (!project.biddingLocked) {
+      return res.status(400).json({ error: 'Project is not locked' });
     }
 
-    // Revert to pending status
-    bid.status = 'pending';
+    // Unlock the project
+    project.biddingLocked = false;
 
     // Log activity
     project.activityLog.push({
       actor: req.user._id,
-      action: 'unlocked_bid',
-      details: 'Unlocked bid - decision still open',
+      action: 'unlocked_project',
+      details: 'Unlocked project - bidding reopened',
       timestamp: new Date()
     });
 
     await project.save();
 
-    // Notify other bidders that bidding is open again
-    const otherBidders = project.bids
-      .filter(b => b._id.toString() !== bid._id.toString())
-      .map(b => b.user);
+    // Notify all bidders that bidding is open again
+    const allBidders = project.bids.map(b => b.user);
 
-    for (const bidderId of otherBidders) {
+    for (const bidderId of allBidders) {
       await Notification.create({
         user: bidderId,
-        type: 'bid_unlocked',
-        title: 'Bidding Still Open',
-        message: `The project owner is still evaluating bids for ${project.title}. The decision is still open.`,
+        type: 'project_unlocked',
+        title: 'Bidding Reopened',
+        message: `The project owner has reopened bidding for ${project.title}. You can now submit or revise your bid.`,
         relatedProject: project._id
       });
     }
 
-    res.json({ success: true, message: 'Bid unlocked' });
+    res.json({ success: true, message: 'Project unlocked' });
   } catch (error) {
-    console.error('Unlock bid error:', error);
-    res.status(500).json({ error: 'Failed to unlock bid' });
+    console.error('Unlock project error:', error);
+    res.status(500).json({ error: 'Failed to unlock project' });
   }
 });
 

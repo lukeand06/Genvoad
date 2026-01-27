@@ -1062,47 +1062,6 @@
             delete document.getElementById('lock-decision-modal').dataset.bidId;
         }
 
-        async function lockBidForDecision(bidId, notes) {
-            try {
-                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}/lock-for-decision`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ notes })
-                });
-                
-                if (!res.ok) {
-                    const error = await res.json();
-                    throw new Error(error.error || 'Failed to lock bid for decision');
-                }
-                
-                alert('🔒 Bid locked for decision. Other bidders have been notified.');
-                closeLockForDecisionModal();
-                loadProject();
-            } catch (e) {
-                alert('Error: ' + e.message);
-            }
-        }
-
-        async function unlockBid(bidId) {
-            if (!confirm('Are you sure you want to unlock this bid? Other bidders will be notified.')) return;
-            
-            try {
-                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}/unlock`, {
-                    method: 'POST'
-                });
-                
-                if (!res.ok) {
-                    const error = await res.json();
-                    throw new Error(error.error || 'Failed to unlock bid');
-                }
-                
-                alert('Bid unlocked - the decision is still open');
-                loadProject();
-            } catch (e) {
-                alert('Error: ' + e.message);
-            }
-        }
-
         function showCounterOfferModal(bidId) {
             currentBidId = bidId;
             document.getElementById('counter-offer-modal').classList.remove('hidden');
@@ -1188,25 +1147,25 @@
             }
         }
 
-        // Lock/unlock bidding
+        // Lock/unlock project for decision
         async function toggleBiddingLock() {
             const project = globalProject || currentProject;
-            const action = project.biddingLocked ? 'unlock' : 'lock';
+            const action = project.biddingLocked ? 'unlock' : 'lock-for-decision';
             const message = project.biddingLocked ? 
-                'Unlock bidding? Vendors will be able to submit and modify bids again.' :
-                'Lock bidding? This will prevent new bids and edits while you review existing offers.';
+                'Unlock the project? Vendors will be able to submit and modify bids again.' :
+                'Lock the project for decision? This will prevent new bids and edits while you make your final decision.';
             
             if (!confirm(message)) return;
             
             try {
-                const res = await authFetch(`/api/projects/${projectId}/${action}-bidding`, {
+                const res = await authFetch(`/api/projects/${projectId}/${action}`, {
                     method: 'POST'
                 });
                 const data = await res.json();
                 
-                if (!res.ok) throw new Error(data.error || `Failed to ${action} bidding`);
+                if (!res.ok) throw new Error(data.error || `Failed to ${action} project`);
                 
-                alert(`Bidding ${action}ed successfully`);
+                alert(`Project ${project.biddingLocked ? 'unlocked' : 'locked for decision'} successfully`);
                 loadProject();
             } catch (e) {
                 alert(e.message);
