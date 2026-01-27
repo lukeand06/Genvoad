@@ -200,6 +200,38 @@
         </div>
     </div>
 
+    <!-- Lock for Decision Modal -->
+    <div id="lock-decision-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg max-w-lg w-full p-6">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="text-2xl">🔒</span>
+                <h2 class="text-xl font-bold text-gray-900">Lock for Decision</h2>
+            </div>
+            
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-4 text-sm text-purple-900">
+                <p class="font-semibold mb-2">What this means:</p>
+                <ul class="space-y-1 text-xs list-disc list-inside">
+                    <li>This bid will be marked as your top choice</li>
+                    <li>Other vendors will be notified to stop bidding</li>
+                    <li>You can still accept, reject, or request revisions</li>
+                    <li>You can unlock if you change your mind</li>
+                </ul>
+            </div>
+            
+            <form id="lock-decision-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Optional: Let other vendors know (e.g., "We're evaluating this proposal")</label>
+                    <textarea id="lock-notes" rows="3" placeholder="This message will be sent to other bidders..." class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeLockForDecisionModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700">🔒 Lock This Bid</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Add Milestone Modal -->
     <div id="milestone-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg max-w-lg w-full p-6">
@@ -616,10 +648,18 @@
                                                 ${isOwner && bid.status === 'pending' && project.status === 'open' ? `
                                                     <button onclick="showCounterOfferModal('${bid._id}')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium hover:bg-blue-200">Counter</button>
                                                     <button onclick="showRevisionModal('${bid._id}')" class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium hover:bg-yellow-200">Revise</button>
+                                                    <button onclick="showLockForDecisionModal('${bid._id}')" class="px-3 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium hover:bg-purple-200">🔒 Lock</button>
                                                     <button onclick="acceptBid('${bid._id}', '${bid.user._id}', '${encodeURIComponent(project.title)}')" class="px-3 py-1 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700">Accept</button>
                                                     <button onclick="rejectBid('${bid._id}')" class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200">Reject</button>
                                                 ` : ''}
-                                                ${isOwner && bid.status === 'revision_requested' ? `<p class="text-yellow-600 font-medium">Awaiting revision...</p>` : ''}
+                                                ${isOwner && bid.status === 'locked_for_decision' ? `
+                                                    <div class="flex gap-2 items-center">
+                                                        <span class="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded font-medium">🔒 Locked</span>
+                                                        <button onclick="unlockBid('${bid._id}')" class="px-3 py-1 bg-gray-100 text-gray-700 rounded text-xs font-medium hover:bg-gray-200">Unlock</button>
+                                                        <button onclick="acceptBid('${bid._id}', '${bid.user._id}', '${encodeURIComponent(project.title)}')" class="px-3 py-1 bg-green-600 text-white rounded text-xs font-medium hover:bg-green-700">✓ Accept</button>
+                                                        <button onclick="rejectBid('${bid._id}')" class="px-3 py-1 bg-red-100 text-red-700 rounded text-xs font-medium hover:bg-red-200">✕ Reject</button>
+                                                    </div>
+                                                ` : ''}
                                             </div>
                                         </div>
                                     </div>
@@ -971,6 +1011,58 @@
             }
         }
 
+        function showLockForDecisionModal(bidId) {
+            document.getElementById('lock-decision-modal').classList.remove('hidden');
+            document.getElementById('lock-decision-modal').dataset.bidId = bidId;
+            document.getElementById('lock-notes').value = '';
+        }
+
+        function closeLockForDecisionModal() {
+            document.getElementById('lock-decision-modal').classList.add('hidden');
+            delete document.getElementById('lock-decision-modal').dataset.bidId;
+        }
+
+        async function lockBidForDecision(bidId, notes) {
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}/lock-for-decision`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes })
+                });
+                
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.error || 'Failed to lock bid for decision');
+                }
+                
+                alert('🔒 Bid locked for decision. Other bidders have been notified.');
+                closeLockForDecisionModal();
+                loadProject();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
+        async function unlockBid(bidId) {
+            if (!confirm('Are you sure you want to unlock this bid? Other bidders will be notified.')) return;
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}/unlock`, {
+                    method: 'POST'
+                });
+                
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.error || 'Failed to unlock bid');
+                }
+                
+                alert('Bid unlocked - the decision is still open');
+                loadProject();
+            } catch (e) {
+                alert('Error: ' + e.message);
+            }
+        }
+
         function showCounterOfferModal(bidId) {
             currentBidId = bidId;
             document.getElementById('counter-offer-modal').classList.remove('hidden');
@@ -990,6 +1082,15 @@
             
             await submitCounterOffer(currentBidId, amount, timeline, notes);
             closeCounterOfferModal();
+        });
+
+        document.getElementById('lock-decision-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const modal = document.getElementById('lock-decision-modal');
+            const bidId = modal.dataset.bidId;
+            const notes = document.getElementById('lock-notes').value;
+            
+            await lockBidForDecision(bidId, notes);
         });
 
         async function submitCounterOffer(bidId, amount, timeline, notes) {
