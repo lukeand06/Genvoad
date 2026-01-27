@@ -415,6 +415,7 @@ app.post('/api/auth/login', async (req, res) => {
       success: true,
       token,
       user: {
+        _id: user._id,
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -427,7 +428,9 @@ app.post('/api/auth/login', async (req, res) => {
         role: user.role,
         activeRole: user.activeRole,
         roles: user.roles,
-        authProvider: user.authProvider
+        authProvider: user.authProvider,
+        companyId: user.companyId,
+        companyRole: user.companyRole
       }
     });
   } catch (error) {
@@ -565,6 +568,7 @@ app.post('/api/auth/switch-role', authMiddleware, async (req, res) => {
     res.json({
       success: true,
       user: {
+        _id: user._id,
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -577,7 +581,9 @@ app.post('/api/auth/switch-role', authMiddleware, async (req, res) => {
         role: user.role,
         activeRole: user.activeRole,
         roles: user.roles,
-        authProvider: user.authProvider
+        authProvider: user.authProvider,
+        companyId: user.companyId,
+        companyRole: user.companyRole
       }
     });
   } catch (error) {

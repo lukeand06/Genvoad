@@ -140,6 +140,19 @@
                         <p class="text-sm text-gray-600 mt-1">Update your personal and professional details</p>
                     </div>
                     <form id="profile-form" class="p-6 space-y-6">
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+                            <div class="flex items-center gap-4">
+                                <div id="settings-avatar" class="w-20 h-20 rounded-full bg-gray-200"></div>
+                                <div>
+                                    <input type="file" id="avatar-input" accept="image/*" class="hidden">
+                                    <button type="button" onclick="document.getElementById('avatar-input').click()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                        Change Picture
+                                    </button>
+                                    <p class="text-xs text-gray-500 mt-1">JPG, PNG or GIF (max 5MB)</p>
+                                </div>
+                            </div>
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
@@ -456,7 +469,73 @@
             throw new Error('Not authenticated');
         }
 
-        const user = getCurrentUser();
+        let user = getCurrentUser();
+        
+        // Validate user has ID, otherwise redirect to login
+        if (!user._id && !user.id) {
+            console.error('User ID missing from localStorage, redirecting to login...');
+            logout();
+            throw new Error('Invalid user session');
+        }
+        // Initialize user menu and role switcher
+        document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+        
+        const roleContainer = document.getElementById('role-switcher');
+        const currentRoleLabel = document.getElementById('current-role');
+        const availableRoles = user.roles || [user.role || 'owner'];
+        const activeRole = user.activeRole || user.role || 'owner';
+        
+        if (currentRoleLabel) currentRoleLabel.textContent = activeRole.charAt(0).toUpperCase() + activeRole.slice(1);
+        
+        if (availableRoles.length > 1 && roleContainer) {
+            roleContainer.innerHTML = availableRoles.map(role => `
+                <button onclick="switchUserRole('${role}')" class="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-50 ${role === activeRole ? 'bg-gray-100 font-medium' : ''}">
+                    Switch to ${role.charAt(0).toUpperCase() + role.slice(1)}
+                </button>
+            `).join('');
+        }
+        
+        async function switchUserRole(role) {
+            try {
+                await switchRole(role);
+                location.reload();
+            } catch (error) {
+                alert('Failed to switch role: ' + error.message);
+            }
+        }
+        
+        // Initialize user menu and role switcher
+        document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+        
+        const roleContainer = document.getElementById('role-switcher');
+        const currentRoleLabel = document.getElementById('current-role');
+        const availableRoles = user.roles || [user.role || 'owner'];
+        const activeRole = user.activeRole || user.role || 'owner';
+        
+        if (currentRoleLabel) currentRoleLabel.textContent = activeRole.charAt(0).toUpperCase() + activeRole.slice(1);
+        
+        if (availableRoles.length > 1 && roleContainer) {
+            roleContainer.innerHTML = availableRoles.map(role => `
+                <button onclick="switchUserRole('${role}')" class="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-50 ${role === activeRole ? 'bg-gray-100 font-medium' : ''}">
+                    Switch to ${role.charAt(0).toUpperCase() + role.slice(1)}
+                </button>
+            `).join('');
+        }
+        
+        async function switchUserRole(role) {
+            try {
+                await switchRole(role);
+                location.reload();
+            } catch (error) {
+                alert('Failed to switch role: ' + error.message);
+            }
+        }
+        
+        document.getElementById('user-menu-btn').addEventListener('click', () => {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
         let profileData = null;
         let selectedRole = user?.role || 'owner';
         const roleButtons = document.querySelectorAll('.role-switch');
@@ -558,6 +637,9 @@
                 }
                 const data = await response.json();
                 profileData = data.user;
+
+                // Update avatar display
+                document.getElementById('settings-avatar').innerHTML = getAvatarHTML(profileData, 'w-20 h-20');
 
                 // Populate all forms
                 populateProfileForm();
@@ -729,6 +811,46 @@
                 logout();
             } catch (err) {
                 showError(err.message);
+            }
+        });
+
+        // Avatar upload handler
+        document.getElementById('avatar-input').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (file.size > 5 * 1024 * 1024) {
+                showError('File size must be less than 5MB');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('avatar', file);
+
+            try {
+                const response = await authFetch('/api/users/avatar', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {} // Let browser set Content-Type with boundary
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to upload profile picture');
+                }
+
+                const data = await response.json();
+                
+                // Update local storage
+                user.avatar = data.avatar;
+                localStorage.setItem('user', JSON.stringify(user));
+
+                // Update avatar display
+                document.getElementById('settings-avatar').innerHTML = getAvatarHTML(user, 'w-20 h-20');
+                showSuccess('Profile picture updated successfully');
+            } catch (error) {
+                console.error('Error uploading profile picture:', error);
+                showError('Failed to upload profile picture: ' + error.message);
             }
         });
 

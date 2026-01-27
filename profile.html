@@ -47,9 +47,17 @@
                         <button id="user-menu-btn">
                             <div id="user-avatar"></div>
                         </button>
-                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                            <div class="px-4 py-3 border-b border-gray-100">
+                                <p class="text-xs text-gray-500 uppercase tracking-wide">Current Role</p>
+                                <p class="text-sm font-semibold text-gray-900 capitalize mt-1" id="current-role">Owner</p>
+                            </div>
+                            <div id="role-switcher" class="px-2 py-2 border-b border-gray-100">
+                                <!-- Role buttons will be inserted here -->
+                            </div>
                             <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
                             <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
+                            <button id="feedback-btn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Send Feedback</button>
                             <hr class="my-1">
                             <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
                         </div>
@@ -79,9 +87,42 @@
             throw new Error('Not authenticated');
         }
 
-        const currentUser = getCurrentUser();
+        let currentUser = getCurrentUser();
+        
+        // Validate user has ID, otherwise fetch fresh user data
+        if (!currentUser._id && !currentUser.id) {
+            console.error('User ID missing from localStorage, redirecting to login...');
+            logout();
+            throw new Error('Invalid user session');
+        }
+        
         const currentUserId = currentUser._id || currentUser.id;
         document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
+        
+        // Initialize role switcher
+        const roleContainer = document.getElementById('role-switcher');
+        const currentRoleLabel = document.getElementById('current-role');
+        const availableRoles = currentUser.roles || [currentUser.role || 'owner'];
+        const activeRole = currentUser.activeRole || currentUser.role || 'owner';
+        
+        if (currentRoleLabel) currentRoleLabel.textContent = activeRole.charAt(0).toUpperCase() + activeRole.slice(1);
+        
+        if (availableRoles.length > 1 && roleContainer) {
+            roleContainer.innerHTML = availableRoles.map(role => `
+                <button onclick="switchUserRole('${role}')" class="w-full text-left px-3 py-2 text-sm rounded hover:bg-gray-50 ${role === activeRole ? 'bg-gray-100 font-medium' : ''}">
+                    Switch to ${role.charAt(0).toUpperCase() + role.slice(1)}
+                </button>
+            `).join('');
+        }
+        
+        async function switchUserRole(role) {
+            try {
+                await switchRole(role);
+                location.reload();
+            } catch (error) {
+                alert('Failed to switch role: ' + error.message);
+            }
+        }
         
         document.getElementById('user-menu-btn').addEventListener('click', () => {
             document.getElementById('user-dropdown').classList.toggle('hidden');
