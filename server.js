@@ -3893,6 +3893,202 @@ app.get('/api/companies/:id/invitations', authMiddleware, async (req, res) => {
   }
 });
 
+// Get personalized company recommendations (LinkedIn-style network discovery)
+app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
+  try {
+    const currentUser = await User.findById(req.user._id);
+    
+    // Get all verified companies
+    const allCompanies = await Company.find({ 
+      verified: true,
+      deletedAt: null 
+    }).limit(100);
+
+    // Get user's project history to understand connections
+    const userProjects = await Project.find({
+      $or: [
+        { owner: req.user._id },
+        { 'bids.user': req.user._id }
+      ]
+    }).select('owner bids location category');
+
+    // Companies user has worked with
+    const workedWithCompanyIds = new Set();
+    userProjects.forEach(project => {
+      if (project.owner.toString() !== req.user._id.toString()) {
+        workedWithCompanyIds.add(project.owner.toString());
+      }
+      project.bids.forEach(bid => {
+        if (bid.user.toString() !== req.user._id.toString()) {
+          workedWithCompanyIds.add(bid.user.toString());
+        }
+      });
+    });
+
+    // Calculate scores for each company
+    const scoredCompanies = allCompanies.map(company => {
+      let score = 0;
+      let reason = '';
+      let category = '';
+
+      // Don't recommend if it's the user's own company
+      if (currentUser.company && company.name === currentUser.company) {
+        return null;
+      }
+
+      // TOP PICKS SCORING
+      // Verified companies get priority
+      if (company.verified) score += 30;
+      
+      // High rating
+      if (company.avgRating && company.avgRating >= 4.5) {
+        score += 25;
+        reason = 'Highly rated company';
+      } else if (company.avgRating && company.avgRating >= 4.0) {
+        score += 15;
+      }
+
+      // Active and established
+      if (company.projectCount && company.projectCount > 20) {
+        score += 20;
+        if (!reason) reason = 'Experienced with many projects';
+      } else if (company.projectCount && company.projectCount > 10) {
+        score += 10;
+      }
+
+      // Complete profile
+      if (company.description && company.description.length > 100) score += 10;
+      if (company.website) score += 5;
+      
+      // MAY KNOW SCORING
+      // Same location
+      if (currentUser.location && company.location && 
+          currentUser.location.toLowerCase().includes(company.location.toLowerCase().split(',')[0].toLowerCase())) {
+        score += 40;
+        category = 'mayKnow';
+        reason = `Based in ${company.location.split(',')[0]}`;
+      }
+
+      // Worked with before
+      if (workedWithCompanyIds.has(company.owner?.toString())) {
+        score += 50;
+        category = 'mayKnow';
+        reason = 'You\'ve worked together before';
+      }
+
+      // Similar industry/type
+      if (currentUser.role === 'vendor' && company.companyType === 'general_contractor') {
+        score += 15;
+        if (!category) {
+          category = 'mayKnow';
+          reason = 'General contractors in your network';
+        }
+      }
+
+      // RECENTLY ACTIVE SCORING
+      const recentActivity = new Date() - new Date(company.updatedAt);
+      const daysInactive = recentActivity / (1000 * 60 * 60 * 24);
+      
+      if (daysInactive < 7) {
+        score += 35;
+        category = 'recentlyActive';
+        reason = 'Active this week';
+      } else if (daysInactive < 30) {
+        score += 25;
+        if (!category) category = 'recentlyActive';
+        if (!reason) reason = 'Active this month';
+      }
+
+      // Recent projects
+      if (company.recentProjectCount && company.recentProjectCount > 0) {
+        score += 20;
+        if (!category) category = 'recentlyActive';
+        if (!reason) reason = `${company.recentProjectCount} active projects`;
+      }
+
+      return {
+        ...company.toObject(),
+        score,
+        reason,
+        category,
+        projectCount: company.projectCount || 0,
+        rating: company.avgRating || 0,
+        activeProjects: company.recentProjectCount || 0,
+        lastActivity: daysInactive < 1 ? 'Active today' : 
+                      daysInactive < 7 ? 'Active this week' :
+                      daysInactive < 30 ? 'Active this month' : 
+                      'Active recently'
+      };
+    }).filter(c => c !== null);
+
+    // Sort by score
+    scoredCompanies.sort((a, b) => b.score - a.score);
+
+    // Categorize recommendations
+    const topPicks = scoredCompanies
+      .filter(c => c.score >= 40)
+      .slice(0, 10);
+
+    const mayKnow = scoredCompanies
+      .filter(c => c.category === 'mayKnow' || c.score >= 30)
+      .slice(0, 10);
+
+    const recentlyActive = scoredCompanies
+      .filter(c => c.category === 'recentlyActive' || new Date() - new Date(c.updatedAt) < 30 * 24 * 60 * 60 * 1000)
+      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .slice(0, 10);
+
+    res.json({
+      topPicks,
+      mayKnow,
+      recentlyActive
+    });
+  } catch (error) {
+    console.error('Company recommendations error:', error);
+    res.status(500).json({ error: 'Failed to load recommendations' });
+  }
+});
+
+// Get user network stats
+app.get('/api/users/network-stats', authMiddleware, async (req, res) => {
+  try {
+    // Get projects user has participated in
+    const projects = await Project.find({
+      $or: [
+        { owner: req.user._id },
+        { 'bids.user': req.user._id }
+      ]
+    });
+
+    // Count unique companies/users worked with
+    const companiesWorkedWith = new Set();
+    projects.forEach(project => {
+      if (project.owner.toString() !== req.user._id.toString()) {
+        companiesWorkedWith.add(project.owner.toString());
+      }
+      project.bids.forEach(bid => {
+        if (bid.user.toString() !== req.user._id.toString()) {
+          companiesWorkedWith.add(bid.user.toString());
+        }
+      });
+    });
+
+    // Active projects
+    const activeProjects = projects.filter(p => 
+      p.status === 'open' || p.status === 'in_progress'
+    ).length;
+
+    res.json({
+      companiesWorkedWith: companiesWorkedWith.size,
+      activeProjects,
+      totalConnections: companiesWorkedWith.size + activeProjects
+    });
+  } catch (error) {
+    console.error('Network stats error:', error);
+    res.status(500).json({ error: 'Failed to load network stats' });
+  }
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {

@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Network - Genovad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        .company-card {
+            transition: all 0.2s ease-in-out;
+        }
+        .company-card:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+                            <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                            <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-xl font-semibold text-gray-900">Genovad</span>
+                    </a>
+                    
+                    <div class="hidden md:flex space-x-1">
+                        <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
+                        <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Projects</a>
+                        <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+                        <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Network</a>
+                        <a href="/browse.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/notifications.html" class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </a>
+                    <div class="relative">
+                        <button id="user-menu-btn">
+                            <div id="user-avatar"></div>
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                            <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
+                            <a href="/company.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Company</a>
+                            <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6">
+            <h1 class="text-3xl font-bold text-gray-900">My Network</h1>
+            <p class="text-gray-600 mt-1">Discover and connect with companies in your industry</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Main Content Area -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Top Picks Section -->
+                <div class="bg-white rounded-lg border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-900">Top picks for you</h2>
+                                <p class="text-sm text-gray-600 mt-1">Based on your profile and activity</p>
+                            </div>
+                            <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div id="top-picks-container" class="divide-y divide-gray-200">
+                        <div class="p-6 text-center text-gray-500">
+                            <div class="animate-pulse">Loading top companies...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Companies You May Know Section -->
+                <div class="bg-white rounded-lg border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-xl font-bold text-gray-900">Companies you may know</h2>
+                            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">Based on shared connections and location</p>
+                    </div>
+                    <div id="may-know-container" class="divide-y divide-gray-200">
+                        <div class="p-6 text-center text-gray-500">
+                            <div class="animate-pulse">Loading recommendations...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recently Active Companies Section -->
+                <div class="bg-white rounded-lg border border-gray-200">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center gap-2">
+                            <h2 class="text-xl font-bold text-gray-900">Recently active companies</h2>
+                            <svg class="w-5 h-5 text-orange-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                            </svg>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">Companies with recent projects and activity</p>
+                    </div>
+                    <div id="recently-active-container" class="divide-y divide-gray-200">
+                        <div class="p-6 text-center text-gray-500">
+                            <div class="animate-pulse">Loading active companies...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Network Stats -->
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                    <h3 class="font-semibold text-gray-900 mb-4">Your Network</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Companies worked with</span>
+                            <span id="companies-count" class="font-semibold text-gray-900">--</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Active projects</span>
+                            <span id="active-projects-count" class="font-semibold text-gray-900">--</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600">Total connections</span>
+                            <span id="connections-count" class="font-semibold text-gray-900">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Filters -->
+                <div class="bg-white rounded-lg border border-gray-200 p-6">
+                    <h3 class="font-semibold text-gray-900 mb-4">Filter by Type</h3>
+                    <div class="space-y-2">
+                        <button onclick="filterByType('all')" class="filter-btn w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-50 bg-gray-100 font-medium">All Companies</button>
+                        <button onclick="filterByType('general_contractor')" class="filter-btn w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50">General Contractors</button>
+                        <button onclick="filterByType('subcontractor')" class="filter-btn w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50">Subcontractors</button>
+                        <button onclick="filterByType('architect')" class="filter-btn w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50">Architects</button>
+                        <button onclick="filterByType('supplier')" class="filter-btn w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50">Suppliers</button>
+                    </div>
+                </div>
+
+                <!-- Browse All -->
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+                    <h3 class="font-semibold mb-2">Explore More</h3>
+                    <p class="text-sm text-blue-50 mb-4">Browse all companies and find the perfect partners</p>
+                    <a href="/browse.html" class="block text-center px-4 py-2 bg-white text-blue-600 rounded-lg font-medium hover:bg-blue-50">Browse All Companies</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        if (!requireAuth()) {
+            throw new Error('Not authenticated');
+        }
+
+        const user = getCurrentUser();
+        document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+
+        // User menu toggle
+        document.getElementById('user-menu-btn').addEventListener('click', () => {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
+        let allRecommendations = {
+            topPicks: [],
+            mayKnow: [],
+            recentlyActive: []
+        };
+        let currentFilter = 'all';
+
+        async function loadRecommendations() {
+            try {
+                const res = await authFetch('/api/companies/recommendations');
+                if (!res.ok) throw new Error('Failed to load recommendations');
+                
+                const data = await res.json();
+                allRecommendations = data;
+                
+                displayRecommendations();
+                loadNetworkStats();
+            } catch (error) {
+                console.error('Load recommendations error:', error);
+                showError('top-picks-container');
+                showError('may-know-container');
+                showError('recently-active-container');
+            }
+        }
+
+        function displayRecommendations() {
+            const filtered = {
+                topPicks: filterCompanies(allRecommendations.topPicks || []),
+                mayKnow: filterCompanies(allRecommendations.mayKnow || []),
+                recentlyActive: filterCompanies(allRecommendations.recentlyActive || [])
+            };
+
+            displayTopPicks(filtered.topPicks);
+            displayMayKnow(filtered.mayKnow);
+            displayRecentlyActive(filtered.recentlyActive);
+        }
+
+        function filterCompanies(companies) {
+            if (currentFilter === 'all') return companies;
+            return companies.filter(c => c.companyType === currentFilter);
+        }
+
+        function filterByType(type) {
+            currentFilter = type;
+            
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-gray-100', 'font-medium');
+                btn.classList.add('text-gray-700');
+            });
+            event.target.classList.add('bg-gray-100', 'font-medium');
+            event.target.classList.remove('text-gray-700');
+            
+            displayRecommendations();
+        }
+
+        function displayTopPicks(companies) {
+            const container = document.getElementById('top-picks-container');
+            
+            if (companies.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
+                return;
+            }
+
+            container.innerHTML = companies.slice(0, 5).map(company => `
+                <div class="company-card p-6 hover:bg-gray-50 cursor-pointer" onclick="window.location.href='/profile.html?company=${company._id}'">
+                    <div class="flex items-start gap-4">
+                        <div class="w-16 h-16 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-xl font-bold flex-shrink-0">
+                            ${company.name.charAt(0)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold text-gray-900 truncate">${company.name}</h3>
+                                ${company.verified ? `
+                                    <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)} • ${company.location || 'Location not specified'}</p>
+                            <p class="text-sm text-gray-700 line-clamp-2 mb-3">${company.description || 'No description available'}</p>
+                            <div class="flex items-center gap-4 text-xs text-gray-500">
+                                <span>${company.projectCount || 0} projects</span>
+                                <span>•</span>
+                                <span>${company.rating ? company.rating.toFixed(1) + '★' : 'No ratings yet'}</span>
+                                ${company.reason ? `
+                                    <span>•</span>
+                                    <span class="text-blue-600">${company.reason}</span>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayMayKnow(companies) {
+            const container = document.getElementById('may-know-container');
+            
+            if (companies.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
+                return;
+            }
+
+            container.innerHTML = companies.slice(0, 5).map(company => `
+                <div class="company-card p-6 hover:bg-gray-50 cursor-pointer" onclick="window.location.href='/profile.html?company=${company._id}'">
+                    <div class="flex items-start gap-4">
+                        <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center text-white font-bold flex-shrink-0">
+                            ${company.name.charAt(0)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold text-gray-900 truncate">${company.name}</h3>
+                                ${company.verified ? `
+                                    <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)}</p>
+                            ${company.reason ? `<p class="text-xs text-green-600 mb-2">${company.reason}</p>` : ''}
+                            <p class="text-xs text-gray-500">${company.projectCount || 0} projects completed</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayRecentlyActive(companies) {
+            const container = document.getElementById('recently-active-container');
+            
+            if (companies.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
+                return;
+            }
+
+            container.innerHTML = companies.slice(0, 5).map(company => `
+                <div class="company-card p-6 hover:bg-gray-50 cursor-pointer" onclick="window.location.href='/profile.html?company=${company._id}'">
+                    <div class="flex items-start gap-4">
+                        <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+                            ${company.name.charAt(0)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold text-gray-900 truncate">${company.name}</h3>
+                                ${company.verified ? `
+                                    <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)}</p>
+                            ${company.lastActivity ? `<p class="text-xs text-orange-600 mb-2">${company.lastActivity}</p>` : ''}
+                            <p class="text-xs text-gray-500">${company.activeProjects || 0} active projects</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function loadNetworkStats() {
+            try {
+                const res = await authFetch('/api/users/network-stats');
+                if (!res.ok) throw new Error('Failed to load stats');
+                
+                const data = await res.json();
+                document.getElementById('companies-count').textContent = data.companiesWorkedWith || 0;
+                document.getElementById('active-projects-count').textContent = data.activeProjects || 0;
+                document.getElementById('connections-count').textContent = data.totalConnections || 0;
+            } catch (error) {
+                console.error('Load stats error:', error);
+            }
+        }
+
+        function formatCompanyType(type) {
+            const types = {
+                'general_contractor': 'General Contractor',
+                'subcontractor': 'Subcontractor',
+                'architect': 'Architect',
+                'engineer': 'Engineer',
+                'supplier': 'Supplier',
+                'other': 'Other'
+            };
+            return types[type] || type;
+        }
+
+        function showError(containerId) {
+            document.getElementById(containerId).innerHTML = `
+                <div class="p-6 text-center">
+                    <p class="text-sm text-red-600 mb-2">Failed to load</p>
+                    <button onclick="loadRecommendations()" class="text-sm text-blue-600 hover:underline">Try again</button>
+                </div>
+            `;
+        }
+
+        loadRecommendations();
+    </script>
+</body>
+</html>
