@@ -3742,40 +3742,67 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Get all verified companies
-    const allCompanies = await Company.find({ 
+    // Get all verified companies - if none found, get all companies
+    let allCompanies = await Company.find({ 
       verified: true,
       deletedAt: null 
     })
     .populate('owner', 'firstName lastName')
     .limit(100);
 
+    // Fallback: if no verified companies, get all companies
+    if (!allCompanies || allCompanies.length === 0) {
+      console.log('No verified companies found, fetching all companies');
+      allCompanies = await Company.find({ 
+        deletedAt: null 
+      })
+      .populate('owner', 'firstName lastName')
+      .limit(100);
+    }
+
+    // If still no companies, return empty recommendations
+    if (!allCompanies || allCompanies.length === 0) {
+      console.log('No companies found in database');
+      return res.json({
+        topPicks: [],
+        mayKnow: [],
+        recentlyActive: []
+      });
+    }
+
     // Get user's project history to understand connections
-    const userProjects = await Project.find({
-      $or: [
-        { owner: req.user._id },
-        { 'bids.user': req.user._id }
-      ]
-    }).select('owner bids location category');
+    let userProjects = [];
+    try {
+      userProjects = await Project.find({
+        $or: [
+          { owner: req.user._id },
+          { 'bids.user': req.user._id }
+        ]
+      }).select('owner bids location category').lean();
+    } catch (e) {
+      console.warn('Error fetching user projects:', e.message);
+    }
 
     // Companies user has worked with
     const workedWithCompanyIds = new Set();
-    userProjects.forEach(project => {
-      try {
-        if (project.owner && project.owner.toString() !== req.user._id.toString()) {
-          workedWithCompanyIds.add(project.owner.toString());
+    if (Array.isArray(userProjects)) {
+      userProjects.forEach(project => {
+        try {
+          if (project.owner && project.owner.toString() !== req.user._id.toString()) {
+            workedWithCompanyIds.add(project.owner.toString());
+          }
+          if (project.bids && Array.isArray(project.bids)) {
+            project.bids.forEach(bid => {
+              if (bid.user && bid.user.toString() !== req.user._id.toString()) {
+                workedWithCompanyIds.add(bid.user.toString());
+              }
+            });
+          }
+        } catch (e) {
+          console.warn('Error processing project:', e.message);
         }
-        if (project.bids && Array.isArray(project.bids)) {
-          project.bids.forEach(bid => {
-            if (bid.user && bid.user.toString() !== req.user._id.toString()) {
-              workedWithCompanyIds.add(bid.user.toString());
-            }
-          });
-        }
-      } catch (e) {
-        console.warn('Error processing project:', e.message);
-      }
-    });
+      });
+    }
 
     // Calculate scores for each company
     const scoredCompanies = allCompanies.map(company => {
@@ -3844,7 +3871,8 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
         }
 
         // RECENTLY ACTIVE SCORING
-        const recentActivity = new Date() - new Date(company.updatedAt);
+        const updatedAt = company.updatedAt ? new Date(company.updatedAt) : new Date(company.createdAt);
+        const recentActivity = new Date() - updatedAt;
         const daysInactive = recentActivity / (1000 * 60 * 60 * 24);
         
         if (daysInactive < 7) {
@@ -3865,6 +3893,9 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
           if (!reason) reason = `${activeProjectCount} active projects`;
         }
 
+        // Ensure score is at least 1 for any company
+        if (score === 0) score = 1;
+
         return {
           ...company.toObject(),
           score,
@@ -3882,7 +3913,7 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
                         'Active recently'
         };
       } catch (e) {
-        console.warn('Error scoring company:', e.message);
+        console.warn('Error scoring company:', e.message, e.stack);
         return null;
       }
     }).filter(c => c !== null);
@@ -3911,7 +3942,13 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Company recommendations error:', error);
-    res.status(500).json({ error: 'Failed to load recommendations', details: error.message });
+    // Return empty recommendations instead of 500 error
+    res.json({
+      topPicks: [],
+      mayKnow: [],
+      recentlyActive: [],
+      message: 'Unable to load recommendations at this time'
+    });
   }
 });
 
