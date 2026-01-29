@@ -343,8 +343,13 @@
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const res = await fetch(`${window.location.origin}/api/projects`, {credentials: 'include', headers});
                 
-                if(!res.ok) throw new Error('Failed to fetch');
+                if(!res.ok) {
+                    const errorText = await res.text();
+                    console.error('API Error:', res.status, errorText);
+                    throw new Error(`Failed to fetch: ${res.status}`);
+                }
                 const data = await res.json();
+                console.log('Projects data:', data);
                 _projects = (data.projects || data.items || []).map(p => ({
                     _id: p._id || p.id,
                     title: p.title,
@@ -363,6 +368,7 @@
                     lat: p.lat,
                     lon: p.lon
                 }));
+                console.log('Processed projects:', _projects.length);
             } catch(e){
                 console.error('Failed to fetch projects:', e);
                 _projects = [];
@@ -370,9 +376,13 @@
         }
 
         function renderAllSections(){
+            console.log('renderAllSections called, projects count:', _projects.length);
             if(!_projects.length){
                 ['cards-recommended', 'cards-recent', 'cards-nearby', 'cards-browse'].forEach(id => {
-                    document.getElementById(id).innerHTML = '<div class="col-span-full"><div class="h-40 bg-gray-200 rounded-lg animate-pulse"></div></div>';
+                    const elem = document.getElementById(id);
+                    if(elem) {
+                        elem.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No projects available</p></div>';
+                    }
                 });
                 return;
             }
