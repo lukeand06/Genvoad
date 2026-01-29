@@ -340,7 +340,7 @@
 
         async function fetchProjects(){
             try {
-                const token = localStorage.getItem('genovad_token');
+                const token = getToken();
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
                 const res = await fetch(`${window.location.origin}/api/projects`, {credentials: 'include', headers});
                 
