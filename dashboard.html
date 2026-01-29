@@ -29,6 +29,7 @@
                         <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Dashboard</a>
                         <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Projects</a>
                         <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+                        <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Network</a>
                         <a href="/browse.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
                         <a href="/company.html" id="company-nav-link" class="hidden px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Company</a>
                     </div>
@@ -453,7 +454,7 @@
             if (!user) return;
             document.getElementById('user-name').textContent = user.firstName || '';
             document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
-            document.getElementById('current-role').textContent = getActiveRole();
+            document.getElementById('current-role').textContent = getUserRole();
         }
         
         // Mobile Menu Handler
@@ -522,28 +523,20 @@
             }
         });
         
-        // Initialize role switcher (now points to Settings > Role Workspace)
+        // Initialize role display
         function initializeRoleSwitcher() {
-            const currentRole = getActiveRole();
+            const currentRole = getUserRole();
             const roleSwitcher = document.getElementById('role-switcher');
             roleSwitcher.innerHTML = `
                 <div class="px-3 py-2 text-sm text-gray-700">
-                    Active: <span class="font-semibold capitalize">${currentRole}</span>
+                    Account Type: <span class="font-semibold capitalize">${currentRole}</span>
                 </div>
-                <a href="/settings.html#role-ui" class="block w-full mt-1 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50">Switch workspace in Settings</a>
+                <a href="/settings.html#role-ui" class="block w-full mt-1 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50">Manage Account Type</a>
             `;
         }
         
-        // Listen for role changes from other tabs/windows
-        window.addEventListener('roleChanged', (e) => {
-            document.getElementById('current-role').textContent = getActiveRole();
-            initializeRoleSwitcher();
-            renderUserHeader();
-            loadDashboard();
-        });
-        
         // Role-based UI customization
-        const isVendor = getActiveRole() === 'vendor';
+        const isVendor = getUserRole() === 'vendor';
         const ctaBtn = document.getElementById('cta-button');
         const subtitle = document.getElementById('dashboard-subtitle');
         
@@ -593,7 +586,7 @@
         // Load dashboard data
         async function loadDashboard() {
             try {
-                const role = getActiveRole();
+                const role = getUserRole();
                 const isOwner = role === 'owner';
                 
                 // Show/hide role-specific stats

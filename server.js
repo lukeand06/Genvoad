@@ -93,7 +93,13 @@ if (process.env.NODE_ENV === 'production') {
 app.use('/public', express.static('public'));
 app.use('/uploads', express.static(uploadDir));
 
-// Connect to MongoDB
+// Serve sitemap.xml with correct content type
+app.get('/sitemap.xml', (req, res) => {
+  res.setHeader('Content-Type', 'application/xml');
+  res.sendFile(require('path').join(__dirname, 'sitemap.xml'));
+});
+
+// Serve robots.txt// Connect to MongoDB
 if (process.env.MONGODB_URI) {
   mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('✓ Connected to MongoDB'))
@@ -235,10 +241,10 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(400).json({ error: 'Invalid role' });
     }
     
-    // Check existing (strict separation: never merge into existing account)
+    // Check existing - email can only be used once (owner and vendor are separate accounts)
     const existing = await User.findOne({ email: email.toLowerCase() });
     if (existing) {
-      return res.status(400).json({ error: 'Email already registered. Use the appropriate login, or sign up with a different email for a separate account.' });
+      return res.status(400).json({ error: 'Email already registered. Please use a different email or login to your existing account.' });
     }
     
     // Hash password
@@ -248,7 +254,7 @@ app.post('/api/auth/signup', async (req, res) => {
     const verificationCode = Math.random().toString().slice(2, 8).padStart(6, '0');
     const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
     
-    // Create user
+    // Create user with single role
     const user = new User({
       firstName,
       lastName,
@@ -257,8 +263,6 @@ app.post('/api/auth/signup', async (req, res) => {
       authProvider: 'password',
       company,
       role: normalizedRole,
-      roles: [normalizedRole],
-      activeRole: normalizedRole,
       verificationCode,
       verificationExpires,
       emailVerified: false
@@ -355,8 +359,6 @@ app.post('/api/auth/verify', async (req, res) => {
         avatar: user.avatar,
         company: user.company,
         role: user.role,
-        activeRole: user.activeRole,
-        roles: user.roles,
         authProvider: user.authProvider
       }
     });
@@ -385,16 +387,13 @@ app.post('/api/auth/login', async (req, res) => {
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
     
-    // Enforce role-specific login: allow only if account has requested role
-    const roles = user.roles && user.roles.length ? user.roles : [user.role || 'owner'];
-    if (!roles.includes(requestedRole)) {
-      return res.status(403).json({ error: `This account is not a ${requestedRole}. Use the appropriate login or create/link a separate ${requestedRole} account.` });
+    // Enforce account type: each account has exactly one role
+    if (user.role !== requestedRole) {
+      return res.status(403).json({ error: `This account is registered as a ${user.role}. Please use the ${user.role} login or create a separate ${requestedRole} account with a different email.` });
     }
     
-    // Align active role to requested
+    // Update last active
     user.lastActive = new Date();
-    user.activeRole = requestedRole;
-    user.role = requestedRole; // keep legacy in sync
     await user.save();
     
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -414,8 +413,6 @@ app.post('/api/auth/login', async (req, res) => {
         company: user.company,
         title: user.title,
         role: user.role,
-        activeRole: user.activeRole,
-        roles: roles,
         authProvider: user.authProvider,
         companyId: user.companyId,
         companyRole: user.companyRole
@@ -466,10 +463,9 @@ app.post('/api/auth/social', async (req, res) => {
     }
 
     if (user) {
-      // Existing user - role must match
-      const roles = user.roles && user.roles.length ? user.roles : [user.role || 'owner'];
-      if (!roles.includes(requestedRole)) {
-        return res.status(403).json({ error: `This account is not a ${requestedRole}. Use the appropriate login or create/link a separate ${requestedRole} account.` });
+      // Existing user - role must match exactly (no role switching)
+      if (user.role !== requestedRole) {
+        return res.status(403).json({ error: `This account is registered as a ${user.role}. Please use the ${user.role} login or create a separate ${requestedRole} account with a different email.` });
       }
 
       user.firstName = user.firstName || firstName;
@@ -478,22 +474,16 @@ app.post('/api/auth/social', async (req, res) => {
       user.providerId = decoded.sub || user.providerId;
       user.emailVerified = true;
       user.lastActive = new Date();
-      user.activeRole = requestedRole;
-      user.role = requestedRole;
       await user.save();
     } else {
-      // New user - create with initial role (strict separation)
-      const initialRole = requestedRole;
-
+      // New user - create with single role
       const placeholderPassword = await generatePlaceholderPassword();
       user = new User({
         firstName,
         lastName,
         email,
         password: placeholderPassword,
-        roles: [initialRole],
-        activeRole: initialRole,
-        role: initialRole,
+        role: requestedRole,
         authProvider: provider,
         providerId: decoded.sub || '',
         company: decoded.hd ? `${decoded.hd} workspace` : 'Self-registered',
@@ -518,8 +508,6 @@ app.post('/api/auth/social', async (req, res) => {
         company: user.company,
         title: user.title,
         role: user.role,
-        activeRole: user.activeRole,
-        roles: user.roles,
         authProvider: user.authProvider
       }
     });
@@ -532,155 +520,6 @@ app.post('/api/auth/social', async (req, res) => {
 // Get current user
 app.get('/api/auth/me', authMiddleware, (req, res) => {
   res.json({ user: req.user });
-});
-
-// Switch active role (no implicit role addition)
-app.post('/api/auth/switch-role', authMiddleware, async (req, res) => {
-  try {
-    const { role } = req.body;
-    
-    if (!role || !['owner', 'vendor'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role' });
-    }
-    
-    const user = await User.findById(req.user._id);
-    const roles = user.roles && user.roles.length ? user.roles : [user.role || 'owner'];
-    if (!roles.includes(role)) {
-      return res.status(403).json({ error: `This account does not have the ${role} role. Create or link a separate ${role} account.` });
-    }
-    
-    user.activeRole = role;
-    user.role = role; // Keep legacy field in sync
-    await user.save();
-    
-    res.json({
-      success: true,
-      user: {
-        _id: user._id,
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        avatar: user.avatar,
-        bio: user.bio,
-        location: user.location,
-        company: user.company,
-        title: user.title,
-        role: user.role,
-        activeRole: user.activeRole,
-        roles: roles,
-        authProvider: user.authProvider,
-        companyId: user.companyId,
-        companyRole: user.companyRole
-      }
-    });
-  } catch (error) {
-    console.error('Switch role error:', error);
-    res.status(500).json({ error: 'Failed to switch role' });
-  }
-});
-
-// Linked accounts: fetch linked owner/vendor accounts
-app.get('/api/auth/linked-accounts', authMiddleware, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id).select('linkedAccounts email role activeRole');
-    const linked = user.linkedAccounts || {};
-    const ownerAcc = linked.owner ? await User.findById(linked.owner).select('_id email role activeRole') : null;
-    const vendorAcc = linked.vendor ? await User.findById(linked.vendor).select('_id email role activeRole') : null;
-    res.json({
-      success: true,
-      linked: {
-        owner: ownerAcc ? { id: ownerAcc._id, email: ownerAcc.email } : null,
-        vendor: vendorAcc ? { id: vendorAcc._id, email: vendorAcc.email } : null
-      }
-    });
-  } catch (err) {
-    console.error('Get linked accounts error:', err);
-    res.status(500).json({ error: 'Failed to fetch linked accounts' });
-  }
-});
-
-// Link an existing account (email+password) as owner or vendor
-app.post('/api/auth/link-account', authMiddleware, async (req, res) => {
-  try {
-    const { role, email, password } = req.body;
-    if (!role || !['owner', 'vendor'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role' });
-    }
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password required' });
-    }
-
-    const target = await User.findOne({ email: email.toLowerCase() });
-    if (!target || target.deletedAt) return res.status(404).json({ error: 'Account not found' });
-    if (!target.emailVerified) return res.status(403).json({ error: 'Target account not verified' });
-    const valid = await bcrypt.compare(password, target.password);
-    if (!valid) return res.status(401).json({ error: 'Invalid credentials for target account' });
-    if (String(target._id) === String(req.user._id)) {
-      return res.status(400).json({ error: 'Cannot link to the same account' });
-    }
-    if (target.role !== role && target.activeRole !== role) {
-      return res.status(400).json({ error: `Target account is not a ${role}` });
-    }
-
-    // Link both sides
-    const current = await User.findById(req.user._id);
-    current.linkedAccounts = current.linkedAccounts || {};
-    current.linkedAccounts[role] = target._id;
-    await current.save();
-
-    target.linkedAccounts = target.linkedAccounts || {};
-    const otherRole = (current.activeRole || current.role || 'owner');
-    target.linkedAccounts[otherRole] = current._id;
-    await target.save();
-
-    res.json({ success: true, message: 'Accounts linked', linkedId: target._id });
-  } catch (err) {
-    console.error('Link account error:', err);
-    res.status(500).json({ error: 'Failed to link account' });
-  }
-});
-
-// Switch to a linked account (returns a new token and user payload)
-app.post('/api/auth/switch-account', authMiddleware, async (req, res) => {
-  try {
-    const { role } = req.body;
-    if (!role || !['owner', 'vendor'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid role' });
-    }
-    const user = await User.findById(req.user._id);
-    const targetId = user.linkedAccounts?.[role];
-    if (!targetId) return res.status(404).json({ error: `No linked ${role} account` });
-    const target = await User.findById(targetId).select('-password');
-    if (!target || target.deletedAt) return res.status(404).json({ error: 'Linked account not found' });
-
-    const token = jwt.sign({ userId: target._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    res.json({
-      success: true,
-      token,
-      user: {
-        _id: target._id,
-        id: target._id,
-        firstName: target.firstName,
-        lastName: target.lastName,
-        email: target.email,
-        avatar: target.avatar,
-        bio: target.bio,
-        location: target.location,
-        company: target.company,
-        title: target.title,
-        role: target.role,
-        activeRole: target.activeRole,
-        roles: target.roles,
-        authProvider: target.authProvider,
-        companyId: target.companyId,
-        companyRole: target.companyRole
-      }
-    });
-  } catch (err) {
-    console.error('Switch account error:', err);
-    res.status(500).json({ error: 'Failed to switch account' });
-  }
 });
 
 // ============ USER ROUTES ============
@@ -4046,6 +3885,307 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Company recommendations error:', error);
     res.status(500).json({ error: 'Failed to load recommendations' });
+  }
+});
+
+// Discovery endpoint: Find people with LinkedIn-style recommendations
+// Includes both owners and vendors with filtering
+app.get('/api/discovery', authMiddleware, async (req, res) => {
+  try {
+    const { search, role, location, minRating, minExperience, verified } = req.query;
+    const currentUser = await User.findById(req.user._id);
+
+    // Build filter
+    const filter = {
+      _id: { $ne: req.user._id }, // Exclude self
+      deletedAt: null,
+      emailVerified: true
+    };
+
+    // Filter by role if specified
+    if (role && ['owner', 'vendor'].includes(role)) {
+      filter.role = role;
+    }
+
+    // Search filter
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      filter.$or = [
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { company: searchRegex },
+        { bio: searchRegex },
+        { skills: searchRegex },
+        { services: searchRegex }
+      ];
+    }
+
+    // Location filter
+    if (location) {
+      const locationRegex = new RegExp(location, 'i');
+      filter.$or = filter.$or || [];
+      filter.$or.push(
+        { city: locationRegex },
+        { state: locationRegex },
+        { location: locationRegex }
+      );
+    }
+
+    // Rating filter
+    if (minRating) {
+      filter.rating = { $gte: parseFloat(minRating) };
+    }
+
+    // Experience filter
+    if (minExperience) {
+      filter.yearsExperience = { $gte: parseInt(minExperience) };
+    }
+
+    // Verified filter
+    if (verified === 'true') {
+      filter.registrarId = { $exists: true, $ne: '' };
+    }
+
+    // Get all matching users
+    const allUsers = await User.find(filter)
+      .select('-password -verificationCode -verificationExpires')
+      .limit(500);
+
+    // Get user's interaction history for recommendations
+    const userProjects = await Project.find({
+      $or: [
+        { owner: req.user._id },
+        { 'bids.user': req.user._id }
+      ]
+    }).select('owner bids createdAt');
+
+    // Users the current user has interacted with
+    const connectedUserIds = new Set();
+    userProjects.forEach(project => {
+      if (project.owner.toString() !== req.user._id.toString()) {
+        connectedUserIds.add(project.owner.toString());
+      }
+      project.bids.forEach(bid => {
+        if (bid.user.toString() !== req.user._id.toString()) {
+          connectedUserIds.add(bid.user.toString());
+        }
+      });
+    });
+
+    // Score and categorize users
+    const scoredUsers = allUsers.map(user => {
+      let score = 0;
+      let section = '';
+      let reason = '';
+
+      // Skip if user has already interacted
+      const hasInteracted = connectedUserIds.has(user._id.toString());
+
+      // TOP PICKS SCORING
+      if (user.rating && user.rating >= 4.5) {
+        score += 40;
+        reason = 'Highly rated professional';
+      } else if (user.rating && user.rating >= 4.0) {
+        score += 25;
+        reason = 'Well-reviewed professional';
+      }
+
+      if (user.reviewCount && user.reviewCount >= 10) {
+        score += 20;
+      } else if (user.reviewCount && user.reviewCount >= 5) {
+        score += 10;
+      }
+
+      if (user.projectsCompleted && user.projectsCompleted >= 10) {
+        score += 15;
+      }
+
+      // Verified badge boost
+      if (user.registrarId && user.registrarId.trim() !== '') {
+        score += 20;
+      }
+
+      // Complete profile
+      if (user.bio && user.bio.length > 50) score += 10;
+      if ((user.skills || []).length > 0) score += 10;
+      if (user.yearsExperience >= 5) score += 15;
+
+      // MIGHT KNOW SCORING (based on shared attributes)
+      if (currentUser.location && user.location && 
+          currentUser.location.toLowerCase().includes(user.location.toLowerCase().split(',')[0])) {
+        score += 35;
+        section = 'mightKnow';
+        reason = `Based in ${user.location.split(',')[0]}`;
+      }
+
+      // Same skills
+      const userSkills = new Set((user.skills || []).map(s => s.toLowerCase()));
+      const currentSkills = new Set((currentUser.skills || []).map(s => s.toLowerCase()));
+      const sharedSkills = [...userSkills].filter(s => currentSkills.has(s)).length;
+      if (sharedSkills > 0) {
+        score += 25 + (sharedSkills * 5);
+        if (!section) {
+          section = 'mightKnow';
+          reason = `Shares ${sharedSkills} skill${sharedSkills > 1 ? 's' : ''} with you`;
+        }
+      }
+
+      // Complementary role (owner might know vendor and vice versa)
+      if (!hasInteracted && currentUser.role !== user.role) {
+        score += 10;
+      }
+
+      // ACTIVITY-BASED SCORING
+      const lastActive = new Date() - new Date(user.lastActive);
+      const daysSinceActive = lastActive / (1000 * 60 * 60 * 24);
+
+      if (daysSinceActive < 1) {
+        score += 30;
+        section = section === 'mightKnow' ? section : 'active';
+        reason = 'Active today';
+      } else if (daysSinceActive < 7) {
+        score += 20;
+        if (!section) section = 'active';
+        if (!reason) reason = 'Active this week';
+      } else if (daysSinceActive < 30) {
+        score += 10;
+        if (!section) section = 'active';
+        if (!reason) reason = 'Active this month';
+      }
+
+      // Recently completed projects
+      const recentProjects = userProjects.filter(p => {
+        const daysSince = (new Date() - new Date(p.createdAt)) / (1000 * 60 * 60 * 24);
+        return daysSince < 30;
+      }).length;
+
+      if (recentProjects > 0) {
+        score += 15 + (recentProjects * 2);
+        if (!section) section = 'active';
+        if (!reason) reason = `${recentProjects} active project${recentProjects > 1 ? 's' : ''}`;
+      }
+
+      // Has worked with someone you know (future: add mutual connections)
+      // if (sharedConnections > 0) score += 25;
+
+      return {
+        ...user.toObject(),
+        score,
+        section: section || 'browse',
+        reason,
+        hasInteracted
+      };
+    });
+
+    // Sort by score
+    scoredUsers.sort((a, b) => b.score - a.score);
+
+    // Categorize into sections
+    const topPicks = scoredUsers
+      .filter(u => u.score >= 60 && !u.hasInteracted)
+      .slice(0, 12);
+
+    const mightKnow = scoredUsers
+      .filter(u => u.section === 'mightKnow' && !u.hasInteracted)
+      .slice(0, 12);
+
+    const activeToday = scoredUsers
+      .filter(u => u.section === 'active' && !u.hasInteracted)
+      .slice(0, 12);
+
+    // Browse (all others, filtered)
+    const browse = scoredUsers.slice(0, 50);
+
+    res.json({
+      topPicks: topPicks.map(u => ({
+        _id: u._id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        avatar: u.avatar,
+        bio: u.bio,
+        company: u.company,
+        title: u.title,
+        role: u.role,
+        location: u.location,
+        city: u.city,
+        state: u.state,
+        skills: u.skills,
+        services: u.services,
+        rating: u.rating,
+        reviewCount: u.reviewCount,
+        yearsExperience: u.yearsExperience,
+        registrarId: u.registrarId,
+        reason: u.reason
+      })),
+      mightKnow: mightKnow.map(u => ({
+        _id: u._id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        avatar: u.avatar,
+        bio: u.bio,
+        company: u.company,
+        title: u.title,
+        role: u.role,
+        location: u.location,
+        city: u.city,
+        state: u.state,
+        skills: u.skills,
+        services: u.services,
+        rating: u.rating,
+        reviewCount: u.reviewCount,
+        yearsExperience: u.yearsExperience,
+        registrarId: u.registrarId,
+        reason: u.reason
+      })),
+      activeToday: activeToday.map(u => ({
+        _id: u._id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        avatar: u.avatar,
+        bio: u.bio,
+        company: u.company,
+        title: u.title,
+        role: u.role,
+        location: u.location,
+        city: u.city,
+        state: u.state,
+        skills: u.skills,
+        services: u.services,
+        rating: u.rating,
+        reviewCount: u.reviewCount,
+        yearsExperience: u.yearsExperience,
+        registrarId: u.registrarId,
+        reason: u.reason
+      })),
+      browse: browse.map(u => ({
+        _id: u._id,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        email: u.email,
+        avatar: u.avatar,
+        bio: u.bio,
+        company: u.company,
+        title: u.title,
+        role: u.role,
+        location: u.location,
+        city: u.city,
+        state: u.state,
+        skills: u.skills,
+        services: u.services,
+        rating: u.rating,
+        reviewCount: u.reviewCount,
+        yearsExperience: u.yearsExperience,
+        registrarId: u.registrarId
+      })),
+      totalCount: allUsers.length,
+      searchApplied: !!search
+    });
+  } catch (error) {
+    console.error('Discovery error:', error);
+    res.status(500).json({ error: 'Failed to load discovery' });
   }
 });
 

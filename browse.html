@@ -93,47 +93,42 @@
             <p class="text-gray-600 mt-2" id="browse-subtitle">See your partners, their projects, and discover new service providers</p>
         </div>
 
-        <!-- Tabs -->
-        <div class="bg-white rounded-lg border border-gray-200 mb-6">
-            <nav class="flex border-b border-gray-200">
-                <button id="tab-partners" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900">My Partners</button>
-                <button id="tab-featured" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Find Companies</button>
-                <button id="tab-projects" class="network-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Partners' Projects</button>
-            </nav>
-        </div>
 
-        <!-- Advanced Filters -->
-        <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-            <!-- Search Bar -->
-            <div class="flex flex-col sm:flex-row gap-4 mb-4">
-                <input type="text" id="search-input" placeholder="Search by name, company, or skills..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                <button id="toggle-filters-btn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center gap-2">
+        <!-- Search Bar -->
+        <div class="bg-white rounded-lg border border-gray-200 p-4 mb-8">
+            <div class="flex flex-col sm:flex-row gap-3">
+                <input type="text" id="search-input" placeholder="Search by name, skills, or company..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                <button id="toggle-filters-btn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2 whitespace-nowrap">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
                     </svg>
                     Filters
                 </button>
-                <button id="search-btn" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Search</button>
+                <button id="search-btn" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 whitespace-nowrap">Search</button>
             </div>
 
             <!-- Expandable Filter Panel -->
-            <div id="filter-panel" class="hidden border-t border-gray-200 pt-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div id="filter-panel" class="hidden border-t border-gray-200 pt-4 mt-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <!-- Account Type Filter -->
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Account Type</label>
+                        <select id="filter-role" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                            <option value="">All Types</option>
+                            <option value="owner">Project Owners</option>
+                            <option value="vendor">Service Providers</option>
+                        </select>
+                    </div>
+
                     <!-- Location Filter -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                        <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Location</label>
                         <input type="text" id="filter-location" placeholder="City or State" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
                     </div>
 
-                    <!-- Skills Filter -->
+                    <!-- Min. Experience Filter -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Skills</label>
-                        <input type="text" id="filter-skills" placeholder="e.g., React, Design, Marketing" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
-                    </div>
-
-                    <!-- Years Experience Filter -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Min. Experience</label>
+                        <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Experience</label>
                         <select id="filter-experience" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
                             <option value="">Any</option>
                             <option value="1">1+ years</option>
@@ -145,7 +140,7 @@
 
                     <!-- Rating Filter -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Min. Rating</label>
+                        <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Rating</label>
                         <select id="filter-rating" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
                             <option value="">Any</option>
                             <option value="4">4+ stars</option>
@@ -153,23 +148,25 @@
                             <option value="5">5 stars</option>
                         </select>
                     </div>
-                </div>
 
-                <!-- Additional Options -->
-                <div class="flex flex-wrap gap-4 mt-4">
-                    <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="verified-only" class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900">
-                        <span class="text-sm font-medium text-gray-700">Verified Companies Only</span>
-                    </label>
-                    <button id="clear-filters-btn" class="text-sm font-medium text-gray-600 hover:text-gray-900">Clear All Filters</button>
+                    <!-- Verified Filter -->
+                    <div class="flex items-end">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="verified-only" class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900">
+                            <span class="text-sm font-medium text-gray-700">Verified Only</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="mt-3 flex justify-end">
+                    <button id="clear-filters-btn" class="text-sm font-medium text-gray-600 hover:text-gray-900">Clear All</button>
                 </div>
             </div>
         </div>
 
-        <!-- Content Container -->
-        <div id="network-content" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <div class="col-span-full text-center py-12">
-                <p class="text-gray-500">Loading...</p>
+        <!-- Discovery Sections -->
+        <div id="network-content" class="space-y-10">
+            <div class="text-center py-12">
+                <p class="text-gray-500">Loading recommendations...</p>
             </div>
         </div>
     </div>
@@ -189,13 +186,13 @@
         const navCta = document.getElementById('nav-cta-button');
         
         if (isVendor) {
-            subtitle.textContent = 'Find project owners, build your network, and discover new opportunities';
+            subtitle.textContent = 'Discover project owners, expand your network, and explore new opportunities';
             if (navCta) {
                 navCta.textContent = 'Find Work';
                 navCta.href = '/browse.html';
             }
         } else {
-            subtitle.textContent = 'See your partners, their projects, and discover new service providers';
+            subtitle.textContent = 'Discover talented professionals, vendors, and experts to grow your network';
         }
         
         document.getElementById('user-menu-btn').addEventListener('click', () => {
@@ -223,409 +220,258 @@
             });
         });
 
-        let partners = [];
-        let featuredServices = [];
-        let partnerProjects = [];
-        let currentTab = 'partners';
+        let discoveryData = {};
+        let allBrowse = [];
 
-        async function loadPartners() {
+        async function loadDiscovery() {
             try {
-                const res = await authFetch('/api/partners');
-                const ct = res.headers.get('content-type') || '';
-                if (!res.ok || !ct.includes('application/json')) {
-                    let err;
-                    try { err = await res.json(); } catch {}
-                    throw new Error((err && (err.error || err.message)) || `Failed to load partners (HTTP ${res.status})`);
+                const search = (document.getElementById('search-input').value || '').trim();
+                const role = document.getElementById('filter-role').value || '';
+                const location = (document.getElementById('filter-location').value || '').trim();
+                const minExperience = document.getElementById('filter-experience').value || '';
+                const minRating = document.getElementById('filter-rating').value || '';
+                const verified = document.getElementById('verified-only').checked ? 'true' : '';
+
+                // Build query string
+                const params = new URLSearchParams();
+                if (search) params.append('search', search);
+                if (role) params.append('role', role);
+                if (location) params.append('location', location);
+                if (minExperience) params.append('minExperience', minExperience);
+                if (minRating) params.append('minRating', minRating);
+                if (verified) params.append('verified', verified);
+
+                const url = `/api/discovery${params.toString() ? '?' + params.toString() : ''}`;
+                const res = await authFetch(url);
+                
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Failed to load recommendations');
                 }
-                const data = await res.json();
-                partners = data.partners || [];
-                displayPartners();
+
+                discoveryData = await res.json();
+                allBrowse = discoveryData.browse || [];
+                displayDiscovery();
             } catch (error) {
-                console.error('Error loading partners:', error);
-                document.getElementById('network-content').innerHTML = `<div class="col-span-full text-center py-12 text-red-500">${error.message || 'Failed to load partners'}</div>`;
-            }
-        }
-
-        async function loadFeaturedServices() {
-            try {
-                const res = await authFetch('/api/users');
-                const ct = res.headers.get('content-type') || '';
-                if (!res.ok || !ct.includes('application/json')) {
-                    let err;
-                    try { err = await res.json(); } catch {}
-                    throw new Error((err && (err.error || err.message)) || `Failed to load companies (HTTP ${res.status})`);
-                }
-                const data = await res.json();
-                // Get ALL users with companies or vendor role
-                featuredServices = (data.users || []).filter(u => 
-                    u._id !== user.id && // Exclude current user
-                    (u.company || u.role === 'vendor' || (u.skills && u.skills.length > 0))
-                );
-                displayFeaturedServices();
-            } catch (error) {
-                console.error('Error loading companies:', error);
-                document.getElementById('network-content').innerHTML = `<div class="col-span-full text-center py-12 text-red-500">${error.message || 'Failed to load companies'}</div>`;
-            }
-        }
-
-        async function loadPartnerProjects() {
-            try {
-                if (!partners || partners.length === 0) {
-                    await loadPartners();
-                }
-                const res = await authFetch('/api/projects');
-                const ct = res.headers.get('content-type') || '';
-                if (!res.ok || !ct.includes('application/json')) {
-                    let err;
-                    try { err = await res.json(); } catch {}
-                    throw new Error((err && (err.error || err.message)) || `Failed to load projects (HTTP ${res.status})`);
-                }
-                const data = await res.json();
-                const allProjects = data.projects || [];
-                const partnerIds = new Set(partners.map(c => c._id));
-                partnerProjects = allProjects.filter(p => partnerIds.has(p.owner?._id));
-                displayPartnerProjects();
-            } catch (error) {
-                console.error('Error loading partner projects:', error);
-                document.getElementById('network-content').innerHTML = `<div class="col-span-full text-center py-12 text-red-500">${error.message || 'Failed to load projects'}</div>`;
-            }
-        }
-
-        function displayPartners() {
-            const search = (document.getElementById('search-input').value || '').toLowerCase();
-            const filtered = partners.filter(partner => {
-                const name = `${partner.firstName} ${partner.lastName}`.toLowerCase();
-                const company = (partner.company || '').toLowerCase();
-                return !search || name.includes(search) || company.includes(search);
-            });
-
-            const container = document.getElementById('network-content');
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No partners yet. Browse professionals to build your network.</p></div>';
-                return;
-            }
-
-            container.innerHTML = filtered.map(conn => `
-                <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-3">
-                                ${getAvatarHTML(conn, 'w-12 h-12')}
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2">
-                                        <h3 class="font-semibold text-gray-900">${conn.company || `${conn.firstName} ${conn.lastName}`}</h3>
-                                        ${getVerificationBadge(conn, 'small')}
-                                    </div>
-                                    ${conn.company ? `<p class="text-sm text-gray-600">${conn.firstName} ${conn.lastName}</p>` : (conn.title ? `<p class="text-sm text-gray-600">${conn.title}</p>` : '')}
-                                </div>
-                            </div>
-                            ${conn.title && conn.company ? `<p class="text-sm text-gray-700 mb-2">${conn.title}</p>` : ''}
-                            ${conn.bio ? `<p class="text-sm text-gray-600 mb-3 line-clamp-2">${conn.bio}</p>` : ''}
-                            
-                            ${conn.skills && conn.skills.length > 0 ? `
-                                <div class="flex flex-wrap gap-2 mb-3">
-                                    ${conn.skills.slice(0, 3).map(skill => `<span class=\"px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded\">${skill}</span>`).join('')}
-                                    ${conn.skills.length > 3 ? `<span class=\"px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded\">+${conn.skills.length - 3}</span>` : ''}
-                                </div>
-                            ` : ''}
-                            
-                            ${(conn.city || conn.state || conn.location) ? `
-                                <p class="text-xs text-gray-500 flex items-center gap-1 mb-4">
-                                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                    </svg>
-                                    ${[conn.city, conn.state].filter(Boolean).join(', ') || conn.location}
-                                </p>
-                            ` : ''}
-                        </div>
+                console.error('Error loading discovery:', error);
+                document.getElementById('network-content').innerHTML = `
+                    <div class="col-span-full text-center py-12 text-red-500">
+                        <p>${error.message || 'Failed to load recommendations'}</p>
                     </div>
-                    
-                    <div class="flex gap-2 pt-4 border-t border-gray-200">
-                        <a href="/profile.html?id=${conn._id}" class="flex-1 text-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">View Profile</a>
-                        <a href="/messages.html?user=${conn._id}" class="flex-1 text-center px-3 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Message</a>
-                    </div>
+                `;
+            }
+        }
+
+        function renderPersonCard(person) {
+            const locationLabel = [person.city, person.state].filter(Boolean).join(', ') || person.location || '';
+            const skillsHTML = person.skills && person.skills.length > 0 ? `
+                <div class="flex flex-wrap gap-1.5 mb-3">
+                    ${person.skills.slice(0, 3).map(skill => `<span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full font-medium">${skill}</span>`).join('')}
+                    ${person.skills.length > 3 ? `<span class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded-full">+${person.skills.length - 3}</span>` : ''}
                 </div>
-            `).join('');
-        }
+            ` : '';
 
-        function displayFeaturedServices() {
-            const search = (document.getElementById('search-input').value || '').toLowerCase();
-            const verifiedOnly = document.getElementById('verified-only').checked;
-            const locationFilter = (document.getElementById('filter-location')?.value || '').toLowerCase();
-            const skillsFilter = (document.getElementById('filter-skills')?.value || '').toLowerCase();
-            const experienceFilter = parseInt(document.getElementById('filter-experience')?.value || '0');
-            const ratingFilter = parseFloat(document.getElementById('filter-rating')?.value || '0');
-            
-            let filtered = featuredServices.filter(service => {
-                // Search filter
-                const name = `${service.firstName} ${service.lastName}`.toLowerCase();
-                const company = (service.company || '').toLowerCase();
-                const skills = (service.skills || []).join(' ').toLowerCase();
-                const location = `${service.city || ''} ${service.state || ''} ${service.location || ''}`.toLowerCase();
-                const bio = (service.bio || '').toLowerCase();
-                
-                const matchesSearch = !search || 
-                    name.includes(search) || 
-                    company.includes(search) || 
-                    skills.includes(search) ||
-                    location.includes(search) ||
-                    bio.includes(search);
-                
-                // Verified filter
-                const matchesVerified = !verifiedOnly || (service.registrarId && service.registrarId.trim() !== '');
-                
-                // Location filter
-                const matchesLocation = !locationFilter || location.includes(locationFilter);
-                
-                // Skills filter
-                const matchesSkills = !skillsFilter || 
-                    skills.includes(skillsFilter) || 
-                    (service.services || []).join(' ').toLowerCase().includes(skillsFilter);
-                
-                // Experience filter
-                const matchesExperience = experienceFilter === 0 || (service.yearsExperience || 0) >= experienceFilter;
-                
-                // Rating filter
-                const matchesRating = ratingFilter === 0 || (service.rating || 0) >= ratingFilter;
-                
-                return matchesSearch && matchesVerified && matchesLocation && matchesSkills && matchesExperience && matchesRating;
-            });
-
-            const container = document.getElementById('network-content');
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No companies found. Try adjusting your filters.</p></div>';
-                return;
-            }
-
-            // Build filter summary
-            const activeFilters = [];
-            if (verifiedOnly) activeFilters.push('verified');
-            if (locationFilter) activeFilters.push('location');
-            if (skillsFilter) activeFilters.push('skills');
-            if (experienceFilter > 0) activeFilters.push(`${experienceFilter}+ yrs exp`);
-            if (ratingFilter > 0) activeFilters.push(`${ratingFilter}+ stars`);
-            
-            const filterSummary = activeFilters.length > 0 ? ` (${activeFilters.join(', ')})` : '';
-
-            // Show total count
-            const countDisplay = `<div class="col-span-full mb-2"><p class="text-sm text-gray-600">${filtered.length} ${filtered.length === 1 ? 'company' : 'companies'} found${filterSummary}</p></div>`;
-
-            container.innerHTML = countDisplay + filtered.map(service => {
-                const locationLabel = [service.city, service.state].filter(Boolean).join(', ') || service.location || '';
-                const skillsHTML = service.skills && service.skills.length > 0 ? `
-                                <div class="flex flex-wrap gap-2 mb-3">
-                                    ${service.skills.slice(0, 3).map(skill => '<span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">' + skill + '</span>').join('')}
-                                    ${service.skills.length > 3 ? '<span class="px-2 py-1 bg-blue-50 text-blue-600 text-xs rounded">+' + (service.skills.length - 3) + '</span>' : ''}
-                                </div>
-                            ` : '';
-                return `
-                <div class="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-lg transition-all duration-150 flex flex-col gap-4 min-h-[260px]">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-3">
-                                ${getAvatarHTML(service, 'w-12 h-12')}
-                                <div class="flex-1">
-                                    <div class="flex items-center gap-2">
-                                        <h3 class="font-semibold text-gray-900">${service.company || `${service.firstName} ${service.lastName}`}</h3>
-                                        ${getVerificationBadge(service, 'small')}
-                                    </div>
-                                    ${service.company ? `<p class="text-sm text-gray-600">${service.firstName} ${service.lastName}</p>` : (service.title ? `<p class="text-sm text-gray-600">${service.title}</p>` : '')}
-                                </div>
-                            </div>
-                            ${service.title && service.company ? `<p class="text-sm text-gray-700 mb-2">${service.title}</p>` : ''}
-                            ${service.bio ? `<p class="text-sm text-gray-600 mb-3 line-clamp-2">${service.bio}</p>` : ''}
-
-                            ${locationLabel ? `
-                                <p class="text-xs text-gray-500 flex items-center gap-1 mb-3">
-                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 111.314 0z"/>
-                                        <circle cx="12" cy="10" r="2" />
-                                    </svg>
-                                    ${locationLabel}
-                                </p>
-                            ` : ''}
-                            
-                            ${skillsHTML}
-                            
-                            ${(service.rating || service.reviewCount) ? `
-                                <div class="flex items-center gap-1 mb-3">
-                                    <span class="text-sm font-semibold text-gray-900">${(service.rating || 0).toFixed(1)}</span>
-                                    <span class="text-xs text-gray-600">(${service.reviewCount || 0} reviews)</span>
-                                </div>
-                            ` : ''}
-                        </div>
+            const ratingHTML = (person.rating || person.reviewCount) ? `
+                <div class="flex items-center gap-1.5 mb-2">
+                    <div class="flex items-center">
+                        ${[...Array(5)].map((_, i) => `
+                            <svg class="w-3.5 h-3.5 ${i < Math.floor(person.rating || 0) ? 'text-yellow-400' : 'text-gray-300'}" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        `).join('')}
                     </div>
-                    
-                    <div class="flex gap-2 pt-4 border-t border-gray-200 mt-auto">
-                        <a href="/profile.html?id=${service._id}" class="flex-1 text-center px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">View Profile</a>
-                        <a href="/messages.html?user=${service._id}" class="flex-1 text-center px-3 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Contact</a>
-                    </div>
+                    <span class="text-sm font-semibold text-gray-900">${(person.rating || 0).toFixed(1)}</span>
+                    <span class="text-xs text-gray-600">(${person.reviewCount || 0})</span>
                 </div>
-            `;}).join('');
-        }
+            ` : '';
 
-        function displayPartnerProjects() {
-            const search = (document.getElementById('search-input').value || '').toLowerCase();
-            const filtered = partnerProjects.filter(proj => {
-                const title = (proj.title || '').toLowerCase();
-                const desc = (proj.description || '').toLowerCase();
-                return !search || title.includes(search) || desc.includes(search);
-            });
+            const reasonHTML = person.reason ? `<p class="text-xs text-blue-600 font-medium mb-2">✓ ${person.reason}</p>` : '';
 
-            const container = document.getElementById('network-content');
-            if (filtered.length === 0) {
-                container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">Your partners haven\'t posted any projects yet.</p></div>';
-                return;
-            }
-
-            container.innerHTML = filtered.map(project => `
-                <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
-                    <div class="mb-3">
-                        <div class="flex items-center gap-2 mb-2">
-                            <h3 class="text-lg font-semibold text-gray-900">${project.title}</h3>
-                            <span class="px-2 py-1 text-xs font-medium rounded-full ${
-                                project.status === 'open' ? 'bg-green-50 text-green-700' :
-                                project.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
-                                'bg-gray-100 text-gray-700'
-                            }">${(project.status || 'open').replace('_', ' ')}</span>
-                        </div>
-                        <p class="text-sm text-gray-600 line-clamp-2">${project.description || ''}</p>
-                    </div>
-                    
-                    <div class="flex flex-wrap gap-3 text-sm text-gray-600 mb-4">
-                        <span class="flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            Budget: ${formatCurrency(project.budget || 0)}
-                        </span>
-                        <span class="flex items-center gap-1">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                            </svg>
-                            ${project.bids?.length || 0} bids
-                        </span>
-                    </div>
-                    
-                    ${project.owner ? `
-                        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-                            <p class="text-xs text-gray-600 mb-2">Posted by</p>
-                            <div class="flex items-center gap-2">
-                                ${getAvatarHTML(project.owner, 'w-8 h-8')}
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex items-center gap-1.5">
-                                        <p class="text-sm font-medium text-gray-900 truncate">${project.owner.company || `${project.owner.firstName} ${project.owner.lastName}`}</p>
-                                        ${getVerificationBadge(project.owner, 'small')}
-                                    </div>
-                                    ${project.owner.company ? `<p class="text-xs text-gray-600 truncate">${project.owner.firstName} ${project.owner.lastName}</p>` : ''}
-                                </div>
+            return `
+                <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow flex flex-col h-full">
+                    <div class="flex items-start gap-3 mb-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold text-gray-900 truncate">${person.company || `${person.firstName} ${person.lastName}`}</h3>
+                                ${getVerificationBadge(person, 'small')}
                             </div>
+                            ${person.company ? `<p class="text-sm text-gray-600 truncate">${person.firstName} ${person.lastName}</p>` : (person.title ? `<p class="text-sm text-gray-600 truncate">${person.title}</p>` : '')}
                         </div>
+                        <div class="flex-shrink-0">
+                            ${getAvatarHTML(person, 'w-10 h-10')}
+                        </div>
+                    </div>
+
+                    ${reasonHTML}
+                    ${ratingHTML}
+                    
+                    ${person.bio ? `<p class="text-sm text-gray-600 mb-3 line-clamp-2">${person.bio}</p>` : ''}
+
+                    ${locationLabel ? `
+                        <p class="text-xs text-gray-500 flex items-center gap-1.5 mb-3">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                            </svg>
+                            ${locationLabel}
+                        </p>
+                    ` : ''}
+
+                    ${person.yearsExperience ? `
+                        <p class="text-xs text-gray-600 mb-3"><span class="font-medium">${person.yearsExperience}+</span> years experience</p>
                     ` : ''}
                     
-                    <a href="/project-detail.html?id=${project._id}" class="block w-full text-center px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">View Project</a>
+                    ${skillsHTML}
+                    
+                    <div class="flex gap-2 pt-3 border-t border-gray-200 mt-auto">
+                        <a href="/profile.html?id=${person._id}" class="flex-1 text-center px-3 py-2 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">View Profile</a>
+                        <a href="/messages.html?user=${person._id}" class="flex-1 text-center px-3 py-2 bg-gray-900 text-white rounded-lg text-xs font-medium hover:bg-gray-800 transition">Contact</a>
+                    </div>
                 </div>
-            `).join('');
+            `;
         }
 
-        // Tab switching
-        document.getElementById('tab-partners').addEventListener('click', () => {
-            currentTab = 'partners';
-            updateTabs();
-            loadPartners();
-        });
+        function displayDiscovery() {
+            const container = document.getElementById('network-content');
+            let html = '';
 
-        document.getElementById('tab-featured').addEventListener('click', () => {
-            currentTab = 'featured';
-            updateTabs();
-            loadFeaturedServices();
-        });
+            // Top Picks Section
+            if (discoveryData.topPicks && discoveryData.topPicks.length > 0) {
+                html += `
+                    <div>
+                        <div class="mb-4">
+                            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                <svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                Top Matches
+                            </h2>
+                            <p class="text-gray-600 text-sm mt-1">Highly recommended based on your profile and activity</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            ${discoveryData.topPicks.map(p => renderPersonCard(p)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
 
-        document.getElementById('tab-projects').addEventListener('click', () => {
-            currentTab = 'projects';
-            updateTabs();
-            loadPartnerProjects();
-        });
+            // People You Might Know Section
+            if (discoveryData.mightKnow && discoveryData.mightKnow.length > 0) {
+                html += `
+                    <div>
+                        <div class="mb-4">
+                            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                <svg class="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                                </svg>
+                                People You Might Know
+                            </h2>
+                            <p class="text-gray-600 text-sm mt-1">Based on location, skills, and mutual interests</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            ${discoveryData.mightKnow.map(p => renderPersonCard(p)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
 
-        function updateTabs() {
-            const tabs = document.querySelectorAll('.network-tab');
-            tabs.forEach(t => {
-                t.classList.remove('border-gray-900', 'text-gray-900');
-                t.classList.add('border-transparent', 'text-gray-600');
-            });
-            
-            const activeTab = currentTab === 'partners' ? 'tab-partners' : 
-                             currentTab === 'featured' ? 'tab-featured' : 'tab-projects';
-            const tab = document.getElementById(activeTab);
-            tab.classList.remove('border-transparent', 'text-gray-600');
-            tab.classList.add('border-gray-900', 'text-gray-900');
+            // Recently Active Section
+            if (discoveryData.activeToday && discoveryData.activeToday.length > 0) {
+                html += `
+                    <div>
+                        <div class="mb-4">
+                            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1m2 1v2.5M2 7l2 1m-2-1l2-1m2 1v2.5"/>
+                                </svg>
+                                Recently Active
+                            </h2>
+                            <p class="text-gray-600 text-sm mt-1">People who've been active recently</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            ${discoveryData.activeToday.map(p => renderPersonCard(p)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Browse All Section
+            if (allBrowse.length > 0) {
+                html += `
+                    <div>
+                        <div class="mb-4">
+                            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                <svg class="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                Browse All
+                            </h2>
+                            <p class="text-gray-600 text-sm mt-1">All professionals matching your criteria</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            ${allBrowse.map(p => renderPersonCard(p)).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (!html) {
+                html = `
+                    <div class="col-span-full text-center py-16">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        <p class="text-gray-500 text-lg">No one found matching your criteria</p>
+                        <p class="text-gray-400 text-sm mt-2">Try adjusting your filters or search terms</p>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
         }
 
-        document.getElementById('search-btn').addEventListener('click', () => {
-            if (currentTab === 'partners') displayPartners();
-            else if (currentTab === 'featured') displayFeaturedServices();
-            else displayPartnerProjects();
-        });
-
-        document.getElementById('search-input').addEventListener('input', () => {
-            if (currentTab === 'partners') displayPartners();
-            else if (currentTab === 'featured') displayFeaturedServices();
-            else displayPartnerProjects();
-        });
-
+        // Filter and search handlers
+        document.getElementById('search-btn').addEventListener('click', loadDiscovery);
+        
         document.getElementById('search-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                document.getElementById('search-btn').click();
+                loadDiscovery();
             }
         });
 
-        // Verified checkbox filter
-        document.getElementById('verified-only').addEventListener('change', () => {
-            if (currentTab === 'featured') displayFeaturedServices();
-        });
-
-        // Toggle filter panel
         document.getElementById('toggle-filters-btn').addEventListener('click', () => {
-            const panel = document.getElementById('filter-panel');
-            panel.classList.toggle('hidden');
+            document.getElementById('filter-panel').classList.toggle('hidden');
         });
 
-        // Clear all filters
         document.getElementById('clear-filters-btn').addEventListener('click', () => {
+            document.getElementById('filter-role').value = '';
             document.getElementById('filter-location').value = '';
-            document.getElementById('filter-skills').value = '';
             document.getElementById('filter-experience').value = '';
             document.getElementById('filter-rating').value = '';
             document.getElementById('verified-only').checked = false;
-            if (currentTab === 'featured') displayFeaturedServices();
+            loadDiscovery();
         });
 
         // Apply filters on change
-        ['filter-experience', 'filter-rating'].forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('change', () => {
-                    if (currentTab === 'featured') displayFeaturedServices();
-                });
-            }
+        ['filter-role', 'filter-experience', 'filter-rating'].forEach(id => {
+            document.getElementById(id).addEventListener('change', loadDiscovery);
         });
 
-        // Apply location and skills filters on input (with debounce)
+        document.getElementById('verified-only').addEventListener('change', loadDiscovery);
+
+        // Debounced location and search filters
         let filterTimeout;
-        ['filter-location', 'filter-skills'].forEach(id => {
+        ['filter-location', 'search-input'].forEach(id => {
             const element = document.getElementById(id);
             if (element) {
                 element.addEventListener('input', () => {
                     clearTimeout(filterTimeout);
-                    filterTimeout = setTimeout(() => {
-                        if (currentTab === 'featured') displayFeaturedServices();
-                    }, 300);
+                    filterTimeout = setTimeout(loadDiscovery, 500);
                 });
             }
         });
 
         // Initial load
-        loadPartners();
+        loadDiscovery();
     </script>
 </body>
 </html>

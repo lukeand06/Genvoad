@@ -56,13 +56,13 @@
                     </button>
                 </form>
 
+                <!-- Social login section - hidden until configured
                 <div class="flex items-center my-6">
                     <div class="flex-1 h-px bg-gray-200"></div>
                     <span class="px-3 text-xs text-gray-500 uppercase tracking-[0.2em]">or</span>
                     <div class="flex-1 h-px bg-gray-200"></div>
                 </div>
 
-                <!-- Social buttons at bottom -->
                 <div class="space-y-3" id="social-buttons">
                     <div id="google-signin" class="w-full"></div>
                     <button id="microsoft-signin" class="w-full border border-gray-300 text-gray-900 py-3 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
@@ -72,6 +72,7 @@
                         <span>Sign in with Apple</span>
                     </button>
                 </div>
+                -->
 
                 <div class="mt-6 text-center text-sm">
                     <span class="text-gray-600">Don't have an account?</span>
@@ -96,6 +97,10 @@
                 btn.textContent = text;
                 btn.classList.add('opacity-60', 'cursor-not-allowed');
             };
+
+            // Social login temporarily disabled - uncomment to enable
+            // const loadAuthConfig = async () => { ... };
+            // loadAuthConfig();
 
             // Role toggle handlers (no modal; direct selection)
             const rolePills = document.querySelectorAll('.role-pill');
@@ -246,7 +251,8 @@
                 }
             };
 
-            loadAuthConfig();
+            // Social login temporarily disabled - uncomment loadAuthConfig() to enable
+            // loadAuthConfig();
 
             document.getElementById('login-form').addEventListener('submit', async (e) => {
                 e.preventDefault();

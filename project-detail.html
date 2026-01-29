@@ -241,10 +241,10 @@
             </div>
             
             <form id="invite-vendor-form" class="space-y-4">
-                <div>
+                <div class="relative">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Search Vendor or Enter Email</label>
                     <input type="text" id="vendor-search" placeholder="Type name or email..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    <div id="vendor-search-results" class="hidden mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg">
+                    <div id="vendor-search-results" class="hidden absolute mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-lg z-50 w-full">
                         <!-- Results will appear here -->
                     </div>
                     <input type="hidden" id="selected-vendor-id">
@@ -1614,40 +1614,77 @@
             selectedVendor = null;
         }
         
-        // Vendor Search with Debounce
+        // Vendor Search with Debounce - Only show partners unless full email typed
         document.getElementById('vendor-search')?.addEventListener('input', (e) => {
             clearTimeout(vendorSearchTimeout);
             const query = e.target.value.trim();
-            
-            if (query.length < 2) {
+        
+            if (query.length === 0) {
                 document.getElementById('vendor-search-results').classList.add('hidden');
                 return;
             }
-            
+        
             vendorSearchTimeout = setTimeout(async () => {
                 try {
-                    const res = await authFetch(`/api/users/search?q=${encodeURIComponent(query)}&role=vendor`);
-                    const data = await res.json();
-                    
-                    if (data.users && data.users.length > 0) {
-                        const resultsDiv = document.getElementById('vendor-search-results');
-                        resultsDiv.innerHTML = data.users.map(vendor => `
-                            <div class="border-b border-gray-200 p-3 hover:bg-gray-50 cursor-pointer" onclick="selectVendor('${vendor._id}', '${vendor.email}', '${(vendor.company || `${vendor.firstName} ${vendor.lastName}`).replace(/'/g, "\\'")}')">
-                                <div class="font-medium text-gray-900">${vendor.company || `${vendor.firstName} ${vendor.lastName}`}</div>
-                                <div class="text-sm text-gray-500">${vendor.email}</div>
-                            </div>
-                        `).join('');
-                        resultsDiv.classList.remove('hidden');
+                    // Check if it's a full email
+                    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(query);
+        
+                    if (isEmail) {
+                        // If full email, search all vendors
+                        const res = await authFetch(`/api/users/search?q=${encodeURIComponent(query)}&role=vendor`);
+                        const data = await res.json();
+        
+                        if (data.users && data.users.length > 0) {
+                            const resultsDiv = document.getElementById('vendor-search-results');
+                            resultsDiv.innerHTML = data.users.map(vendor => `
+                                <div class="border-b last:border-b-0 border-gray-200 p-3 hover:bg-gray-50 cursor-pointer" onclick="selectVendor('${vendor._id || ''}', '${vendor.email}', '${(vendor.company || `${vendor.firstName || ''} ${vendor.lastName || ''}`).replace(/'/g, "\\'")}')">
+                                    <div class="font-medium text-gray-900">${vendor.company || `${vendor.firstName} ${vendor.lastName}`}</div>
+                                    <div class="text-sm text-gray-500">${vendor.email}</div>
+                                    ${!vendor._id ? '<span class="text-xs text-orange-600">Not registered - will receive invite</span>' : ''}
+                                </div>
+                            `).join('');
+                            resultsDiv.classList.remove('hidden');
+                        } else {
+                            document.getElementById('vendor-search-results').innerHTML = '<div class="p-3 text-center text-gray-500">No user found with this email</div>';
+                            document.getElementById('vendor-search-results').classList.remove('hidden');
+                        }
                     } else {
-                        document.getElementById('vendor-search-results').innerHTML = '<div class="p-3 text-center text-gray-500">No vendors found</div>';
-                        document.getElementById('vendor-search-results').classList.remove('hidden');
+                        // Otherwise only search partners
+                        const partnersRes = await authFetch('/api/partners');
+                        const partnersData = await partnersRes.json();
+                        const partners = partnersData.partners || [];
+        
+                        const searchLower = query.toLowerCase();
+                        const filtered = partners.filter(p => {
+                            const name = `${p.firstName} ${p.lastName}`.toLowerCase();
+                            const company = (p.company || '').toLowerCase();
+                            return name.includes(searchLower) || company.includes(searchLower);
+                        });
+        
+                        if (filtered.length > 0) {
+                            const resultsDiv = document.getElementById('vendor-search-results');
+                            resultsDiv.innerHTML = filtered.map(vendor => `
+                                <div class="border-b last:border-b-0 border-gray-200 p-3 hover:bg-gray-50 cursor-pointer" onclick="selectVendor('${vendor._id}', '${vendor.email || ''}', '${(vendor.company || `${vendor.firstName} ${vendor.lastName}`).replace(/'/g, "\\'")}')">
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex-1">
+                                            <div class="font-medium text-gray-900">${vendor.company || `${vendor.firstName} ${vendor.lastName}`}</div>
+                                        </div>
+                                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Partner</span>
+                                    </div>
+                                </div>
+                            `).join('');
+                            resultsDiv.classList.remove('hidden');
+                        } else {
+                            document.getElementById('vendor-search-results').innerHTML = '<div class="p-3 text-center text-gray-500">No partners found. Type full email to invite others.</div>';
+                            document.getElementById('vendor-search-results').classList.remove('hidden');
+                        }
                     }
                 } catch (error) {
                     console.error('Vendor search error:', error);
                     document.getElementById('vendor-search-results').innerHTML = '<div class="p-3 text-center text-red-500">Search failed</div>';
                     document.getElementById('vendor-search-results').classList.remove('hidden');
                 }
-            }, 300);
+            }, 200);
         });
         
         function selectVendor(vendorId, vendorEmail, vendorName) {
