@@ -93,9 +93,32 @@
             <p class="text-gray-600 mt-2" id="browse-subtitle">See your partners, their projects, and discover new service providers</p>
         </div>
 
+        <!-- Tabs -->
+        <div class="mb-8 border-b border-gray-200">
+            <div class="flex gap-8">
+                <button id="tab-discover" class="tab-btn pb-4 px-1 border-b-2 border-gray-900 font-medium text-gray-900 transition" data-tab="discover">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    Discover
+                </button>
+                <button id="tab-partners" class="tab-btn pb-4 px-1 border-b-2 border-transparent font-medium text-gray-600 hover:text-gray-900 transition" data-tab="partners">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-2a6 6 0 0112 0v2zm0 0h6v-2a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                    Your Partners
+                </button>
+                <button id="tab-partner-projects" class="tab-btn pb-4 px-1 border-b-2 border-transparent font-medium text-gray-600 hover:text-gray-900 transition" data-tab="partner-projects">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    Partner Projects
+                </button>
+            </div>
+        </div>
 
-        <!-- Search Bar -->
-        <div class="bg-white rounded-lg border border-gray-200 p-4 mb-8">
+        <!-- Search Bar (only shown for Discover tab) -->
+        <div id="search-section" class="bg-white rounded-lg border border-gray-200 p-4 mb-8">
             <div class="flex flex-col sm:flex-row gap-3">
                 <input type="text" id="search-input" placeholder="Search by name, skills, or company..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
                 <button id="toggle-filters-btn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2 whitespace-nowrap">
@@ -164,9 +187,29 @@
         </div>
 
         <!-- Discovery Sections -->
-        <div id="network-content" class="space-y-10">
-            <div class="text-center py-12">
-                <p class="text-gray-500">Loading recommendations...</p>
+        <div id="tab-content-discover" class="tab-content">
+            <div id="network-content" class="space-y-10">
+                <div class="text-center py-12">
+                    <p class="text-gray-500">Loading recommendations...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Your Partners Tab -->
+        <div id="tab-content-partners" class="tab-content hidden">
+            <div id="partners-content" class="space-y-6">
+                <div class="text-center py-12">
+                    <p class="text-gray-500">Loading your partners...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Partner Projects Tab -->
+        <div id="tab-content-partner-projects" class="tab-content hidden">
+            <div id="partner-projects-content" class="space-y-6">
+                <div class="text-center py-12">
+                    <p class="text-gray-500">Loading partner projects...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -200,6 +243,42 @@
         });
         document.getElementById('logout-btn').addEventListener('click', logout);
 
+        // Tab Switching Logic
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                
+                // Update buttons
+                tabButtons.forEach(b => {
+                    b.classList.remove('border-gray-900', 'text-gray-900');
+                    b.classList.add('border-transparent', 'text-gray-600');
+                });
+                btn.classList.remove('border-transparent', 'text-gray-600');
+                btn.classList.add('border-gray-900', 'text-gray-900');
+                
+                // Update content
+                tabContents.forEach(content => content.classList.add('hidden'));
+                document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+                
+                // Show/hide search section
+                const searchSection = document.getElementById('search-section');
+                if (tabName === 'discover') {
+                    searchSection.style.display = 'block';
+                    loadDiscovery();
+                } else {
+                    searchSection.style.display = 'none';
+                    if (tabName === 'partners') {
+                        loadPartners();
+                    } else if (tabName === 'partner-projects') {
+                        loadPartnerProjects();
+                    }
+                }
+            });
+        });
+
         // Mobile Menu Handler
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
@@ -222,6 +301,129 @@
 
         let discoveryData = {};
         let allBrowse = [];
+
+        async function loadPartners() {
+            try {
+                const container = document.getElementById('partners-content');
+                container.innerHTML = '<div class="text-center py-12"><p class="text-gray-500">Loading...</p></div>';
+                
+                const response = await authFetch('/api/partners');
+                if (!response.ok) throw new Error('Failed to load partners');
+                
+                const data = await response.json();
+                const partners = data.partners || [];
+                
+                if (partners.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-12">
+                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            <p class="text-gray-500 text-lg">No partners yet</p>
+                            <p class="text-gray-400 text-sm mt-2">Connect with professionals to expand your network</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const html = `
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        ${partners.map(partner => renderPersonCard(partner)).join('')}
+                    </div>
+                `;
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading partners:', error);
+                document.getElementById('partners-content').innerHTML = `
+                    <div class="text-center py-12">
+                        <p class="text-red-600">Failed to load partners</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function loadPartnerProjects() {
+            try {
+                const container = document.getElementById('partner-projects-content');
+                container.innerHTML = '<div class="text-center py-12"><p class="text-gray-500">Loading...</p></div>';
+                
+                const response = await authFetch('/api/partners');
+                if (!response.ok) throw new Error('Failed to load partners');
+                
+                const partnerData = await response.json();
+                const partners = partnerData.partners || [];
+                
+                if (partners.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-12">
+                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                            </svg>
+                            <p class="text-gray-500 text-lg">No partner projects yet</p>
+                            <p class="text-gray-400 text-sm mt-2">Your partners' projects will appear here</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Get projects from partners
+                const partnerIds = partners.map(p => p._id);
+                const projectsResponse = await authFetch('/api/projects');
+                if (!projectsResponse.ok) throw new Error('Failed to load projects');
+                
+                const projectsData = await projectsResponse.json();
+                const allProjects = projectsData.projects || [];
+                
+                // Filter projects by partner ownership
+                const partnerProjects = allProjects.filter(project => {
+                    const ownerId = project.owner && (project.owner._id || project.owner);
+                    return partnerIds.includes(ownerId);
+                });
+                
+                if (partnerProjects.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-12">
+                            <p class="text-gray-500 text-lg">No active projects from partners</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const html = `
+                    <div class="space-y-4">
+                        ${partnerProjects.map(project => `
+                            <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">${project.title}</h3>
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            By <span class="font-medium">${project.owner && project.owner.company ? project.owner.company : (project.owner && project.owner.firstName ? project.owner.firstName + ' ' + project.owner.lastName : 'Unknown')}</span>
+                                        </p>
+                                    </div>
+                                    <span class="px-3 py-1 ${project.status === 'open' ? 'bg-green-50 text-green-700' : project.status === 'in_progress' ? 'bg-blue-50 text-blue-700' : 'bg-gray-50 text-gray-700'} text-xs font-semibold rounded-full capitalize">${project.status.replace('_', ' ')}</span>
+                                </div>
+                                <p class="text-gray-600 text-sm mb-3">${project.description.substring(0, 150)}${project.description.length > 150 ? '...' : ''}</p>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex gap-4 text-sm text-gray-600">
+                                        ${project.budget ? `<span>💰 $${project.budget.min.toLocaleString()} - $${project.budget.max.toLocaleString()}</span>` : ''}
+                                        ${project.timeline ? `<span>⏱️ ${project.timeline}</span>` : ''}
+                                    </div>
+                                    <a href="/project-detail.html?id=${project._id}" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition">View Project</a>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading partner projects:', error);
+                document.getElementById('partner-projects-content').innerHTML = `
+                    <div class="text-center py-12">
+                        <p class="text-red-600">Failed to load partner projects</p>
+                    </div>
+                `;
+            }
+        }
 
         async function loadDiscovery() {
             try {
@@ -264,6 +466,9 @@
 
         function renderPersonCard(person) {
             const locationLabel = [person.city, person.state].filter(Boolean).join(', ') || person.location || '';
+            const accountType = person.role === 'vendor' ? 'Service Provider' : 'Project Owner';
+            const accountTypeBadge = `<span class="px-2.5 py-1 ${person.role === 'vendor' ? 'bg-purple-50 text-purple-700' : 'bg-orange-50 text-orange-700'} text-xs font-semibold rounded-full">${accountType}</span>`;
+            
             const skillsHTML = person.skills && person.skills.length > 0 ? `
                 <div class="flex flex-wrap gap-1.5 mb-3">
                     ${person.skills.slice(0, 3).map(skill => `<span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full font-medium">${skill}</span>`).join('')}
@@ -296,6 +501,7 @@
                                 ${getVerificationBadge(person, 'small')}
                             </div>
                             ${person.company ? `<p class="text-sm text-gray-600 truncate">${person.firstName} ${person.lastName}</p>` : (person.title ? `<p class="text-sm text-gray-600 truncate">${person.title}</p>` : '')}
+                            <div class="mt-1">${accountTypeBadge}</div>
                         </div>
                         <div class="flex-shrink-0">
                             ${getAvatarHTML(person, 'w-10 h-10')}
@@ -324,7 +530,12 @@
                     
                     <div class="flex gap-2 pt-3 border-t border-gray-200 mt-auto">
                         <a href="/profile.html?id=${person._id}" class="flex-1 text-center px-3 py-2 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition">View Profile</a>
-                        <a href="/messages.html?user=${person._id}" class="flex-1 text-center px-3 py-2 bg-gray-900 text-white rounded-lg text-xs font-medium hover:bg-gray-800 transition">Contact</a>
+                        <button onclick="addPartnerFromBrowse('${person._id}', this)" class="partner-btn px-3 py-2 bg-gray-900 text-white rounded-lg text-xs font-medium hover:bg-gray-800 transition flex items-center justify-center gap-1" title="Add as Partner">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                        <a href="/messages.html?user=${person._id}" class="flex-1 text-center px-3 py-2 bg-blue-600 text-white rounded-lg text-xs font-medium hover:bg-blue-700 transition">Contact</a>
                     </div>
                 </div>
             `;
@@ -333,86 +544,74 @@
         function displayDiscovery() {
             const container = document.getElementById('network-content');
             let html = '';
+            const INITIAL_LOAD = 3; // Show 3 cards initially per section
+
+            // Function to render a section with show more capability
+            function renderSection(title, icon, description, items, sectionId) {
+                if (!items || items.length === 0) return '';
+                
+                const initialItems = items.slice(0, INITIAL_LOAD);
+                const remainingItems = items.slice(INITIAL_LOAD);
+                const hasMore = remainingItems.length > 0;
+                
+                return `
+                    <div>
+                        <div class="mb-4">
+                            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                                ${icon}
+                                ${title}
+                            </h2>
+                            <p class="text-gray-600 text-sm mt-1">${description}</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="${sectionId}-grid">
+                            ${initialItems.map(p => renderPersonCard(p)).join('')}
+                        </div>
+                        ${hasMore ? `
+                            <div class="mt-4 text-center">
+                                <button onclick="showMoreCards('${sectionId}', ${JSON.stringify(remainingItems).replace(/'/g, '&#39;')})" class="px-6 py-2 border-2 border-gray-900 text-gray-900 font-medium rounded-lg hover:bg-gray-50 transition">
+                                    Show More (${remainingItems.length} more)
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
 
             // Top Picks Section
-            if (discoveryData.topPicks && discoveryData.topPicks.length > 0) {
-                html += `
-                    <div>
-                        <div class="mb-4">
-                            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                <svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                                </svg>
-                                Top Matches
-                            </h2>
-                            <p class="text-gray-600 text-sm mt-1">Highly recommended based on your profile and activity</p>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            ${discoveryData.topPicks.map(p => renderPersonCard(p)).join('')}
-                        </div>
-                    </div>
-                `;
-            }
+            html += renderSection(
+                'Top Matches',
+                '<svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>',
+                'Highly recommended based on your profile and activity',
+                discoveryData.topPicks,
+                'top-picks'
+            );
 
             // People You Might Know Section
-            if (discoveryData.mightKnow && discoveryData.mightKnow.length > 0) {
-                html += `
-                    <div>
-                        <div class="mb-4">
-                            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                <svg class="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
-                                </svg>
-                                People You Might Know
-                            </h2>
-                            <p class="text-gray-600 text-sm mt-1">Based on location, skills, and mutual interests</p>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            ${discoveryData.mightKnow.map(p => renderPersonCard(p)).join('')}
-                        </div>
-                    </div>
-                `;
-            }
+            html += renderSection(
+                'People You Might Know',
+                '<svg class="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>',
+                'Based on location, skills, and mutual interests',
+                discoveryData.mightKnow,
+                'might-know'
+            );
 
             // Recently Active Section
-            if (discoveryData.activeToday && discoveryData.activeToday.length > 0) {
-                html += `
-                    <div>
-                        <div class="mb-4">
-                            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1m2 1v2.5M2 7l2 1m-2-1l2-1m2 1v2.5"/>
-                                </svg>
-                                Recently Active
-                            </h2>
-                            <p class="text-gray-600 text-sm mt-1">People who've been active recently</p>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            ${discoveryData.activeToday.map(p => renderPersonCard(p)).join('')}
-                        </div>
-                    </div>
-                `;
-            }
+            html += renderSection(
+                'Recently Active',
+                '<svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1m2 1v2.5M2 7l2 1m-2-1l2-1m2 1v2.5"/></svg>',
+                'People who\'ve been active recently',
+                discoveryData.activeToday,
+                'active-today'
+            );
 
             // Browse All Section
-            if (allBrowse.length > 0) {
-                html += `
-                    <div>
-                        <div class="mb-4">
-                            <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                                <svg class="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                                </svg>
-                                Browse All
-                            </h2>
-                            <p class="text-gray-600 text-sm mt-1">All professionals matching your criteria</p>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            ${allBrowse.map(p => renderPersonCard(p)).join('')}
-                        </div>
-                    </div>
-                `;
-            }
+            html += renderSection(
+                'Browse All',
+                '<svg class="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>',
+                'All professionals matching your criteria',
+                allBrowse,
+                'browse-all'
+            );
 
             if (!html) {
                 html = `
@@ -469,6 +668,71 @@
                 });
             }
         });
+
+        async function addPartnerFromBrowse(partnerId, button) {
+            try {
+                button.disabled = true;
+                const originalHTML = button.innerHTML;
+                button.innerHTML = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>';
+                
+                const response = await authFetch(`/api/partners/${partnerId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to add partner');
+                }
+                
+                button.classList.add('bg-green-600', 'hover:bg-green-700');
+                button.classList.remove('bg-gray-900', 'hover:bg-gray-800');
+                button.innerHTML = '<svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+                button.title = 'Partner Added';
+                button.disabled = true;
+            } catch (error) {
+                console.error('Error adding partner:', error);
+                button.disabled = false;
+                alert('Failed to add partner: ' + error.message);
+            }
+        }
+
+        function showMoreCards(sectionId, remainingItems) {
+            const grid = document.getElementById(`${sectionId}-grid`);
+            if (!grid) return;
+
+            // Add remaining items with staggered animation
+            remainingItems.forEach((person, index) => {
+                setTimeout(() => {
+                    const card = document.createElement('div');
+                    card.innerHTML = renderPersonCard(person);
+                    card.style.animation = 'fadeIn 0.3s ease-in';
+                    grid.appendChild(card.firstElementChild);
+                }, index * 50); // Stagger by 50ms for smooth loading
+            });
+
+            // Remove the show more button
+            const button = event.target;
+            if (button) {
+                button.closest('div').parentElement.remove();
+            }
+        }
+
+        // Add CSS animation for smooth card loading
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        `;
+        document.head.appendChild(style);
 
         // Initial load
         loadDiscovery();

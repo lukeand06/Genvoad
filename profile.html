@@ -287,10 +287,11 @@
                                         </svg>
                                         Send Message
                                     </a>
-                                    <button onclick="window.print()" class="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                                    <button id="add-partner-btn" onclick="addAsPartner('${profile._id}')" class="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                         </svg>
+                                        <span id="partner-btn-text">Add Partner</span>
                                     </button>
                                 `}
                             </div>
@@ -1034,7 +1035,72 @@
             }
         }
 
+        async function addAsPartner(partnerId) {
+            try {
+                const btn = document.getElementById('add-partner-btn');
+                const btnText = document.getElementById('partner-btn-text');
+                const originalText = btnText.textContent;
+                
+                btn.disabled = true;
+                btnText.textContent = 'Adding...';
+                
+                const response = await authFetch(`/api/partners/${partnerId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    throw new Error(data.error || 'Failed to add partner');
+                }
+                
+                btnText.textContent = '✓ Partner Added';
+                btn.classList.add('bg-green-50', 'text-green-700', 'border-green-300');
+                btn.classList.remove('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+                
+                setTimeout(() => {
+                    btn.disabled = false;
+                }, 2000);
+            } catch (error) {
+                console.error('Error adding partner:', error);
+                const btn = document.getElementById('add-partner-btn');
+                const btnText = document.getElementById('partner-btn-text');
+                btnText.textContent = 'Add Partner';
+                btn.disabled = false;
+                alert('Failed to add partner: ' + error.message);
+            }
+        }
+
+        async function checkPartnerStatus() {
+            try {
+                if (isOwnProfile) return; // Don't show button on own profile
+                
+                const response = await authFetch('/api/partners');
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                const partners = data.partners || [];
+                const isPartner = partners.some(p => p._id === profileUserId);
+                
+                const btn = document.getElementById('add-partner-btn');
+                const btnText = document.getElementById('partner-btn-text');
+                
+                if (isPartner) {
+                    btnText.textContent = '✓ Partner';
+                    btn.disabled = true;
+                    btn.classList.add('bg-green-50', 'text-green-700', 'border-green-300');
+                    btn.classList.remove('border-gray-300', 'text-gray-700', 'hover:bg-gray-50');
+                }
+            } catch (error) {
+                console.error('Error checking partner status:', error);
+            }
+        }
+
         loadProfile();
+        if (!isOwnProfile) {
+            setTimeout(checkPartnerStatus, 500);
+        }
+
     </script>
 </body>
 </html>
