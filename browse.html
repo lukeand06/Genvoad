@@ -186,11 +186,77 @@
             </div>
         </div>
 
-        <!-- Discovery Sections -->
+        <!-- Discovery Sections - Companies -->
         <div id="tab-content-discover" class="tab-content">
-            <div id="network-content" class="space-y-10">
-                <div class="text-center py-12">
-                    <p class="text-gray-500">Loading recommendations...</p>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Content Area -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Top Picks Section -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                        <div class="p-5 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-900">Top Companies for You</h2>
+                                    <p class="text-sm text-gray-600 mt-1">Based on your profile and activity</p>
+                                </div>
+                                <svg class="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            </div>
+                        </div>
+                        <div id="top-picks-container" class="divide-y divide-gray-200">
+                            <div class="p-6 text-center text-gray-500">
+                                <div class="animate-pulse">Loading top companies...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Companies You May Know Section -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                        <div class="p-5 border-b border-gray-200">
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-xl font-bold text-gray-900">Companies You May Know</h2>
+                                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="may-know-container" class="divide-y divide-gray-200">
+                            <div class="p-6 text-center text-gray-500">
+                                <div class="animate-pulse">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recently Active Section -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                        <div class="p-5 border-b border-gray-200">
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-xl font-bold text-gray-900">Recently Active Companies</h2>
+                                <svg class="w-5 h-5 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div id="recently-active-container" class="divide-y divide-gray-200">
+                            <div class="p-6 text-center text-gray-500">
+                                <div class="animate-pulse">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Quick Filters -->
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                        <h3 class="font-bold text-gray-900 mb-4">Filter by Type</h3>
+                        <div class="space-y-2">
+                            <button onclick="filterByType('all')" class="filter-btn w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-gray-50 bg-gray-100 font-medium">All Companies</button>
+                            <button onclick="filterByType('general_contractor')" class="filter-btn w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50">General Contractors</button>
+                            <button onclick="filterByType('subcontractor')" class="filter-btn w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50">Subcontractors</button>
+                            <button onclick="filterByType('architect')" class="filter-btn w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50">Architects</button>
+                            <button onclick="filterByType('supplier')" class="filter-btn w-full text-left px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50">Suppliers</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -263,18 +329,17 @@
                 tabContents.forEach(content => content.classList.add('hidden'));
                 document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
                 
-                // Show/hide search section
+                // Hide search section - not needed for any tabs
                 const searchSection = document.getElementById('search-section');
+                searchSection.style.display = 'none';
+                
+                // Load appropriate content
                 if (tabName === 'discover') {
-                    searchSection.style.display = 'block';
                     loadDiscovery();
-                } else {
-                    searchSection.style.display = 'none';
-                    if (tabName === 'partners') {
-                        loadPartners();
-                    } else if (tabName === 'partner-projects') {
-                        loadPartnerProjects();
-                    }
+                } else if (tabName === 'partners') {
+                    loadPartners();
+                } else if (tabName === 'partner-projects') {
+                    loadPartnerProjects();
                 }
             });
         });
@@ -462,6 +527,189 @@
                 document.getElementById('partner-projects-content').innerHTML = `
                     <div class="text-center py-12">
                         <p class="text-red-600">Failed to load partner projects</p>
+                    </div>
+                `;
+            }
+        }
+
+        let allRecommendations = {
+            topPicks: [],
+            mayKnow: [],
+            recentlyActive: []
+        };
+        let currentFilter = 'all';
+
+        async function loadDiscovery() {
+            try {
+                const res = await authFetch('/api/companies/recommendations');
+                if (!res.ok) throw new Error('Failed to load recommendations');
+                
+                const data = await res.json();
+                allRecommendations = data;
+                
+                displayCompanyRecommendations();
+            } catch (error) {
+                console.error('Load recommendations error:', error);
+                showError('top-picks-container');
+                showError('may-know-container');
+                showError('recently-active-container');
+            }
+        }
+
+        function displayCompanyRecommendations() {
+            const filtered = {
+                topPicks: filterCompanies(allRecommendations.topPicks || []),
+                mayKnow: filterCompanies(allRecommendations.mayKnow || []),
+                recentlyActive: filterCompanies(allRecommendations.recentlyActive || [])
+            };
+
+            displayTopPicks(filtered.topPicks);
+            displayMayKnow(filtered.mayKnow);
+            displayRecentlyActive(filtered.recentlyActive);
+        }
+
+        function filterCompanies(companies) {
+            if (currentFilter === 'all') return companies;
+            return companies.filter(c => c.companyType === currentFilter);
+        }
+
+        function filterByType(type) {
+            currentFilter = type;
+            
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('bg-gray-100', 'font-medium');
+                btn.classList.add('text-gray-700');
+            });
+            event.target.classList.add('bg-gray-100', 'font-medium');
+            event.target.classList.remove('text-gray-700');
+            
+            displayCompanyRecommendations();
+        }
+
+        function displayTopPicks(companies) {
+            const container = document.getElementById('top-picks-container');
+            
+            if (companies.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
+                return;
+            }
+
+            container.innerHTML = companies.slice(0, 5).map(company => `
+                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?company=${company._id}'">
+                    <div class="flex items-start gap-4">
+                        <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                            ${company.name.charAt(0)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-bold text-gray-900 truncate">${company.name}</h3>
+                                ${company.verified ? `
+                                    <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)} • ${company.location || 'Location not specified'}</p>
+                            <p class="text-sm text-gray-700 line-clamp-2 mb-3">${company.description || 'No description available'}</p>
+                            <div class="flex items-center gap-4 text-xs text-gray-500">
+                                <span>${company.projectCount || 0} projects</span>
+                                <span>•</span>
+                                <span>${company.rating ? company.rating.toFixed(1) + ' ★' : 'No ratings yet'}</span>
+                                ${company.reason ? `
+                                    <span>•</span>
+                                    <span class="text-blue-600">${company.reason}</span>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayMayKnow(companies) {
+            const container = document.getElementById('may-know-container');
+            
+            if (companies.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
+                return;
+            }
+
+            container.innerHTML = companies.slice(0, 5).map(company => `
+                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?company=${company._id}'">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center text-white font-bold flex-shrink-0">
+                            ${company.name.charAt(0)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold text-gray-900 truncate">${company.name}</h3>
+                                ${company.verified ? `
+                                    <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)}</p>
+                            ${company.reason ? `<p class="text-xs text-green-600 mb-2">${company.reason}</p>` : ''}
+                            <p class="text-xs text-gray-500">${company.projectCount || 0} projects completed</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function displayRecentlyActive(companies) {
+            const container = document.getElementById('recently-active-container');
+            
+            if (companies.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
+                return;
+            }
+
+            container.innerHTML = companies.slice(0, 5).map(company => `
+                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?company=${company._id}'">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold flex-shrink-0">
+                            ${company.name.charAt(0)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold text-gray-900 truncate">${company.name}</h3>
+                                ${company.verified ? `
+                                    <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)}</p>
+                            ${company.lastActivity ? `<p class="text-xs text-orange-600 mb-2">${company.lastActivity}</p>` : ''}
+                            <p class="text-xs text-gray-500">${company.activeProjects || 0} active projects</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatCompanyType(type) {
+            const types = {
+                'general_contractor': 'General Contractor',
+                'subcontractor': 'Subcontractor',
+                'architect': 'Architect',
+                'engineer': 'Engineer',
+                'supplier': 'Supplier',
+                'other': 'Other'
+            };
+            return types[type] || type;
+        }
+
+        function showError(containerId) {
+            const elem = document.getElementById(containerId);
+            if (elem) {
+                elem.innerHTML = `
+                    <div class="p-6 text-center">
+                        <p class="text-sm text-red-600 mb-2">Failed to load</p>
+                        <button onclick="loadDiscovery()" class="text-sm text-blue-600 hover:underline">Try again</button>
                     </div>
                 `;
             }
@@ -696,47 +944,6 @@
             container.innerHTML = html;
         }
 
-        // Filter and search handlers
-        document.getElementById('search-btn').addEventListener('click', loadDiscovery);
-        
-        document.getElementById('search-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                loadDiscovery();
-            }
-        });
-
-        document.getElementById('toggle-filters-btn').addEventListener('click', () => {
-            document.getElementById('filter-panel').classList.toggle('hidden');
-        });
-
-        document.getElementById('clear-filters-btn').addEventListener('click', () => {
-            document.getElementById('filter-role').value = '';
-            document.getElementById('filter-location').value = '';
-            document.getElementById('filter-experience').value = '';
-            document.getElementById('filter-rating').value = '';
-            document.getElementById('verified-only').checked = false;
-            loadDiscovery();
-        });
-
-        // Apply filters on change
-        ['filter-role', 'filter-experience', 'filter-rating'].forEach(id => {
-            document.getElementById(id).addEventListener('change', loadDiscovery);
-        });
-
-        document.getElementById('verified-only').addEventListener('change', loadDiscovery);
-
-        // Debounced location and search filters
-        let filterTimeout;
-        ['filter-location', 'search-input'].forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('input', () => {
-                    clearTimeout(filterTimeout);
-                    filterTimeout = setTimeout(loadDiscovery, 500);
-                });
-            }
-        });
-
         async function addPartnerFromBrowse(partnerId, button) {
             try {
                 button.disabled = true;
@@ -765,28 +972,7 @@
             }
         }
 
-        function showMoreCards(sectionId, remainingItems) {
-            const grid = document.getElementById(`${sectionId}-grid`);
-            if (!grid) return;
-
-            // Add remaining items with staggered animation
-            remainingItems.forEach((person, index) => {
-                setTimeout(() => {
-                    const card = document.createElement('div');
-                    card.innerHTML = renderPersonCard(person);
-                    card.style.animation = 'fadeIn 0.3s ease-in';
-                    grid.appendChild(card.firstElementChild);
-                }, index * 50); // Stagger by 50ms for smooth loading
-            });
-
-            // Remove the show more button
-            const button = event.target;
-            if (button) {
-                button.closest('div').parentElement.remove();
-            }
-        }
-
-        // Add CSS animation for smooth card loading
+        // Add CSS for company cards
         const style = document.createElement('style');
         style.textContent = `
             @keyframes fadeIn {
@@ -798,6 +984,12 @@
                     opacity: 1;
                     transform: translateY(0);
                 }
+            }
+            .company-card {
+                transition: all 0.2s ease-in-out;
+            }
+            .company-card:hover {
+                transform: translateY(-2px);
             }
         `;
         document.head.appendChild(style);
