@@ -11,6 +11,29 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-clamp: 2; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+        
+        /* Custom card styles */
+        .project-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .project-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(20,106,90,.15);
+            border-color: #c8e9e2;
+        }
+        
+        .card-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .card-section {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -144,7 +167,7 @@
                 <h2 class="text-2xl font-bold text-gray-900">Recommended For You</h2>
                 <p class="text-gray-600 mt-1">Projects matching your skills and experience</p>
             </div>
-            <div id="cards-recommended" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="cards-recommended" class="card-section"></div>
         </div>
 
         <!-- Recently Active Section -->
@@ -153,7 +176,7 @@
                 <h2 class="text-2xl font-bold text-gray-900">Recently Active With</h2>
                 <p class="text-gray-600 mt-1">Projects from teams you've worked with</p>
             </div>
-            <div id="cards-recent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="cards-recent" class="card-section"></div>
         </div>
 
         <!-- Near You Section -->
@@ -162,7 +185,7 @@
                 <h2 class="text-2xl font-bold text-gray-900">Near You</h2>
                 <p class="text-gray-600 mt-1">Projects in your area (uses browser location when allowed)</p>
             </div>
-            <div id="cards-nearby" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="cards-nearby" class="card-section"></div>
         </div>
 
         <!-- Browse All Section -->
@@ -171,7 +194,7 @@
                 <h2 class="text-2xl font-bold text-gray-900">Browse All Projects</h2>
                 <p class="text-gray-600 mt-1">Explore all opportunities with advanced filtering</p>
             </div>
-            <div id="cards-browse" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="cards-browse" class="card-section"></div>
             <div class="flex justify-center mt-8">
                 <button id="btn-show-more" class="px-8 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800" style="display:none;">Show More Projects</button>
             </div>
@@ -185,27 +208,41 @@
         }
 
         const currentUser = getCurrentUser();
-        document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
+        const userAvatarEl = document.getElementById('user-avatar');
+        if (userAvatarEl) {
+            userAvatarEl.innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
+        }
 
         // Mobile Menu
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
         const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
         
-        mobileMenuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
         
-        mobileMenuBackdrop.addEventListener('click', () => {
-            mobileMenu.classList.add('hidden');
-        });
+        if (mobileMenuBackdrop && mobileMenu) {
+            mobileMenuBackdrop.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        }
         
         // User menu
-        document.getElementById('user-menu-btn').addEventListener('click', () => {
-            document.getElementById('user-dropdown').classList.toggle('hidden');
-        });
+        const userMenuBtn = document.getElementById('user-menu-btn');
+        const userDropdown = document.getElementById('user-dropdown');
+        if (userMenuBtn && userDropdown) {
+            userMenuBtn.addEventListener('click', () => {
+                userDropdown.classList.toggle('hidden');
+            });
+        }
         
-        document.getElementById('logout-btn').addEventListener('click', logout);
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', logout);
+        }
 
         let _projects = [];
         let _displayedCount = 0;
@@ -248,35 +285,80 @@
             
             const categoryShown = p.category || (p.tags && p.tags[0]) || 'General';
             const budgetDisplay = p.budget ? '$' + Number(p.budget).toLocaleString() : 'Budget TBD';
+            const tagsToShow = (p.tags || []).filter(t => t !== categoryShown).slice(0, 3);
 
             return `
-                <article class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition">
-                    <div class="p-6">
-                        <div class="flex items-start justify-between mb-4">
-                            <div class="flex items-start space-x-3 flex-1">
-                                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">
-                                    ${p.icon || initials}
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">${p.title}</h3>
-                                    <p class="text-sm text-gray-600 mt-1">${categoryShown}</p>
+                <article class="project-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm" onclick="viewProject('${p._id}')">
+                    <!-- Card Header -->
+                    <div class="p-6 border-b border-gray-100">
+                        <div class="flex items-start gap-4">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-bold text-sm text-gray-700 flex-shrink-0">
+                                ${p.icon || initials}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">${p.title}</h3>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
+                                        ${categoryShown}
+                                    </span>
+                                    ${statusBadge}
                                 </div>
                             </div>
-                            ${statusBadge}
                         </div>
+                        ${tagsToShow.length > 0 ? `
+                            <div class="flex flex-wrap gap-2 mt-3">
+                                ${tagsToShow.map(tag => `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">${tag}</span>`).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
 
+                    <!-- Card Body -->
+                    <div class="p-6">
                         ${p.description ? `<p class="text-sm text-gray-600 line-clamp-2 mb-4">${p.description}</p>` : ''}
-
-                        <div class="space-y-2 mb-6 text-sm">
-                            ${p.location ? `<div class="flex items-center text-gray-600"><svg class="w-4 h-4 mr-2 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>${p.location}</div>` : ''}
-                            <div class="flex items-center text-gray-600"><svg class="w-4 h-4 mr-2 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><strong>${budgetDisplay}</strong></div>
-                            ${p.createdAt ? `<div class="flex items-center text-gray-600"><svg class="w-4 h-4 mr-2 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>Posted ${new Date(p.createdAt).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</div>` : ''}
+                        
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            ${p.location ? `
+                                <div class="flex items-start gap-2">
+                                    <svg class="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                    </svg>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-medium text-gray-500">Location</div>
+                                        <div class="text-sm font-semibold text-gray-900 truncate">${p.location}</div>
+                                    </div>
+                                </div>
+                            ` : ''}
+                            <div class="flex items-start gap-2">
+                                <svg class="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <div class="min-w-0">
+                                    <div class="text-xs font-medium text-gray-500">Budget</div>
+                                    <div class="text-sm font-semibold text-gray-900">${budgetDisplay}</div>
+                                </div>
+                            </div>
+                            ${p.createdAt ? `
+                                <div class="flex items-start gap-2 col-span-2">
+                                    <svg class="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+                                    </svg>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-medium text-gray-500">Posted</div>
+                                        <div class="text-sm font-semibold text-gray-900">${new Date(p.createdAt).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}</div>
+                                    </div>
+                                </div>
+                            ` : ''}
                         </div>
+                    </div>
 
-                        <div class="flex gap-3">
-                            <button onclick="viewProject('${p._id}')" class="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm hover:bg-gray-800">View Details</button>
-                            <button onclick="messageOwner('${p._id}')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-50">Message</button>
-                        </div>
+                    <!-- Card Footer -->
+                    <div class="px-6 pb-6 flex gap-3">
+                        <button onclick="event.stopPropagation(); viewProject('${p._id}')" class="flex-1 px-4 py-2.5 bg-teal-600 text-white rounded-lg font-semibold text-sm hover:bg-teal-700 transition">
+                            View Details
+                        </button>
+                        <button onclick="event.stopPropagation(); messageOwner('${p._id}')" class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-semibold text-sm hover:bg-gray-50 transition">
+                            Message
+                        </button>
                     </div>
                 </article>
             `;
@@ -284,6 +366,10 @@
 
         function renderGrid(hostId, list, limit = 0){
             const host = document.getElementById(hostId);
+            if (!host) {
+                console.error('Container not found:', hostId);
+                return;
+            }
             host.innerHTML = '';
             
             if(!list.length){
@@ -293,20 +379,27 @@
 
             const toShow = limit > 0 ? list.slice(0, limit) : list;
             toShow.forEach((p, index) => {
-                const el = document.createElement('div');
-                el.innerHTML = cardHTML(p);
-                el.style.animation = `fadeIn ${0.3 + index * 0.05}s ease forwards`;
-                host.appendChild(el.firstElementChild);
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = cardHTML(p);
+                wrapper.firstElementChild.style.animation = `fadeIn ${0.3 + index * 0.05}s ease forwards`;
+                wrapper.firstElementChild.style.opacity = '0';
+                host.appendChild(wrapper.firstElementChild);
             });
         }
 
         function readFilters(){
+            const fSearch = document.getElementById('f-search');
+            const fCategory = document.getElementById('f-category');
+            const fStatus = document.getElementById('f-status');
+            const fMin = document.getElementById('f-min');
+            const fMax = document.getElementById('f-max');
+            
             return {
-                search: (document.getElementById('f-search').value || '').toLowerCase(),
-                category: document.getElementById('f-category').value,
-                status: document.getElementById('f-status').value,
-                minBudget: document.getElementById('f-min').value ? Number(document.getElementById('f-min').value) : null,
-                maxBudget: document.getElementById('f-max').value ? Number(document.getElementById('f-max').value) : null,
+                search: (fSearch?.value || '').toLowerCase(),
+                category: fCategory?.value || 'all',
+                status: fStatus?.value || 'all',
+                minBudget: fMin?.value ? Number(fMin.value) : null,
+                maxBudget: fMax?.value ? Number(fMax.value) : null,
             };
         }
 
@@ -399,11 +492,13 @@
             renderGrid('cards-browse', filtered, INITIAL_LOAD);
             
             const browseBtn = document.getElementById('btn-show-more');
-            if(filtered.length > INITIAL_LOAD){
-                browseBtn.style.display = 'inline-block';
-                browseBtn.onclick = () => showMoreProjects(filtered);
-            } else {
-                browseBtn.style.display = 'none';
+            if(browseBtn){
+                if(filtered.length > INITIAL_LOAD){
+                    browseBtn.style.display = 'inline-block';
+                    browseBtn.onclick = () => showMoreProjects(filtered);
+                } else {
+                    browseBtn.style.display = 'none';
+                }
             }
         }
 
@@ -413,7 +508,10 @@
             _displayedCount = nextBatch;
 
             if(_displayedCount >= filtered.length){
-                document.getElementById('btn-show-more').style.display = 'none';
+                const browseBtn = document.getElementById('btn-show-more');
+                if(browseBtn){
+                    browseBtn.style.display = 'none';
+                }
             }
         }
 
@@ -439,17 +537,34 @@
         }
 
         // Event listeners
-        document.getElementById('applyFilters').addEventListener('click', renderAllSections);
-        document.getElementById('clearFilters').addEventListener('click', () => {
-            document.getElementById('f-search').value = '';
-            document.getElementById('f-category').value = 'all';
-            document.getElementById('f-status').value = 'all';
-            document.getElementById('f-min').value = '';
-            document.getElementById('f-max').value = '';
-            renderAllSections();
-        });
-
-        document.getElementById('f-search').addEventListener('input', renderAllSections);
+        const applyFiltersBtn = document.getElementById('applyFilters');
+        const clearFiltersBtn = document.getElementById('clearFilters');
+        const searchInput = document.getElementById('f-search');
+        
+        if (applyFiltersBtn) {
+            applyFiltersBtn.addEventListener('click', renderAllSections);
+        }
+        
+        if (clearFiltersBtn) {
+            clearFiltersBtn.addEventListener('click', () => {
+                const fSearch = document.getElementById('f-search');
+                const fCategory = document.getElementById('f-category');
+                const fStatus = document.getElementById('f-status');
+                const fMin = document.getElementById('f-min');
+                const fMax = document.getElementById('f-max');
+                
+                if (fSearch) fSearch.value = '';
+                if (fCategory) fCategory.value = 'all';
+                if (fStatus) fStatus.value = 'all';
+                if (fMin) fMin.value = '';
+                if (fMax) fMax.value = '';
+                renderAllSections();
+            });
+        }
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', renderAllSections);
+        }
 
         // Initialize
         (async () => {

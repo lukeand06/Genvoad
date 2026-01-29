@@ -3780,15 +3780,15 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
       if (company.verified) score += 30;
       
       // High rating
-      if (company.avgRating && company.avgRating >= 4.5) {
+      if (company.rating && company.rating >= 4.5) {
         score += 25;
         reason = 'Highly rated company';
-      } else if (company.avgRating && company.avgRating >= 4.0) {
+      } else if (company.rating && company.rating >= 4.0) {
         score += 15;
       }
 
       // Active and established
-      if (company.projectCount && company.projectCount > 20) {
+      if (company.projectsCompleted && company.projectsCompleted > 20) {
         score += 20;
         if (!reason) reason = 'Experienced with many projects';
       } else if (company.projectCount && company.projectCount > 10) {
@@ -3800,12 +3800,16 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
       if (company.website) score += 5;
       
       // MAY KNOW SCORING
-      // Same location
-      if (currentUser.location && company.location && 
-          currentUser.location.toLowerCase().includes(company.location.toLowerCase().split(',')[0].toLowerCase())) {
+      // Same location - company.address contains city, state
+      const companyLocation = company.address?.city && company.address?.state 
+        ? `${company.address.city}, ${company.address.state}` 
+        : (company.address?.city || company.address?.state || '');
+      
+      if (currentUser.location && companyLocation && 
+          currentUser.location.toLowerCase().includes(companyLocation.toLowerCase().split(',')[0].toLowerCase())) {
         score += 40;
         category = 'mayKnow';
-        reason = `Based in ${company.location.split(',')[0]}`;
+        reason = `Based in ${companyLocation.split(',')[0]}`;
       }
 
       // Worked with before
@@ -3816,7 +3820,7 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
       }
 
       // Similar industry/type
-      if (currentUser.role === 'vendor' && company.companyType === 'general_contractor') {
+      if (currentUser.role === 'vendor' && company.type === 'general_contractor') {
         score += 15;
         if (!category) {
           category = 'mayKnow';
@@ -3838,11 +3842,12 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
         if (!reason) reason = 'Active this month';
       }
 
-      // Recent projects
-      if (company.recentProjectCount && company.recentProjectCount > 0) {
+      // Recent projects (calculated from active projects)
+      const activeProjectCount = 0; // TODO: Calculate from actual active projects
+      if (activeProjectCount > 0) {
         score += 20;
         if (!category) category = 'recentlyActive';
-        if (!reason) reason = `${company.recentProjectCount} active projects`;
+        if (!reason) reason = `${activeProjectCount} active projects`;
       }
 
       return {
@@ -3850,9 +3855,12 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
         score,
         reason,
         category,
-        projectCount: company.projectCount || 0,
-        rating: company.avgRating || 0,
-        activeProjects: company.recentProjectCount || 0,
+        projectCount: company.projectsCompleted || 0,
+        rating: company.rating || 0,
+        reviewCount: company.reviewCount || 0,
+        companyType: company.type, // Map type to companyType for frontend
+        location: companyLocation || 'Location not specified', // Add formatted location
+        activeProjects: 0, // TODO: Calculate from actual active projects
         lastActivity: daysInactive < 1 ? 'Active today' : 
                       daysInactive < 7 ? 'Active this week' :
                       daysInactive < 30 ? 'Active this month' : 
