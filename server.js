@@ -3737,28 +3737,25 @@ app.get('/api/companies/:id/invitations', authMiddleware, async (req, res) => {
 // Get personalized company recommendations (LinkedIn-style network discovery)
 app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
   try {
+    const { verified } = req.query;
     const currentUser = await User.findById(req.user._id);
     if (!currentUser) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Get all verified companies - if none found, get all companies
-    let allCompanies = await Company.find({ 
-      verified: true,
-      deletedAt: null 
-    })
-    .populate('owner', 'firstName lastName')
-    .limit(100);
-
-    // Fallback: if no verified companies, get all companies
-    if (!allCompanies || allCompanies.length === 0) {
-      console.log('No verified companies found, fetching all companies');
-      allCompanies = await Company.find({ 
-        deletedAt: null 
-      })
+    // Build filter based on query parameter
+    const filter = { deletedAt: null };
+    if (verified === 'true') {
+      filter.verified = true;
+    } else if (verified === 'false') {
+      filter.verified = false;
+    }
+    // If no verified parameter, get all companies
+    
+    // Get all companies based on filter
+    let allCompanies = await Company.find(filter)
       .populate('owner', 'firstName lastName')
       .limit(100);
-    }
 
     // If still no companies, return empty recommendations
     if (!allCompanies || allCompanies.length === 0) {
@@ -3877,8 +3874,8 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
         
         if (daysInactive < 7) {
           score += 35;
-          category = 'recentlyActive';
-          reason = 'Active this week';
+          if (!category) category = 'recentlyActive';
+          if (!reason) reason = 'Active this week';
         } else if (daysInactive < 30) {
           score += 25;
           if (!category) category = 'recentlyActive';
@@ -3938,7 +3935,8 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
     res.json({
       topPicks,
       mayKnow,
-      recentlyActive
+      recentlyActive,
+      totalCompanies: allCompanies.length
     });
   } catch (error) {
     console.error('Company recommendations error:', error);
