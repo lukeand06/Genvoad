@@ -4,255 +4,223 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Projects - Genovad</title>
-    <meta name="description" content="Browse, create, and manage construction projects on Genovad" />
-    
-    <!-- Preconnect to external domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    
-    <!-- Optimized font loading -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet" /></noscript>
-    
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root{
-            --bg:#f6f7f8; --surface:#ffffff; --ink:#0b1620; --muted:#5a6975;
-            --brand:#146a5a; --brand-2:#1e7a73; --ring:#aee3d8; --chip:#ecf5f3; --chip-text:#256b5b;
-            --warn:#b45309; --ok:#0f766e; --shadow:0 10px 40px rgba(16,24,40,.08); --border:#e7efec;
-        }
-        *,*::before,*::after{box-sizing:border-box}
-        html,body{height:100%; margin:0}
-        body{font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-
-        .hero{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #e8edf2;box-shadow:0 2px 8px rgba(15,23,42,.04)}
-        .hero-inner{display:flex;flex-direction:column;gap:4px;max-width:1400px;margin:0 auto;padding:16px 24px}
-        .hero h1{margin:0;font:800 24px/1.2 Inter,sans-serif;color:#0b3a32;display:flex;align-items:center;gap:8px}
-        .hero h1::before{content:'';width:6px;height:6px;background:#146a5a;border-radius:50%;display:inline-block}
-        .hero p{margin:0;font-size:14px;color:#4a5f5a;font-weight:500}
-
-        .page{margin:24px auto 96px;padding:0 16px;display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;width:100%;max-width:1400px}
-        .leftCol{display:grid;gap:20px;align-content:start}
-        .rightCol{display:grid;gap:20px}
-
-        .side{
-            background:linear-gradient(150deg,#f8fbfa 0%,#eef4f2 100%);
-            border-radius:16px;padding:16px;border:1px solid #dfe9e6;box-shadow:var(--shadow);
-        }
-        .logo{font:700 22px Oswald,Inter,sans-serif;letter-spacing:.5px;color:var(--ink);margin:2px 0 10px}
-        .side h3{margin:4px 0 12px;font:700 11px Inter,sans-serif;letter-spacing:1.4px;color:#2f4d48;text-transform:uppercase;padding:8px 12px;border:1px solid #dbe8e5;border-radius:10px;background:#ffffffc9}
-        .field{display:grid;gap:6px;margin:8px 0 12px;padding:10px 12px;background:#fff;border:1px solid #e6ecea;border-radius:12px;box-shadow:0 4px 12px rgba(16,24,40,.05)}
-        .field label{font-size:12px;color:#2f4d48;font-weight:700;letter-spacing:.01em}
-        .field input,.field select{height:40px;border:1px solid #e2e9e7;background:#f9fbfb;border-radius:9px;padding:0 12px;font-size:14px;color:var(--ink);width:100%}
-        .field input:focus,.field select:focus{outline:none;border-color:#c8e9e2;box-shadow:0 0 0 3px #aee3d873}
-        .budget-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-        .btn{height:40px;border:none;border-radius:10px;background:var(--brand);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(20,106,90,.25);padding:0 14px}
-        .btn:hover{background:var(--brand-2)}
-        .btn-ghost{height:40px;border:1px solid #d7e6e3;background:#f6fbfa;color:#125f52;border-radius:10px;font-weight:700;padding:0 14px;cursor:pointer}
-
-        .section{background:var(--surface);border-radius:18px;padding:18px;box-shadow:var(--shadow);overflow:hidden;grid-column:1 / -1}
-        .section h2{margin:0 0 6px;font:700 18px Inter;color:#12342f}
-        .section p.sub{margin:0 0 16px;color:var(--muted);font-size:13px}
-
-        .grid{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;padding-bottom:8px;flex-wrap:nowrap;scroll-snap-type:x mandatory}
-        .grid::-webkit-scrollbar{height:8px}
-        .grid::-webkit-scrollbar-track{background:#f0f5f3;border-radius:4px}
-        .grid::-webkit-scrollbar-thumb{background:#b8d9d1;border-radius:4px}
-
-        .card{
-            flex:0 0 360px;max-width:360px;min-width:300px;scroll-snap-align:start;
-            border:1px solid #e5ede9;border-radius:14px;background:#fff;overflow:hidden;
-            transition:all .2s ease;cursor:pointer;display:flex;flex-direction:column;box-shadow:0 2px 6px rgba(11,22,32,.05);
-        }
-        .card:hover{border-color:#c8e9e2;box-shadow:0 8px 24px rgba(20,106,90,.15);transform:translateY(-3px)}
-
-        .card-header{display:flex;flex-direction:column;gap:10px;padding:20px 20px 16px 20px;border-bottom:none}
-        .card-header-top{display:flex;align-items:flex-start;gap:14px}
-        .logo-dot{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;font-weight:800;font-size:18px;color:#0f3f37;background:linear-gradient(135deg,#f2f6f5 0%,#e6f0ed 100%);box-shadow:0 2px 8px rgba(18,106,90,.06)}
-        .card-header-content{flex:1;min-width:0}
-        .title{font:700 17px Inter;margin:0;color:#0b1620;letter-spacing:-.2px;line-height:1.4;word-break:break-word}
-        .card-meta-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
-        .chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;background:#e0f1eb;color:#0d5a4f;border-radius:5px;font-weight:600;font-size:12px;letter-spacing:-.3px}
-        .status-badge{padding:4px 9px;border-radius:5px;font-weight:600;font-size:12px;border:none;letter-spacing:-.3px}
-        .status-open{background:#d4f5e8;color:#0d5a4f}
-        .status-urgent{background:#fde4d0;color:#92400e}
-        .status-progress{background:#d1e9f9;color:#0d47a1}
-
-        .card-body{flex:1;display:flex;flex-direction:column;gap:12px;padding:16px 20px 12px 20px}
-        .info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-        .info-item{display:flex;align-items:center;gap:8px;padding:0;background:none;border:none;border-radius:0}
-        .info-item svg{width:14px;height:14px;color:#146a5a;margin-top:0;flex-shrink:0}
-        .info-item-content{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
-        .info-label{font-size:11px;font-weight:500;color:#7a8a87;text-transform:uppercase;letter-spacing:.8px;margin-bottom:0;display:none}
-        .info-value{font-size:14px;font-weight:600;color:#0b1620;word-break:break-word;line-height:1.3}
-
-        .tagstrip{display:flex;gap:5px;flex-wrap:wrap}
-        .tag{font-weight:600;font-size:11px;color:#0d5a4f;background:#dff0ec;border:none;border-radius:5px;padding:4px 8px;letter-spacing:-.2px}
-
-        .desc{color:#5a6f6b;font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:400}
-
-        .cta{display:flex;flex-direction:column;gap:8px;padding:12px 20px 20px 20px;background:#fff;border-top:1px solid #f0f5f3}
-        .btn-cta{height:40px;padding:0 16px;border-radius:9px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border:none;color:#146a5a;background:#f0f5f3;box-shadow:none;transition:all .15s;letter-spacing:-.3px}
-        .btn-cta:hover{background:#dff0ec;transform:translateY(-1px)}
-        .btn-cta.primary{background:#146a5a;color:#fff;font-weight:600}
-        .btn-cta.primary:hover{background:#1e7a73;box-shadow:0 4px 12px rgba(20,106,90,.25)}
-
-        .skeleton{animation:pulse 1.2s ease-in-out infinite;background:linear-gradient(90deg,#f3f6f5 25%,#e9f1ef 37%,#f3f6f5 63%);background-size:400% 100%}
-        @keyframes pulse{0%{background-position:100% 0}100%{background-position:0 0}}
-        .sk-card{height:220px;border-radius:16px}
-
-        .search-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#fff;border:1px solid #e2e9e7;border-radius:12px;flex:1}
-        .search-bar input{flex:1;border:none;background:transparent;font-size:14px;outline:none;color:var(--ink)}
-        .search-bar input::placeholder{color:#a0b5ae}
-
-        @media (max-width:1080px){
-            .page{grid-template-columns:1fr}
-            .card{flex:0 0 320px;max-width:320px;min-width:280px}
-        }
-        @media (max-width:768px){
-            .page{grid-template-columns:1fr;gap:16px;margin:16px auto 72px}
-            .card{flex:0 0 280px;max-width:300px;min-width:240px}
-        }
-        @media (max-width:480px){
-            .page{margin:12px auto 60px;padding:0 12px}
-            .card{flex:0 0 240px;max-width:260px;min-width:200px}
-            .info-grid{grid-template-columns:1fr}
-            .side{padding:12px;border-radius:12px}
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-clamp: 2; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
     </style>
 </head>
-<body>
-    <header class="hero" role="banner">
-        <div class="hero-inner">
-            <h1>Projects</h1>
-            <p>Discover opportunities, post work, and grow your network on Genovad</p>
-        </div>
-    </header>
-
-    <main class="page" role="main">
-        <!-- Left Sidebar: Filters -->
-        <div class="leftCol">
-            <aside class="side" aria-label="Filters">
-                <div class="logo">GENOVAD</div>
-                <h3>Filters</h3>
-
-                <div class="field">
-                    <label for="f-search">Search by Keyword</label>
-                    <input type="text" id="f-search" placeholder="e.g., renovation, plumbing..." />
-                </div>
-
-                <div class="field">
-                    <label for="f-category">Category</label>
-                    <select id="f-category">
-                        <option value="all">All Categories</option>
-                        <option>Residential</option>
-                        <option>Commercial</option>
-                        <option>Industrial</option>
-                        <option>Renovation</option>
-                        <option>Landscaping</option>
-                        <option>Infrastructure</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label for="f-status">Status</label>
-                    <select id="f-status">
-                        <option value="all">All Status</option>
-                        <option value="open">Open</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label>Budget Range (USD)</label>
-                    <div class="budget-grid">
-                        <input id="f-min" type="number" placeholder="Min" />
-                        <input id="f-max" type="number" placeholder="Max" />
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+                            <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                            <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-xl font-semibold text-gray-900">Genovad</span>
+                    </a>
+                    
+                    <div class="hidden md:flex space-x-1">
+                        <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
+                        <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Projects</a>
+                        <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+                        <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Network</a>
+                        <a href="/browse.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
+                        <a href="/company.html" id="company-nav-link" class="hidden px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Company</a>
                     </div>
                 </div>
 
-                <div class="field">
-                    <label for="f-location">Location / City</label>
-                    <input id="f-location" type="text" placeholder="e.g., Bay Area, CA" />
-                </div>
-
-                <div class="field">
-                    <label for="f-timeline">Timeline</label>
-                    <select id="f-timeline">
-                        <option value="all">All Timelines</option>
-                        <option value="urgent">Urgent (this week)</option>
-                        <option value="soon">Soon (this month)</option>
-                        <option value="flexible">Flexible (3+ months)</option>
-                    </select>
-                </div>
-
-                <div style="display:flex;gap:8px;margin-top:12px;">
-                    <button class="btn" id="applyFilters" type="button">Apply</button>
-                    <button class="btn-ghost" id="clearFilters" type="button">Clear</button>
-                </div>
-            </aside>
-        </div>
-
-        <!-- Right Content: Browse Sections -->
-        <div class="rightCol">
-            <!-- Recommended For You -->
-            <section class="section">
-                <h2>Recommended For You</h2>
-                <p class="sub">Projects matching your skills and experience</p>
-                <div id="cards-recommended" class="grid" aria-live="polite"></div>
-            </section>
-
-            <!-- Recently Active With -->
-            <section class="section">
-                <h2>Recently Active With</h2>
-                <p class="sub">Projects from owners and teams you've worked with</p>
-                <div id="cards-recent" class="grid"></div>
-            </section>
-
-            <!-- Near You -->
-            <section class="section">
-                <h2>Near You</h2>
-                <p class="sub">Projects in your area (uses browser location when allowed)</p>
-                <div id="cards-nearby" class="grid"></div>
-            </section>
-
-            <!-- Browse All Projects -->
-            <section class="section">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-                    <div>
-                        <h2>Browse All Projects</h2>
-                        <p class="sub">Explore all opportunities with advanced filtering</p>
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/notifications.html" class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
+                    </a>
+                    <a href="/create-project.html" id="nav-cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <div class="relative" id="user-menu">
+                        <button id="user-menu-btn" class="flex items-center space-x-2">
+                            <div id="user-avatar"></div>
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                            <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
+                            <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
+                            <hr class="my-1">
+                            <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
+                        </div>
                     </div>
                 </div>
-                <div id="cards-browse" class="grid"></div>
-                <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;">
-                    <button id="btn-show-more" class="btn" style="display:none">Show More Projects</button>
-                </div>
-            </section>
+            </div>
         </div>
-    </main>
+    </nav>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-menu" class="hidden fixed inset-0 z-40 md:hidden">
+        <div class="fixed inset-0 bg-black bg-opacity-50" id="mobile-menu-backdrop"></div>
+        <div class="fixed top-0 left-0 w-64 h-full bg-white shadow-lg overflow-y-auto">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Menu</h3>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="/dashboard.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
+                <a href="/projects.html" class="block px-4 py-3 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg hover:bg-gray-100">Projects</a>
+                <a href="/messages.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+                <a href="/browse.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
+                <a href="/notifications.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Notifications</a>
+            </nav>
+            <div class="p-4 border-t border-gray-200">
+                <a href="/create-project.html" class="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Post Project</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Projects</h1>
+            <p class="text-gray-600 mt-2">Browse opportunities, discover projects, and grow your network</p>
+        </div>
+
+        <!-- Filters & Search -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                <input type="text" id="f-search" placeholder="Search by keyword..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select id="f-category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    <option value="all">All Categories</option>
+                    <option>Residential</option>
+                    <option>Commercial</option>
+                    <option>Industrial</option>
+                    <option>Renovation</option>
+                    <option>Landscaping</option>
+                    <option>Infrastructure</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select id="f-status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    <option value="all">All Status</option>
+                    <option value="open">Open</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range</label>
+                <div class="flex gap-2">
+                    <input type="number" id="f-min" placeholder="Min" class="w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                    <input type="number" id="f-max" placeholder="Max" class="w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="flex gap-3 mb-8">
+            <button id="applyFilters" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Apply Filters</button>
+            <button id="clearFilters" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50">Clear</button>
+        </div>
+
+        <!-- Recommended Section -->
+        <div class="mb-12">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Recommended For You</h2>
+                <p class="text-gray-600 mt-1">Projects matching your skills and experience</p>
+            </div>
+            <div id="cards-recommended" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- Recently Active Section -->
+        <div class="mb-12">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Recently Active With</h2>
+                <p class="text-gray-600 mt-1">Projects from teams you've worked with</p>
+            </div>
+            <div id="cards-recent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- Near You Section -->
+        <div class="mb-12">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Near You</h2>
+                <p class="text-gray-600 mt-1">Projects in your area (uses browser location when allowed)</p>
+            </div>
+            <div id="cards-nearby" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- Browse All Section -->
+        <div class="mb-12">
+            <div class="mb-6">
+                <h2 class="text-2xl font-bold text-gray-900">Browse All Projects</h2>
+                <p class="text-gray-600 mt-1">Explore all opportunities with advanced filtering</p>
+            </div>
+            <div id="cards-browse" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div class="flex justify-center mt-8">
+                <button id="btn-show-more" class="px-8 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800" style="display:none;">Show More Projects</button>
+            </div>
+        </div>
+    </div>
 
     <script src="/public/js/auth.js"></script>
     <script>
-        const currentUser = (() => {
-            try { return JSON.parse(localStorage.getItem('genovad_user') || '{}'); }
-            catch { return {}; }
-        })();
+        if (!requireAuth()) {
+            throw new Error('Not authenticated');
+        }
+
+        const currentUser = getCurrentUser();
+        document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
+
+        // Mobile Menu
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        mobileMenuBackdrop.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+        });
+        
+        // User menu
+        document.getElementById('user-menu-btn').addEventListener('click', () => {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+        
+        document.getElementById('logout-btn').addEventListener('click', logout);
 
         let _projects = [];
         let _displayedCount = 0;
         const INITIAL_LOAD = 3;
-        const LOAD_INCREMENT = 3;
+        const LOAD_INCREMENT = 6;
         let _userLocation = null;
 
         function icon(path){
-            return `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="${path}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+            return `<svg viewBox="0 0 24 24" fill="none" class="w-4 h-4"><path d="${path}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
         }
 
         const pin = "M12 21s7-4.35 7-10a7 7 0 10-14 0c0 5.65 7 10 7 10z M12 11a2 2 0 110-4 2 2 0 010 4z";
-        const coin = "M4 7a8 3 0 1016 0 8 3 0 10-16 0zm0 5a8 3 0 0016 0m-16 5a8 3 0 0016 0";
+        const coin = "M12 8v8m-4-4h8M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z";
         const calendar = "M8 7V3m8 4V3M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z";
-        const check = "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z";
 
         function daysLeft(dateStr){
             if(!dateStr) return null;
@@ -262,81 +230,54 @@
             return Math.ceil(ms/86400000);
         }
 
-        function cardHTML(p){
+        function getStatusBadge(dueDays) {
+            if(dueDays === null) return '';
+            if(dueDays <= 3 && dueDays >= 0) {
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">⚡ Urgent - ${dueDays}d left</span>`;
+            } else if(dueDays > 3 && dueDays <= 14) {
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Due in ${dueDays} days</span>`;
+            } else if(dueDays > 14) {
+                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Open</span>`;
+            }
+            return '';
+        }
+
+        function cardHTML(p) {
             const dueDays = daysLeft(p.dueDate || p.createdAt);
+            const statusBadge = getStatusBadge(dueDays);
             const initials = (p.ownerName || p.owner?.name || '•').split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
             
-            let statusBadge = '';
-            if(dueDays !== null){
-                if(dueDays <= 3 && dueDays >= 0){
-                    statusBadge = `<span class="status-badge status-urgent">⚡ Urgent - ${dueDays}d left</span>`;
-                } else if(dueDays > 3 && dueDays <= 14){
-                    statusBadge = `<span class="status-badge status-open">Due in ${dueDays} days</span>`;
-                } else if(dueDays > 14){
-                    statusBadge = `<span class="status-badge status-open">Open</span>`;
-                }
-            }
-
             const categoryShown = p.category || (p.tags && p.tags[0]) || 'General';
-            const tagsToShow = (p.tags || []).filter(t => t !== categoryShown).slice(0, 3);
-            const tagStripFiltered = tagsToShow.map(t => `<span class="tag">${t}</span>`).join('');
-
             const budgetDisplay = p.budget ? '$' + Number(p.budget).toLocaleString() : 'Budget TBD';
 
             return `
-                <article class="card" tabindex="0" role="button" aria-label="Open ${p.title}">
-                    <div class="card-header">
-                        <div class="card-header-top">
-                            <div class="logo-dot">${p.icon || initials}</div>
-                            <div class="card-header-content">
-                                <h3 class="title">${p.title}</h3>
-                                <div class="card-meta-row">
-                                    <span class="chip">${categoryShown}</span>
-                                    ${statusBadge}
+                <article class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition">
+                    <div class="p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-start space-x-3 flex-1">
+                                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">
+                                    ${p.icon || initials}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <h3 class="text-lg font-semibold text-gray-900 line-clamp-2">${p.title}</h3>
+                                    <p class="text-sm text-gray-600 mt-1">${categoryShown}</p>
                                 </div>
                             </div>
+                            ${statusBadge}
                         </div>
-                        ${tagStripFiltered ? `<div class="tagstrip">${tagStripFiltered}</div>` : ''}
-                    </div>
 
-                    <div class="card-body">
-                        ${p.description ? `<p class="desc">${p.description}${p.scope ? ' • ' + p.scope : ''}</p>` : ''}
-                        
-                        <div class="info-grid">
-                            <div class="info-item">
-                                ${icon(pin)}
-                                <div class="info-item-content">
-                                    <div class="info-label">Location</div>
-                                    <div class="info-value">${p.location || 'Not specified'}</div>
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                ${icon(coin)}
-                                <div class="info-item-content">
-                                    <div class="info-label">Budget</div>
-                                    <div class="info-value">${budgetDisplay}</div>
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                ${icon(calendar)}
-                                <div class="info-item-content">
-                                    <div class="info-label">Posted</div>
-                                    <div class="info-value">${p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) : 'Recently'}</div>
-                                </div>
-                            </div>
-                            <div class="info-item">
-                                ${icon(check)}
-                                <div class="info-item-content">
-                                    <div class="info-label">Status</div>
-                                    <div class="info-value">${(p.status || 'open').replace('_', ' ')}</div>
-                                </div>
-                            </div>
+                        ${p.description ? `<p class="text-sm text-gray-600 line-clamp-2 mb-4">${p.description}</p>` : ''}
+
+                        <div class="space-y-2 mb-6 text-sm">
+                            ${p.location ? `<div class="flex items-center text-gray-600"><svg class="w-4 h-4 mr-2 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>${p.location}</div>` : ''}
+                            <div class="flex items-center text-gray-600"><svg class="w-4 h-4 mr-2 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg><strong>${budgetDisplay}</strong></div>
+                            ${p.createdAt ? `<div class="flex items-center text-gray-600"><svg class="w-4 h-4 mr-2 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>Posted ${new Date(p.createdAt).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</div>` : ''}
                         </div>
-                    </div>
 
-                    <div class="cta">
-                        <button class="btn-cta primary" data-id="${p._id}" onclick="event.stopPropagation(); viewProject('${p._id}')">View Details</button>
-                        <button class="btn-cta" onclick="event.stopPropagation(); messageOwner('${p._id}')">Message Owner</button>
+                        <div class="flex gap-3">
+                            <button onclick="viewProject('${p._id}')" class="flex-1 px-4 py-2 bg-gray-900 text-white rounded-lg font-medium text-sm hover:bg-gray-800">View Details</button>
+                            <button onclick="messageOwner('${p._id}')" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium text-sm hover:bg-gray-50">Message</button>
+                        </div>
                     </div>
                 </article>
             `;
@@ -347,7 +288,7 @@
             host.innerHTML = '';
             
             if(!list.length){
-                host.innerHTML = '<div style="grid-column:1/-1;color:#6a7b78;padding:16px;text-align:center;">No projects match.</div>';
+                host.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No projects found</p></div>';
                 return;
             }
 
@@ -367,8 +308,6 @@
                 status: document.getElementById('f-status').value,
                 minBudget: document.getElementById('f-min').value ? Number(document.getElementById('f-min').value) : null,
                 maxBudget: document.getElementById('f-max').value ? Number(document.getElementById('f-max').value) : null,
-                location: (document.getElementById('f-location').value || '').toLowerCase(),
-                timeline: document.getElementById('f-timeline').value
             };
         }
 
@@ -387,10 +326,7 @@
                 const budget = Number(p.budget) || 0;
                 const matchesBudget = (!f.minBudget || budget >= f.minBudget) && (!f.maxBudget || budget <= f.maxBudget);
                 
-                const location = (p.location || '').toLowerCase();
-                const matchesLocation = !f.location || location.includes(f.location);
-                
-                return matchesSearch && matchesCategory && matchesStatus && matchesBudget && matchesLocation;
+                return matchesSearch && matchesCategory && matchesStatus && matchesBudget;
             });
         }
 
@@ -399,7 +335,7 @@
             const dx = _userLocation.lat - Number(p.lat);
             const dy = _userLocation.lon - Number(p.lon);
             const dist = Math.sqrt(dx*dx + dy*dy);
-            return 1 - (dist / 100); // closer = higher score
+            return 1 - (dist / 100);
         }
 
         async function fetchProjects(){
@@ -437,37 +373,25 @@
         function renderAllSections(){
             if(!_projects.length){
                 ['cards-recommended', 'cards-recent', 'cards-nearby', 'cards-browse'].forEach(id => {
-                    const host = document.getElementById(id);
-                    host.innerHTML = '';
-                    for(let i = 0; i < 3; i++){
-                        const sk = document.createElement('div');
-                        sk.className = 'skeleton sk-card';
-                        host.appendChild(sk);
-                    }
+                    document.getElementById(id).innerHTML = '<div class="col-span-full"><div class="h-40 bg-gray-200 rounded-lg animate-pulse"></div></div>';
                 });
                 return;
             }
 
             const filtered = filterProjects(_projects);
             
-            // Recommended: All filtered projects
             renderGrid('cards-recommended', filtered.slice(0, INITIAL_LOAD));
-
-            // Recent: Top 3 projects
             renderGrid('cards-recent', filtered.slice(0, INITIAL_LOAD));
-
-            // Nearby: Top 3 projects sorted by proximity
+            
             const sorted = [...filtered].sort((a,b) => scoreProximity(b) - scoreProximity(a));
             renderGrid('cards-nearby', sorted.slice(0, INITIAL_LOAD));
 
-            // Browse All: First batch
             _displayedCount = INITIAL_LOAD;
             renderGrid('cards-browse', filtered, INITIAL_LOAD);
             
-            // Show more button if needed
             const browseBtn = document.getElementById('btn-show-more');
             if(filtered.length > INITIAL_LOAD){
-                browseBtn.style.display = 'inline-flex';
+                browseBtn.style.display = 'inline-block';
                 browseBtn.onclick = () => showMoreProjects(filtered);
             } else {
                 browseBtn.style.display = 'none';
@@ -513,8 +437,6 @@
             document.getElementById('f-status').value = 'all';
             document.getElementById('f-min').value = '';
             document.getElementById('f-max').value = '';
-            document.getElementById('f-location').value = '';
-            document.getElementById('f-timeline').value = 'all';
             renderAllSections();
         });
 
@@ -525,11 +447,6 @@
             await fetchProjects();
             renderAllSections();
         })();
-
-        // Add fade-in animation
-        const style = document.createElement('style');
-        style.textContent = `@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`;
-        document.head.appendChild(style);
     </script>
 </body>
 </html>

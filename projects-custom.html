@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - Genovad</title>
+    <meta name="description" content="Browse, create, and manage construction projects on Genovad" />
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Optimized font loading -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet" /></noscript>
+    
+    <style>
+        :root{
+            --bg:#f6f7f8; --surface:#ffffff; --ink:#0b1620; --muted:#5a6975;
+            --brand:#146a5a; --brand-2:#1e7a73; --ring:#aee3d8; --chip:#ecf5f3; --chip-text:#256b5b;
+            --warn:#b45309; --ok:#0f766e; --shadow:0 10px 40px rgba(16,24,40,.08); --border:#e7efec;
+        }
+        *,*::before,*::after{box-sizing:border-box}
+        html,body{height:100%; margin:0}
+        body{font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+
+        .hero{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #e8edf2;box-shadow:0 2px 8px rgba(15,23,42,.04)}
+        .hero-inner{display:flex;flex-direction:column;gap:4px;max-width:1400px;margin:0 auto;padding:16px 24px}
+        .hero h1{margin:0;font:800 24px/1.2 Inter,sans-serif;color:#0b3a32;display:flex;align-items:center;gap:8px}
+        .hero h1::before{content:'';width:6px;height:6px;background:#146a5a;border-radius:50%;display:inline-block}
+        .hero p{margin:0;font-size:14px;color:#4a5f5a;font-weight:500}
+
+        .page{margin:24px auto 96px;padding:0 16px;display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;width:100%;max-width:1400px}
+        .leftCol{display:grid;gap:20px;align-content:start}
+        .rightCol{display:grid;gap:20px}
+
+        .side{
+            background:linear-gradient(150deg,#f8fbfa 0%,#eef4f2 100%);
+            border-radius:16px;padding:16px;border:1px solid #dfe9e6;box-shadow:var(--shadow);
+        }
+        .logo{font:700 22px Oswald,Inter,sans-serif;letter-spacing:.5px;color:var(--ink);margin:2px 0 10px}
+        .side h3{margin:4px 0 12px;font:700 11px Inter,sans-serif;letter-spacing:1.4px;color:#2f4d48;text-transform:uppercase;padding:8px 12px;border:1px solid #dbe8e5;border-radius:10px;background:#ffffffc9}
+        .field{display:grid;gap:6px;margin:8px 0 12px;padding:10px 12px;background:#fff;border:1px solid #e6ecea;border-radius:12px;box-shadow:0 4px 12px rgba(16,24,40,.05)}
+        .field label{font-size:12px;color:#2f4d48;font-weight:700;letter-spacing:.01em}
+        .field input,.field select{height:40px;border:1px solid #e2e9e7;background:#f9fbfb;border-radius:9px;padding:0 12px;font-size:14px;color:var(--ink);width:100%}
+        .field input:focus,.field select:focus{outline:none;border-color:#c8e9e2;box-shadow:0 0 0 3px #aee3d873}
+        .budget-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .btn{height:40px;border:none;border-radius:10px;background:var(--brand);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(20,106,90,.25);padding:0 14px}
+        .btn:hover{background:var(--brand-2)}
+        .btn-ghost{height:40px;border:1px solid #d7e6e3;background:#f6fbfa;color:#125f52;border-radius:10px;font-weight:700;padding:0 14px;cursor:pointer}
+
+        .section{background:var(--surface);border-radius:18px;padding:18px;box-shadow:var(--shadow);overflow:hidden;grid-column:1 / -1}
+        .section h2{margin:0 0 6px;font:700 18px Inter;color:#12342f}
+        .section p.sub{margin:0 0 16px;color:var(--muted);font-size:13px}
+
+        .grid{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;padding-bottom:8px;flex-wrap:nowrap;scroll-snap-type:x mandatory}
+        .grid::-webkit-scrollbar{height:8px}
+        .grid::-webkit-scrollbar-track{background:#f0f5f3;border-radius:4px}
+        .grid::-webkit-scrollbar-thumb{background:#b8d9d1;border-radius:4px}
+
+        .card{
+            flex:0 0 360px;max-width:360px;min-width:300px;scroll-snap-align:start;
+            border:1px solid #e5ede9;border-radius:14px;background:#fff;overflow:hidden;
+            transition:all .2s ease;cursor:pointer;display:flex;flex-direction:column;box-shadow:0 2px 6px rgba(11,22,32,.05);
+        }
+        .card:hover{border-color:#c8e9e2;box-shadow:0 8px 24px rgba(20,106,90,.15);transform:translateY(-3px)}
+
+        .card-header{display:flex;flex-direction:column;gap:10px;padding:20px 20px 16px 20px;border-bottom:none}
+        .card-header-top{display:flex;align-items:flex-start;gap:14px}
+        .logo-dot{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;font-weight:800;font-size:18px;color:#0f3f37;background:linear-gradient(135deg,#f2f6f5 0%,#e6f0ed 100%);box-shadow:0 2px 8px rgba(18,106,90,.06)}
+        .card-header-content{flex:1;min-width:0}
+        .title{font:700 17px Inter;margin:0;color:#0b1620;letter-spacing:-.2px;line-height:1.4;word-break:break-word}
+        .card-meta-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
+        .chip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;background:#e0f1eb;color:#0d5a4f;border-radius:5px;font-weight:600;font-size:12px;letter-spacing:-.3px}
+        .status-badge{padding:4px 9px;border-radius:5px;font-weight:600;font-size:12px;border:none;letter-spacing:-.3px}
+        .status-open{background:#d4f5e8;color:#0d5a4f}
+        .status-urgent{background:#fde4d0;color:#92400e}
+        .status-progress{background:#d1e9f9;color:#0d47a1}
+
+        .card-body{flex:1;display:flex;flex-direction:column;gap:12px;padding:16px 20px 12px 20px}
+        .info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+        .info-item{display:flex;align-items:center;gap:8px;padding:0;background:none;border:none;border-radius:0}
+        .info-item svg{width:14px;height:14px;color:#146a5a;margin-top:0;flex-shrink:0}
+        .info-item-content{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+        .info-label{font-size:11px;font-weight:500;color:#7a8a87;text-transform:uppercase;letter-spacing:.8px;margin-bottom:0;display:none}
+        .info-value{font-size:14px;font-weight:600;color:#0b1620;word-break:break-word;line-height:1.3}
+
+        .tagstrip{display:flex;gap:5px;flex-wrap:wrap}
+        .tag{font-weight:600;font-size:11px;color:#0d5a4f;background:#dff0ec;border:none;border-radius:5px;padding:4px 8px;letter-spacing:-.2px}
+
+        .desc{color:#5a6f6b;font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:400}
+
+        .cta{display:flex;flex-direction:column;gap:8px;padding:12px 20px 20px 20px;background:#fff;border-top:1px solid #f0f5f3}
+        .btn-cta{height:40px;padding:0 16px;border-radius:9px;font-weight:600;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;border:none;color:#146a5a;background:#f0f5f3;box-shadow:none;transition:all .15s;letter-spacing:-.3px}
+        .btn-cta:hover{background:#dff0ec;transform:translateY(-1px)}
+        .btn-cta.primary{background:#146a5a;color:#fff;font-weight:600}
+        .btn-cta.primary:hover{background:#1e7a73;box-shadow:0 4px 12px rgba(20,106,90,.25)}
+
+        .skeleton{animation:pulse 1.2s ease-in-out infinite;background:linear-gradient(90deg,#f3f6f5 25%,#e9f1ef 37%,#f3f6f5 63%);background-size:400% 100%}
+        @keyframes pulse{0%{background-position:100% 0}100%{background-position:0 0}}
+        .sk-card{height:220px;border-radius:16px}
+
+        .search-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;background:#fff;border:1px solid #e2e9e7;border-radius:12px;flex:1}
+        .search-bar input{flex:1;border:none;background:transparent;font-size:14px;outline:none;color:var(--ink)}
+        .search-bar input::placeholder{color:#a0b5ae}
+
+        @media (max-width:1080px){
+            .page{grid-template-columns:1fr}
+            .card{flex:0 0 320px;max-width:320px;min-width:280px}
+        }
+        @media (max-width:768px){
+            .page{grid-template-columns:1fr;gap:16px;margin:16px auto 72px}
+            .card{flex:0 0 280px;max-width:300px;min-width:240px}
+        }
+        @media (max-width:480px){
+            .page{margin:12px auto 60px;padding:0 12px}
+            .card{flex:0 0 240px;max-width:260px;min-width:200px}
+            .info-grid{grid-template-columns:1fr}
+            .side{padding:12px;border-radius:12px}
+        }
+    </style>
+</head>
+<body>
+    <header class="hero" role="banner">
+        <div class="hero-inner">
+            <h1>Projects</h1>
+            <p>Discover opportunities, post work, and grow your network on Genovad</p>
+        </div>
+    </header>
+
+    <main class="page" role="main">
+        <!-- Left Sidebar: Filters -->
+        <div class="leftCol">
+            <aside class="side" aria-label="Filters">
+                <div class="logo">GENOVAD</div>
+                <h3>Filters</h3>
+
+                <div class="field">
+                    <label for="f-search">Search by Keyword</label>
+                    <input type="text" id="f-search" placeholder="e.g., renovation, plumbing..." />
+                </div>
+
+                <div class="field">
+                    <label for="f-category">Category</label>
+                    <select id="f-category">
+                        <option value="all">All Categories</option>
+                        <option>Residential</option>
+                        <option>Commercial</option>
+                        <option>Industrial</option>
+                        <option>Renovation</option>
+                        <option>Landscaping</option>
+                        <option>Infrastructure</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label for="f-status">Status</label>
+                    <select id="f-status">
+                        <option value="all">All Status</option>
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Budget Range (USD)</label>
+                    <div class="budget-grid">
+                        <input id="f-min" type="number" placeholder="Min" />
+                        <input id="f-max" type="number" placeholder="Max" />
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="f-location">Location / City</label>
+                    <input id="f-location" type="text" placeholder="e.g., Bay Area, CA" />
+                </div>
+
+                <div class="field">
+                    <label for="f-timeline">Timeline</label>
+                    <select id="f-timeline">
+                        <option value="all">All Timelines</option>
+                        <option value="urgent">Urgent (this week)</option>
+                        <option value="soon">Soon (this month)</option>
+                        <option value="flexible">Flexible (3+ months)</option>
+                    </select>
+                </div>
+
+                <div style="display:flex;gap:8px;margin-top:12px;">
+                    <button class="btn" id="applyFilters" type="button">Apply</button>
+                    <button class="btn-ghost" id="clearFilters" type="button">Clear</button>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Right Content: Browse Sections -->
+        <div class="rightCol">
+            <!-- Recommended For You -->
+            <section class="section">
+                <h2>Recommended For You</h2>
+                <p class="sub">Projects matching your skills and experience</p>
+                <div id="cards-recommended" class="grid" aria-live="polite"></div>
+            </section>
+
+            <!-- Recently Active With -->
+            <section class="section">
+                <h2>Recently Active With</h2>
+                <p class="sub">Projects from owners and teams you've worked with</p>
+                <div id="cards-recent" class="grid"></div>
+            </section>
+
+            <!-- Near You -->
+            <section class="section">
+                <h2>Near You</h2>
+                <p class="sub">Projects in your area (uses browser location when allowed)</p>
+                <div id="cards-nearby" class="grid"></div>
+            </section>
+
+            <!-- Browse All Projects -->
+            <section class="section">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                    <div>
+                        <h2>Browse All Projects</h2>
+                        <p class="sub">Explore all opportunities with advanced filtering</p>
+                    </div>
+                </div>
+                <div id="cards-browse" class="grid"></div>
+                <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;">
+                    <button id="btn-show-more" class="btn" style="display:none">Show More Projects</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        const currentUser = (() => {
+            try { return JSON.parse(localStorage.getItem('genovad_user') || '{}'); }
+            catch { return {}; }
+        })();
+
+        let _projects = [];
+        let _displayedCount = 0;
+        const INITIAL_LOAD = 3;
+        const LOAD_INCREMENT = 3;
+        let _userLocation = null;
+
+        function icon(path){
+            return `<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="${path}" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        }
+
+        const pin = "M12 21s7-4.35 7-10a7 7 0 10-14 0c0 5.65 7 10 7 10z M12 11a2 2 0 110-4 2 2 0 010 4z";
+        const coin = "M4 7a8 3 0 1016 0 8 3 0 10-16 0zm0 5a8 3 0 0016 0m-16 5a8 3 0 0016 0";
+        const calendar = "M8 7V3m8 4V3M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z";
+        const check = "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z";
+
+        function daysLeft(dateStr){
+            if(!dateStr) return null;
+            const d = new Date(dateStr);
+            if (isNaN(d)) return null;
+            const ms = d.setHours(23,59,59,999) - Date.now();
+            return Math.ceil(ms/86400000);
+        }
+
+        function cardHTML(p){
+            const dueDays = daysLeft(p.dueDate || p.createdAt);
+            const initials = (p.ownerName || p.owner?.name || '•').split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+            
+            let statusBadge = '';
+            if(dueDays !== null){
+                if(dueDays <= 3 && dueDays >= 0){
+                    statusBadge = `<span class="status-badge status-urgent">⚡ Urgent - ${dueDays}d left</span>`;
+                } else if(dueDays > 3 && dueDays <= 14){
+                    statusBadge = `<span class="status-badge status-open">Due in ${dueDays} days</span>`;
+                } else if(dueDays > 14){
+                    statusBadge = `<span class="status-badge status-open">Open</span>`;
+                }
+            }
+
+            const categoryShown = p.category || (p.tags && p.tags[0]) || 'General';
+            const tagsToShow = (p.tags || []).filter(t => t !== categoryShown).slice(0, 3);
+            const tagStripFiltered = tagsToShow.map(t => `<span class="tag">${t}</span>`).join('');
+
+            const budgetDisplay = p.budget ? '$' + Number(p.budget).toLocaleString() : 'Budget TBD';
+
+            return `
+                <article class="card" tabindex="0" role="button" aria-label="Open ${p.title}">
+                    <div class="card-header">
+                        <div class="card-header-top">
+                            <div class="logo-dot">${p.icon || initials}</div>
+                            <div class="card-header-content">
+                                <h3 class="title">${p.title}</h3>
+                                <div class="card-meta-row">
+                                    <span class="chip">${categoryShown}</span>
+                                    ${statusBadge}
+                                </div>
+                            </div>
+                        </div>
+                        ${tagStripFiltered ? `<div class="tagstrip">${tagStripFiltered}</div>` : ''}
+                    </div>
+
+                    <div class="card-body">
+                        ${p.description ? `<p class="desc">${p.description}${p.scope ? ' • ' + p.scope : ''}</p>` : ''}
+                        
+                        <div class="info-grid">
+                            <div class="info-item">
+                                ${icon(pin)}
+                                <div class="info-item-content">
+                                    <div class="info-label">Location</div>
+                                    <div class="info-value">${p.location || 'Not specified'}</div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                ${icon(coin)}
+                                <div class="info-item-content">
+                                    <div class="info-label">Budget</div>
+                                    <div class="info-value">${budgetDisplay}</div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                ${icon(calendar)}
+                                <div class="info-item-content">
+                                    <div class="info-label">Posted</div>
+                                    <div class="info-value">${p.createdAt ? new Date(p.createdAt).toLocaleDateString('en-US', {month: 'short', day: 'numeric'}) : 'Recently'}</div>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                ${icon(check)}
+                                <div class="info-item-content">
+                                    <div class="info-label">Status</div>
+                                    <div class="info-value">${(p.status || 'open').replace('_', ' ')}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cta">
+                        <button class="btn-cta primary" data-id="${p._id}" onclick="event.stopPropagation(); viewProject('${p._id}')">View Details</button>
+                        <button class="btn-cta" onclick="event.stopPropagation(); messageOwner('${p._id}')">Message Owner</button>
+                    </div>
+                </article>
+            `;
+        }
+
+        function renderGrid(hostId, list, limit = 0){
+            const host = document.getElementById(hostId);
+            host.innerHTML = '';
+            
+            if(!list.length){
+                host.innerHTML = '<div style="grid-column:1/-1;color:#6a7b78;padding:16px;text-align:center;">No projects match.</div>';
+                return;
+            }
+
+            const toShow = limit > 0 ? list.slice(0, limit) : list;
+            toShow.forEach((p, index) => {
+                const el = document.createElement('div');
+                el.innerHTML = cardHTML(p);
+                el.style.animation = `fadeIn ${0.3 + index * 0.05}s ease forwards`;
+                host.appendChild(el.firstElementChild);
+            });
+        }
+
+        function readFilters(){
+            return {
+                search: (document.getElementById('f-search').value || '').toLowerCase(),
+                category: document.getElementById('f-category').value,
+                status: document.getElementById('f-status').value,
+                minBudget: document.getElementById('f-min').value ? Number(document.getElementById('f-min').value) : null,
+                maxBudget: document.getElementById('f-max').value ? Number(document.getElementById('f-max').value) : null,
+                location: (document.getElementById('f-location').value || '').toLowerCase(),
+                timeline: document.getElementById('f-timeline').value
+            };
+        }
+
+        function filterProjects(list){
+            const f = readFilters();
+            
+            return list.filter(p => {
+                const search = f.search;
+                const title = (p.title || '').toLowerCase();
+                const desc = (p.description || '').toLowerCase();
+                const matchesSearch = !search || title.includes(search) || desc.includes(search);
+                
+                const matchesCategory = f.category === 'all' || !f.category || (p.category || '').toLowerCase() === f.category.toLowerCase();
+                const matchesStatus = f.status === 'all' || !f.status || (p.status || 'open') === f.status;
+                
+                const budget = Number(p.budget) || 0;
+                const matchesBudget = (!f.minBudget || budget >= f.minBudget) && (!f.maxBudget || budget <= f.maxBudget);
+                
+                const location = (p.location || '').toLowerCase();
+                const matchesLocation = !f.location || location.includes(f.location);
+                
+                return matchesSearch && matchesCategory && matchesStatus && matchesBudget && matchesLocation;
+            });
+        }
+
+        function scoreProximity(p){
+            if(!_userLocation || !p.lat || !p.lon) return 0;
+            const dx = _userLocation.lat - Number(p.lat);
+            const dy = _userLocation.lon - Number(p.lon);
+            const dist = Math.sqrt(dx*dx + dy*dy);
+            return 1 - (dist / 100); // closer = higher score
+        }
+
+        async function fetchProjects(){
+            try {
+                const token = localStorage.getItem('genovad_token');
+                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+                const res = await fetch(`${API_BASE}/api/projects`, {credentials: 'include', headers});
+                
+                if(!res.ok) throw new Error('Failed to fetch');
+                const data = await res.json();
+                _projects = (data.projects || data.items || []).map(p => ({
+                    _id: p._id || p.id,
+                    title: p.title,
+                    description: p.description || '',
+                    location: p.location || '',
+                    budget: Number(p.budget) || 0,
+                    category: p.category || '',
+                    status: p.status || 'open',
+                    tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? p.tags.split(',').map(t => t.trim()) : []),
+                    createdAt: p.createdAt,
+                    dueDate: p.dueDate,
+                    ownerName: p.owner?.firstName || p.ownerName || 'Owner',
+                    owner: p.owner,
+                    icon: p.icon || '📁',
+                    scope: p.scope || '',
+                    lat: p.lat,
+                    lon: p.lon
+                }));
+            } catch(e){
+                console.error('Failed to fetch projects:', e);
+                _projects = [];
+            }
+        }
+
+        function renderAllSections(){
+            if(!_projects.length){
+                ['cards-recommended', 'cards-recent', 'cards-nearby', 'cards-browse'].forEach(id => {
+                    const host = document.getElementById(id);
+                    host.innerHTML = '';
+                    for(let i = 0; i < 3; i++){
+                        const sk = document.createElement('div');
+                        sk.className = 'skeleton sk-card';
+                        host.appendChild(sk);
+                    }
+                });
+                return;
+            }
+
+            const filtered = filterProjects(_projects);
+            
+            // Recommended: All filtered projects
+            renderGrid('cards-recommended', filtered.slice(0, INITIAL_LOAD));
+
+            // Recent: Top 3 projects
+            renderGrid('cards-recent', filtered.slice(0, INITIAL_LOAD));
+
+            // Nearby: Top 3 projects sorted by proximity
+            const sorted = [...filtered].sort((a,b) => scoreProximity(b) - scoreProximity(a));
+            renderGrid('cards-nearby', sorted.slice(0, INITIAL_LOAD));
+
+            // Browse All: First batch
+            _displayedCount = INITIAL_LOAD;
+            renderGrid('cards-browse', filtered, INITIAL_LOAD);
+            
+            // Show more button if needed
+            const browseBtn = document.getElementById('btn-show-more');
+            if(filtered.length > INITIAL_LOAD){
+                browseBtn.style.display = 'inline-flex';
+                browseBtn.onclick = () => showMoreProjects(filtered);
+            } else {
+                browseBtn.style.display = 'none';
+            }
+        }
+
+        function showMoreProjects(filtered){
+            const nextBatch = Math.min(_displayedCount + LOAD_INCREMENT, filtered.length);
+            renderGrid('cards-browse', filtered, nextBatch);
+            _displayedCount = nextBatch;
+
+            if(_displayedCount >= filtered.length){
+                document.getElementById('btn-show-more').style.display = 'none';
+            }
+        }
+
+        function viewProject(projectId){
+            const p = _projects.find(x => x._id === projectId);
+            if(!p) return;
+            window.location.href = `/project-detail.html?id=${projectId}`;
+        }
+
+        function messageOwner(projectId){
+            const p = _projects.find(x => x._id === projectId);
+            if(!p) return;
+            const ownerId = p.owner?._id || 'unknown';
+            window.location.href = `/messages.html?user=${ownerId}&projectId=${projectId}&projectTitle=${encodeURIComponent(p.title)}`;
+        }
+
+        // Get user location
+        if(navigator.geolocation){
+            navigator.geolocation.getCurrentPosition(pos => {
+                _userLocation = {lat: pos.coords.latitude, lon: pos.coords.longitude};
+                renderAllSections();
+            }, () => {}, {maximumAge: 600000, timeout: 6000});
+        }
+
+        // Event listeners
+        document.getElementById('applyFilters').addEventListener('click', renderAllSections);
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            document.getElementById('f-search').value = '';
+            document.getElementById('f-category').value = 'all';
+            document.getElementById('f-status').value = 'all';
+            document.getElementById('f-min').value = '';
+            document.getElementById('f-max').value = '';
+            document.getElementById('f-location').value = '';
+            document.getElementById('f-timeline').value = 'all';
+            renderAllSections();
+        });
+
+        document.getElementById('f-search').addEventListener('input', renderAllSections);
+
+        // Initialize
+        (async () => {
+            await fetchProjects();
+            renderAllSections();
+        })();
+
+        // Add fade-in animation
+        const style = document.createElement('style');
+        style.textContent = `@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }`;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
