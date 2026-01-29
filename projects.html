@@ -543,12 +543,20 @@
             window.location.href = `/messages.html?user=${ownerId}&projectId=${projectId}&projectTitle=${encodeURIComponent(p.title)}`;
         }
 
-        // Get user location
+        // Get user location (async, non-blocking)
         if(navigator.geolocation){
-            navigator.geolocation.getCurrentPosition(pos => {
-                _userLocation = {lat: pos.coords.latitude, lon: pos.coords.longitude};
-                renderAllSections();
-            }, () => {}, {maximumAge: 600000, timeout: 6000});
+            navigator.geolocation.getCurrentPosition(
+                pos => {
+                    _userLocation = {lat: pos.coords.latitude, lon: pos.coords.longitude};
+                    // Re-render to include proximity scores
+                    renderAllSections();
+                },
+                () => {
+                    // Permission denied or error - just continue without location
+                    console.log('Geolocation permission denied or unavailable');
+                },
+                {maximumAge: 600000, timeout: 3000}
+            );
         }
 
         // Event listeners
@@ -581,7 +589,7 @@
             searchInput.addEventListener('input', renderAllSections);
         }
 
-        // Initialize
+        // Initialize - Render projects immediately, geolocation is non-blocking
         (async () => {
             try {
                 console.log('Starting projects page initialization...');
@@ -592,6 +600,10 @@
             } catch (error) {
                 console.error('Initialization error:', error);
                 // Render empty state
+                const loadingIndicator = document.getElementById('loading-indicator');
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
                 ['cards-recommended', 'cards-recent', 'cards-nearby', 'cards-browse'].forEach(id => {
                     const elem = document.getElementById(id);
                     if (elem) {
