@@ -342,7 +342,7 @@
             try {
                 const token = localStorage.getItem('genovad_token');
                 const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-                const res = await fetch(`${API_BASE}/api/projects`, {credentials: 'include', headers});
+                const res = await fetch(`${window.location.origin}/api/projects`, {credentials: 'include', headers});
                 
                 if(!res.ok) throw new Error('Failed to fetch');
                 const data = await res.json();
