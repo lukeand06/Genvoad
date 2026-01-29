@@ -41,6 +41,18 @@ function getUserRole() {
   return user?.role || 'owner';
 }
 
+// Set active role (for role switching)
+function setActiveRole(role) {
+  if (role && ['owner', 'vendor'].includes(role)) {
+    localStorage.setItem('activeRole', role);
+  }
+}
+
+// Get active role
+function getActiveRole() {
+  return localStorage.getItem('activeRole') || getUserRole() || 'owner';
+}
+
 // Check if authenticated
 function isAuthenticated() {
   return !!getToken();
