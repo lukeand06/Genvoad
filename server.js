@@ -389,7 +389,9 @@ app.post('/api/auth/login', async (req, res) => {
     
     // Enforce account type: each account has exactly one role
     if (user.role !== requestedRole) {
-      return res.status(403).json({ error: `This account is registered as a ${user.role}. Please use the ${user.role} login or create a separate ${requestedRole} account with a different email.` });
+      const currentRoleLabel = user.role === 'vendor' ? 'Vendor / Service Provider' : 'Project Owner';
+      const requestedRoleLabel = requestedRole === 'vendor' ? 'Vendor / Service Provider' : 'Project Owner';
+      return res.status(403).json({ error: `This account is registered as a ${currentRoleLabel}. Please sign up with a ${requestedRoleLabel} account to continue.` });
     }
     
     // Update last active
