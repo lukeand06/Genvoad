@@ -491,10 +491,10 @@
                 const projectsData = await projectsResponse.json();
                 const allProjects = projectsData.projects || [];
                 
-                // Filter projects by partner ownership
+                // Filter projects by partner ownership and exclude completed projects
                 const partnerProjects = allProjects.filter(project => {
                     const ownerId = project.owner && (project.owner._id || project.owner);
-                    return partnerIds.includes(ownerId);
+                    return partnerIds.includes(ownerId) && project.status !== 'completed';
                 });
                 
                 if (partnerProjects.length === 0) {

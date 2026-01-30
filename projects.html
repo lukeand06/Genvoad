@@ -466,7 +466,8 @@
                 const matchesStatus = f.status === 'all' || (p.status || 'open') === f.status;
                 const budget = Number(p.budget) || 0;
                 const matchesBudget = (!f.minBudget || budget >= f.minBudget) && (!f.maxBudget || budget <= f.maxBudget);
-                return matchesSearch && matchesCategory && matchesStatus && matchesBudget;
+                const notCompleted = p.status !== 'completed';
+                return matchesSearch && matchesCategory && matchesStatus && matchesBudget && notCompleted;
             });
         }
 

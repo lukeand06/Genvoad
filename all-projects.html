@@ -371,8 +371,9 @@
                 const categoryMatch = filters.category === 'all' || p.category === filters.category;
                 const statusMatch = filters.status === 'all' || p.status === filters.status;
                 const budgetMatch = p.budget >= filters.minBudget && p.budget <= filters.maxBudget;
+                const notCompleted = p.status !== 'completed';
                 
-                return searchMatch && categoryMatch && statusMatch && budgetMatch;
+                return searchMatch && categoryMatch && statusMatch && budgetMatch && notCompleted;
             });
         }
 
