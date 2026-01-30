@@ -282,10 +282,8 @@
                         <div class="flex gap-2">
                             <select id="browse-type-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-900">
                                 <option value="">All Types</option>
-                                <option value="general_contractor">General Contractors</option>
-                                <option value="subcontractor">Subcontractors</option>
-                                <option value="architect">Architects</option>
-                                <option value="supplier">Suppliers</option>
+                                <option value="owner">Project Owners</option>
+                                <option value="vendor">Service Providers</option>
                             </select>
                             <select id="browse-verified-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-900">
                                 <option value="">All Companies</option>
@@ -595,11 +593,21 @@
 
         async function loadDiscovery() {
             try {
-                const res = await authFetch('/api/companies/recommendations');
+                // Fetch users/partners instead of Company documents
+                // This is what messages.html and dashboard.html use successfully
+                const res = await authFetch('/api/discovery');
                 if (!res.ok) throw new Error('Failed to load recommendations');
                 
                 const data = await res.json();
-                allRecommendations = data;
+                
+                // Transform users into company-like format for display
+                const users = data.users || [];
+                
+                allRecommendations = {
+                    topPicks: users.slice(0, 10),
+                    mayKnow: users.slice(10, 20),
+                    recentlyActive: users.slice(20, 30)
+                };
                 
                 displayCompanyRecommendations();
             } catch (error) {
@@ -624,28 +632,33 @@
                     allCompanies = [];
                 }
 
+                // Use /api/discovery to get users (like dashboard and messages do)
                 const params = new URLSearchParams({
                     limit: companiesLimit,
-                    skip: currentSkip,
-                    ...browseFilters
+                    skip: currentSkip
                 });
 
-                const res = await authFetch(`/api/companies?${params}`);
+                // Add filters if set
+                if (browseFilters.type) params.set('role', browseFilters.type);
+                if (browseFilters.verified) params.set('verified', browseFilters.verified);
+
+                const res = await authFetch(`/api/discovery?${params}`);
                 if (!res.ok) throw new Error('Failed to load companies');
                 
                 const data = await res.json();
+                const users = data.users || [];
                 
                 if (append) {
-                    allCompanies = [...allCompanies, ...data.companies];
+                    allCompanies = [...allCompanies, ...users];
                 } else {
-                    allCompanies = data.companies;
+                    allCompanies = users;
                 }
                 
-                hasMoreCompanies = data.hasMore;
-                currentSkip += data.companies.length;
+                hasMoreCompanies = users.length >= companiesLimit;
+                currentSkip += users.length;
                 
                 displayAllCompanies();
-                updateCompaniesCount(data.total);
+                updateCompaniesCount(data.total || users.length);
             } catch (error) {
                 console.error('Load all companies error:', error);
                 const container = document.getElementById('all-companies-container');
@@ -665,23 +678,32 @@
                 return;
             }
 
-            container.innerHTML = allCompanies.map(company => `
-                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?company=${company._id}'">
+            container.innerHTML = allCompanies.map(company => {
+                // Handle both user objects and company objects
+                const isUser = company.firstName !== undefined;
+                const name = isUser ? (company.company || `${company.firstName} ${company.lastName}`) : company.name;
+                const verified = isUser ? (company.registrarId && company.registrarId.length > 0) : company.verified;
+                const type = isUser ? company.role : company.companyType;
+                const location = isUser ? (company.location || company.city || '') : company.location;
+                const description = isUser ? company.bio : company.description;
+                
+                return `
+                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?${isUser ? 'id' : 'company'}=${company._id}'">
                     <div class="flex items-start gap-4">
                         <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
-                            ${company.name.charAt(0)}
+                            ${name.charAt(0)}
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-1">
-                                <h3 class="font-bold text-gray-900 truncate">${company.name}</h3>
-                                ${company.verified ? `
+                                <h3 class="font-bold text-gray-900 truncate">${name}</h3>
+                                ${verified ? `
                                     <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                     </svg>
                                 ` : ''}
                             </div>
-                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)} • ${company.location || 'Location not specified'}</p>
-                            <p class="text-sm text-gray-700 line-clamp-2 mb-3">${company.description || 'No description available'}</p>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(type)} • ${location || 'Location not specified'}</p>
+                            <p class="text-sm text-gray-700 line-clamp-2 mb-3">${description || 'No description available'}</p>
                             <div class="flex items-center gap-4 text-xs text-gray-500">
                                 <span>${company.projectCount || 0} projects</span>
                                 <span>•</span>
@@ -690,7 +712,7 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
 
             // Show/hide load more button
             if (hasMoreCompanies) {
@@ -771,23 +793,32 @@
                 return;
             }
 
-            container.innerHTML = companies.slice(0, 5).map(company => `
-                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?company=${company._id}'">
+            container.innerHTML = companies.slice(0, 5).map(company => {
+                // Handle both user objects and company objects
+                const isUser = company.firstName !== undefined;
+                const name = isUser ? (company.company || `${company.firstName} ${company.lastName}`) : company.name;
+                const verified = isUser ? (company.registrarId && company.registrarId.length > 0) : company.verified;
+                const type = isUser ? company.role : company.companyType;
+                const location = isUser ? (company.location || company.city || '') : company.location;
+                const description = isUser ? company.bio : company.description;
+                
+                return `
+                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?${isUser ? 'id' : 'company'}=${company._id}'">
                     <div class="flex items-start gap-4">
                         <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
-                            ${company.name.charAt(0)}
+                            ${name.charAt(0)}
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-1">
-                                <h3 class="font-bold text-gray-900 truncate">${company.name}</h3>
-                                ${company.verified ? `
+                                <h3 class="font-bold text-gray-900 truncate">${name}</h3>
+                                ${verified ? `
                                     <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                     </svg>
                                 ` : ''}
                             </div>
-                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)} • ${company.location || 'Location not specified'}</p>
-                            <p class="text-sm text-gray-700 line-clamp-2 mb-3">${company.description || 'No description available'}</p>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(type)} • ${location || 'Location not specified'}</p>
+                            <p class="text-sm text-gray-700 line-clamp-2 mb-3">${description || 'No description available'}</p>
                             <div class="flex items-center gap-4 text-xs text-gray-500">
                                 <span>${company.projectCount || 0} projects</span>
                                 <span>•</span>
@@ -800,7 +831,16 @@
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}                   <span>${company.rating ? company.rating.toFixed(1) + ' ★' : 'No ratings yet'}</span>
+                                ${company.reason ? `
+                                    <span>•</span>
+                                    <span class="text-blue-600">${company.reason}</span>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
         }
 
         function displayMayKnow(companies) {
@@ -816,28 +856,35 @@
                 return;
             }
 
-            container.innerHTML = companies.slice(0, 5).map(company => `
-                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?company=${company._id}'">
+            container.innerHTML = companies.slice(0, 5).map(company => {
+                // Handle both user objects and company objects
+                const isUser = company.firstName !== undefined;
+                const name = isUser ? (company.company || `${company.firstName} ${company.lastName}`) : company.name;
+                const verified = isUser ? (company.registrarId && company.registrarId.length > 0) : company.verified;
+                const type = isUser ? company.role : company.companyType;
+                
+                return `
+                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?${isUser ? 'id' : 'company'}=${company._id}'">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-green-600 to-green-700 flex items-center justify-center text-white font-bold flex-shrink-0">
-                            ${company.name.charAt(0)}
+                            ${name.charAt(0)}
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-1">
-                                <h3 class="font-semibold text-gray-900 truncate">${company.name}</h3>
-                                ${company.verified ? `
+                                <h3 class="font-semibold text-gray-900 truncate">${name}</h3>
+                                ${verified ? `
                                     <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                     </svg>
                                 ` : ''}
                             </div>
-                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)}</p>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(type)}</p>
                             ${company.reason ? `<p class="text-xs text-green-600 mb-2">${company.reason}</p>` : ''}
                             <p class="text-xs text-gray-500">${company.projectCount || 0} projects completed</p>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function displayRecentlyActive(companies) {
@@ -853,28 +900,35 @@
                 return;
             }
 
-            container.innerHTML = companies.slice(0, 5).map(company => `
-                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?company=${company._id}'">
+            container.innerHTML = companies.slice(0, 5).map(company => {
+                // Handle both user objects and company objects
+                const isUser = company.firstName !== undefined;
+                const name = isUser ? (company.company || `${company.firstName} ${company.lastName}`) : company.name;
+                const verified = isUser ? (company.registrarId && company.registrarId.length > 0) : company.verified;
+                const type = isUser ? company.role : company.companyType;
+                
+                return `
+                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?${isUser ? 'id' : 'company'}=${company._id}'">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white font-bold flex-shrink-0">
-                            ${company.name.charAt(0)}
+                            ${name.charAt(0)}
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 mb-1">
-                                <h3 class="font-semibold text-gray-900 truncate">${company.name}</h3>
-                                ${company.verified ? `
+                                <h3 class="font-semibold text-gray-900 truncate">${name}</h3>
+                                ${verified ? `
                                     <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                                     </svg>
                                 ` : ''}
                             </div>
-                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)}</p>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(type)}</p>
                             ${company.lastActivity ? `<p class="text-xs text-orange-600 mb-2">${company.lastActivity}</p>` : ''}
                             <p class="text-xs text-gray-500">${company.activeProjects || 0} active projects</p>
                         </div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function formatCompanyType(type) {
@@ -884,7 +938,9 @@
                 'architect': 'Architect',
                 'engineer': 'Engineer',
                 'supplier': 'Supplier',
-                'other': 'Other'
+                'other': 'Other',
+                'owner': 'Project Owner',
+                'vendor': 'Service Provider'
             };
             return types[type] || type;
         }
