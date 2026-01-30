@@ -1101,14 +1101,19 @@ app.get('/api/projects', authMiddleware, async (req, res) => {
     if (owner) query.owner = owner;
     if (contractor) query.acceptedContractor = contractor;
     
+    console.log('Fetching projects with query:', query);
+    
     const projects = await Project.find(query)
       .populate('owner', 'firstName lastName avatar company')
       .populate('bids.user', 'firstName lastName avatar company')
       .sort('-createdAt')
       .limit(50);
     
+    console.log(`Found ${projects.length} projects`);
+    
     res.json({ projects });
   } catch (error) {
+    console.error('Failed to fetch projects:', error);
     res.status(500).json({ error: 'Failed to fetch projects' });
   }
 });
@@ -3225,6 +3230,86 @@ app.post('/api/companies', authMiddleware, upload.array('documents', 5), async (
 });
 
 // Get company details
+// Browse all companies endpoint with filtering
+// IMPORTANT: This must come BEFORE the /:id route to avoid route shadowing
+app.get('/api/companies', authMiddleware, async (req, res) => {
+  try {
+    const { search, type, location, verified, minRating, limit = 50, skip = 0 } = req.query;
+    
+    // Build filter
+    const filter = {};
+    
+    // Type filter (general_contractor, subcontractor, architect, supplier, etc.)
+    if (type && type !== 'all') {
+      filter.type = type;
+    }
+    
+    // Verified filter
+    if (verified === 'true') {
+      filter.verified = true;
+    } else if (verified === 'false') {
+      filter.verified = false;
+    }
+    
+    // Location filter
+    if (location) {
+      filter.$or = [
+        { 'address.city': new RegExp(location, 'i') },
+        { 'address.state': new RegExp(location, 'i') }
+      ];
+    }
+    
+    // Rating filter
+    if (minRating) {
+      filter.rating = { $gte: parseFloat(minRating) };
+    }
+    
+    // Search filter
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      filter.$or = [
+        { name: searchRegex },
+        { description: searchRegex },
+        { type: searchRegex }
+      ];
+    }
+    
+    // Get companies
+    const companies = await Company.find(filter)
+      .populate('owner', 'firstName lastName')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .lean();
+    
+    // Get total count for pagination
+    const total = await Company.countDocuments(filter);
+    
+    // Format companies with additional fields
+    const formattedCompanies = companies.map(company => ({
+      ...company,
+      projectCount: company.projectsCompleted || 0,
+      rating: company.rating || 0,
+      reviewCount: company.reviewCount || 0,
+      companyType: company.type,
+      location: (company.address && company.address.city && company.address.state) 
+        ? `${company.address.city}, ${company.address.state}` 
+        : (company.address && (company.address.city || company.address.state) 
+          ? (company.address.city || company.address.state) 
+          : 'Location not specified')
+    }));
+    
+    res.json({ 
+      companies: formattedCompanies,
+      total,
+      hasMore: (parseInt(skip) + companies.length) < total
+    });
+  } catch (error) {
+    console.error('Browse companies error:', error);
+    res.status(500).json({ error: 'Failed to fetch companies' });
+  }
+});
+
 // Get personalized company recommendations (LinkedIn-style network discovery)
 // IMPORTANT: This must come BEFORE the /:id route to avoid route shadowing
 app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
@@ -3236,7 +3321,7 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
     }
     
     // Build filter based on query parameter
-    const filter = { deletedAt: null };
+    const filter = {};
     if (verified === 'true') {
       filter.verified = true;
     } else if (verified === 'false') {
@@ -3249,13 +3334,28 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
       .populate('owner', 'firstName lastName')
       .limit(100);
 
-    // If still no companies, return empty recommendations
+    console.log(`Found ${allCompanies.length} Company documents in database for recommendations`);
+
+    // If no Company documents exist, try to get users with company names as fallback
     if (!allCompanies || allCompanies.length === 0) {
-      console.log('No companies found in database');
+      console.log('No Company documents found. Checking if users exist with company data...');
+      const usersWithCompanies = await User.find({ 
+        company: { $exists: true, $ne: '' },
+        emailVerified: true
+      }).select('firstName lastName company role location').limit(10);
+      
+      console.log(`Found ${usersWithCompanies.length} users with company names`);
+      
+      if (usersWithCompanies.length > 0) {
+        console.log('TIP: Users have company names but no Company documents created yet. Users should create Company profiles via /company.html');
+      }
+      
       return res.json({
         topPicks: [],
         mayKnow: [],
-        recentlyActive: []
+        recentlyActive: [],
+        totalCompanies: 0,
+        message: 'No companies found. Create your company profile to get started!'
       });
     }
 

@@ -105,6 +105,12 @@
                     </svg>
                     Discover
                 </button>
+                <button id="tab-browse-all" class="tab-btn pb-4 px-1 border-b-2 border-transparent font-medium text-gray-600 hover:text-gray-900 transition" data-tab="browse-all">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    All Companies
+                </button>
                 <button id="tab-partners" class="tab-btn pb-4 px-1 border-b-2 border-transparent font-medium text-gray-600 hover:text-gray-900 transition" data-tab="partners">
                     <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-2a6 6 0 0112 0v2zm0 0h6v-2a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -264,6 +270,43 @@
             </div>
         </div>
 
+        <!-- Browse All Companies Tab -->
+        <div id="tab-content-browse-all" class="tab-content hidden">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
+                <div class="p-5 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">All Companies</h2>
+                            <p class="text-sm text-gray-600 mt-1" id="companies-count">Loading companies...</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <select id="browse-type-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-900">
+                                <option value="">All Types</option>
+                                <option value="general_contractor">General Contractors</option>
+                                <option value="subcontractor">Subcontractors</option>
+                                <option value="architect">Architects</option>
+                                <option value="supplier">Suppliers</option>
+                            </select>
+                            <select id="browse-verified-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-900">
+                                <option value="">All Companies</option>
+                                <option value="true">Verified Only</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="all-companies-container" class="divide-y divide-gray-200">
+                    <div class="p-6 text-center text-gray-500">
+                        <div class="animate-pulse">Loading all companies...</div>
+                    </div>
+                </div>
+                <div id="load-more-container" class="p-4 text-center border-t border-gray-200 hidden">
+                    <button id="load-more-btn" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">
+                        Load More
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Your Partners Tab -->
         <div id="tab-content-partners" class="tab-content hidden">
             <div id="partners-content" class="space-y-6">
@@ -284,10 +327,10 @@
     </div>
 
     <!-- Floating Browse All Button -->
-    <a href="/browse.html" class="fixed bottom-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-800 transition-all hover:shadow-xl flex items-center gap-2 font-semibold text-sm z-50">
-        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+    <button id="browse-all-btn" class="fixed bottom-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-800 transition-all hover:shadow-xl flex items-center gap-2 font-semibold text-sm z-50">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
         Browse All
-    </a>
+    </button>
 
     <script src="/public/js/auth.js"></script>
     <script>
@@ -345,6 +388,8 @@
                 // Load appropriate content
                 if (tabName === 'discover') {
                     loadDiscovery();
+                } else if (tabName === 'browse-all') {
+                    loadBrowseAllCompanies();
                 } else if (tabName === 'partners') {
                     loadPartners();
                 } else if (tabName === 'partner-projects') {
@@ -564,6 +609,123 @@
                 showError('recently-active-container');
             }
         }
+
+        // Browse All Companies functionality
+        let allCompanies = [];
+        let currentSkip = 0;
+        const companiesLimit = 20;
+        let hasMoreCompanies = true;
+        let browseFilters = { type: '', verified: '' };
+
+        async function loadBrowseAllCompanies(append = false) {
+            try {
+                if (!append) {
+                    currentSkip = 0;
+                    allCompanies = [];
+                }
+
+                const params = new URLSearchParams({
+                    limit: companiesLimit,
+                    skip: currentSkip,
+                    ...browseFilters
+                });
+
+                const res = await authFetch(`/api/companies?${params}`);
+                if (!res.ok) throw new Error('Failed to load companies');
+                
+                const data = await res.json();
+                
+                if (append) {
+                    allCompanies = [...allCompanies, ...data.companies];
+                } else {
+                    allCompanies = data.companies;
+                }
+                
+                hasMoreCompanies = data.hasMore;
+                currentSkip += data.companies.length;
+                
+                displayAllCompanies();
+                updateCompaniesCount(data.total);
+            } catch (error) {
+                console.error('Load all companies error:', error);
+                const container = document.getElementById('all-companies-container');
+                container.innerHTML = '<div class="p-6 text-center text-red-500">Failed to load companies</div>';
+            }
+        }
+
+        function displayAllCompanies() {
+            const container = document.getElementById('all-companies-container');
+            const loadMoreContainer = document.getElementById('load-more-container');
+            
+            if (!container) return;
+            
+            if (allCompanies.length === 0) {
+                container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies found</div>';
+                loadMoreContainer.classList.add('hidden');
+                return;
+            }
+
+            container.innerHTML = allCompanies.map(company => `
+                <div class="company-card p-5 hover:bg-gray-50 cursor-pointer transition" onclick="window.location.href='/profile.html?company=${company._id}'">
+                    <div class="flex items-start gap-4">
+                        <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-white text-lg font-bold flex-shrink-0">
+                            ${company.name.charAt(0)}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-bold text-gray-900 truncate">${company.name}</h3>
+                                ${company.verified ? `
+                                    <svg class="w-5 h-5 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">${formatCompanyType(company.companyType)} • ${company.location || 'Location not specified'}</p>
+                            <p class="text-sm text-gray-700 line-clamp-2 mb-3">${company.description || 'No description available'}</p>
+                            <div class="flex items-center gap-4 text-xs text-gray-500">
+                                <span>${company.projectCount || 0} projects</span>
+                                <span>•</span>
+                                <span>${company.rating ? company.rating.toFixed(1) + ' ★' : 'No ratings yet'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Show/hide load more button
+            if (hasMoreCompanies) {
+                loadMoreContainer.classList.remove('hidden');
+            } else {
+                loadMoreContainer.classList.add('hidden');
+            }
+        }
+
+        function updateCompaniesCount(total) {
+            const countEl = document.getElementById('companies-count');
+            if (countEl) {
+                countEl.textContent = `${total} ${total === 1 ? 'company' : 'companies'} found`;
+            }
+        }
+
+        // Browse All event listeners
+        document.getElementById('browse-type-filter')?.addEventListener('change', (e) => {
+            browseFilters.type = e.target.value;
+            loadBrowseAllCompanies(false);
+        });
+
+        document.getElementById('browse-verified-filter')?.addEventListener('change', (e) => {
+            browseFilters.verified = e.target.value;
+            loadBrowseAllCompanies(false);
+        });
+
+        document.getElementById('load-more-btn')?.addEventListener('click', () => {
+            loadBrowseAllCompanies(true);
+        });
+
+        document.getElementById('browse-all-btn')?.addEventListener('click', () => {
+            // Switch to browse all tab
+            document.getElementById('tab-browse-all')?.click();
+        });
 
         function displayCompanyRecommendations() {
             const filtered = {
