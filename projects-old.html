@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - Genovad</title>
+    <meta name="description" content="Browse and post projects on Genovad" />
+    
+    <!-- Preconnect to external domains -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    <!-- Optimized font loading -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet" /></noscript>
+    
+    <style>
+        :root{
+            --bg:#f6f7f8; --surface:#ffffff; --ink:#0b1620; --muted:#5a6975;
+            --brand:#146a5a; --brand-2:#1e7a73; --ring:#aee3d8; --chip:#ecf5f3; --chip-text:#256b5b;
+            --warn:#b45309; --ok:#0f766e; --shadow:0 10px 40px rgba(16,24,40,.08); --border:#e7efec;
+            --spine:#0f6a5d;
+        }
+        *,*::before,*::after{box-sizing:border-box}
+        html,body{height:100%; margin:0}
+        body{font-family:Inter,system-ui,-apple-system,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+
+        #globalTopBar{display:none !important;}
+
+        .hero{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid #e8edf2;box-shadow:0 2px 8px rgba(15,23,42,.04)}
+        .hero-inner{display:flex;flex-direction:column;gap:4px;max-width:1400px;margin:0 auto;padding:16px 24px}
+        .hero h1{margin:0;font:800 24px/1.2 Inter,sans-serif;color:#0b3a32;display:flex;align-items:center;gap:8px}
+        .hero h1::before{content:'';width:6px;height:6px;background:#146a5a;border-radius:50%;display:inline-block}
+        .hero p{margin:0;font-size:14px;color:#4a5f5a;font-weight:500}
+
+        .page{margin:24px auto 96px;padding:0 16px;display:grid;grid-template-columns:320px minmax(0,1fr);gap:24px;width:100%;max-width:100%}
+        .leftCol{display:grid;gap:20px;align-content:start}
+        .rightCol{display:grid;gap:20px}
+
+        .side{
+            background:linear-gradient(150deg,#f8fbfa 0%,#eef4f2 100%);
+            border-radius:16px;padding:16px;border:1px solid #dfe9e6;box-shadow:var(--shadow);
+        }
+        .logo{font:700 22px Oswald,Inter,sans-serif;letter-spacing:.5px;color:var(--ink);margin:2px 0 10px}
+        .side h3{margin:4px 0 12px;font:700 11px Inter,sans-serif;letter-spacing:1.4px;color:#2f4d48;text-transform:uppercase;padding:8px 12px;border:1px solid #dbe8e5;border-radius:10px;background:#ffffffc9}
+        .field{display:grid;gap:6px;margin:8px 0 12px;padding:10px 12px;background:#fff;border:1px solid #e6ecea;border-radius:12px;box-shadow:0 4px 12px rgba(16,24,40,.05)}
+        .field label{font-size:12px;color:#2f4d48;font-weight:700;letter-spacing:.01em}
+        .field input,.field select{height:40px;border:1px solid #e2e9e7;background:#f9fbfb;border-radius:9px;padding:0 12px;font-size:14px;color:var(--ink);width:100%}
+        .field input:focus,.field select:focus{outline:none;border-color:#c8e9e2;box-shadow:0 0 0 3px #aee3d873}
+        .budget-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .btn{height:40px;border:none;border-radius:10px;background:var(--brand);color:#fff;font-weight:700;cursor:pointer;box-shadow:0 8px 24px rgba(20,106,90,.25);padding:0 14px}
+        .btn:hover{background:var(--brand-2)}
+        .btn-ghost{height:40px;border:1px solid #d7e6e3;background:#f6fbfa;color:#125f52;border-radius:10px;font-weight:700;padding:0 14px;cursor:pointer}
+        .backBtn{width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;height:44px;border:1px solid var(--border);background:#fff;color:#0f3f37;border-radius:12px;font-weight:700;cursor:pointer}
+        .backBtn:hover{background:#f7fbfa}
+
+        .section{background:var(--surface);border-radius:18px;padding:18px;box-shadow:var(--shadow);overflow:hidden;grid-column:1 / -1}
+        .section h2{margin:0 0 6px;font:700 18px Inter;color:#12342f}
+        .section p.sub{margin:0 0 16px;color:var(--muted);font-size:13px}
+
+        .grid{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;padding-bottom:8px;flex-wrap:nowrap;scroll-snap-type:x mandatory}
+        .grid::-webkit-scrollbar{height:8px}
+        .grid::-webkit-scrollbar-track{background:#f0f5f3;border-radius:4px}
+        .grid::-webkit-scrollbar-thumb{background:#b8d9d1;border-radius:4px}
+        .grid::-webkit-scrollbar-thumb:hover{background:#95c5b8}
+
+        .card{
+            position:relative;flex:0 0 360px;max-width:360px;min-width:300px;scroll-snap-align:start;
+            border:1px solid var(--border);border-radius:16px;background:#fff;overflow:hidden;
+            transition:box-shadow .18s ease, border-color .18s ease, transform .18s ease;
+            cursor:pointer;display:flex;flex-direction:column;
+        }
+        .card:hover{border-color:#cfe4de;box-shadow:0 14px 34px rgba(16,24,40,.12);transform:translateY(-2px)}
+
+        .card-header{position:relative;display:flex;flex-direction:column;gap:12px;padding:18px 18px 14px 18px;border-bottom:1px solid #f3f7f6}
+        .card-header-top{display:flex;align-items:flex-start;gap:12px}
+        .logo-dot{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;flex-shrink:0;font-weight:800;font-size:18px;color:#0f3f37;background:linear-gradient(135deg,#f2f6f5 0%,#e6f0ed 100%);box-shadow:0 4px 12px rgba(18,106,90,.08)}
+        .card-header-content{flex:1;min-width:0}
+        .title{font:800 16.5px Inter;margin:0 0 6px 0;color:#0e3530;letter-spacing:.3px;line-height:1.3}
+        .card-meta-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+        .chip{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:#ecf5f3;color:#256b5b;border-radius:6px;font-weight:700;font-size:11.5px}
+        .status-badge{padding:5px 10px;border-radius:6px;font-weight:700;font-size:11px;border:1px solid}
+        .status-open{background:#eefcf6;color:#0d5d4f;border-color:#b8e6d5}
+        .status-urgent{background:#fff4ed;color:#8a3b12;border-color:#ffd9c5}
+        .status-progress{background:#e0f2fe;color:#075985;border-color:#bae6fd}
+        .status-completed{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
+
+        .card-body{flex:1;display:flex;flex-direction:column;gap:14px;padding:16px 18px}
+        .info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+        .info-item{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:#f9fbfb;border:1px solid #eef3f1;border-radius:10px}
+        .info-item svg{width:16px;height:16px;color:#2d6157;margin-top:2px;flex-shrink:0}
+        .info-item-content{flex:1;min-width:0}
+        .info-label{font-size:10.5px;font-weight:700;color:#5a6f6b;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px}
+        .info-value{font-size:13.5px;font-weight:700;color:#1a4540;word-break:break-word}
+        .info-value a{color:#146a5a;text-decoration:none}
+        .info-value a:hover{text-decoration:underline}
+
+        .tagstrip{display:flex;gap:6px;flex-wrap:wrap}
+        .tag{font-weight:700;font-size:10.5px;color:#1d6457;background:#f0fbf7;border:1px solid #d6ede7;border-radius:6px;padding:5px 9px}
+
+        .desc{color:#4a5c5a;font-size:13px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+        .cta{display:flex;flex-direction:column;gap:8px;padding:14px 18px;background:#fafcfb;border-top:1px solid #f0f5f3}
+        .btn-cta{
+            height:44px;padding:0 16px;border-radius:10px;font-weight:700;font-size:13.5px;display:inline-flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;
+            border:1px solid #cfe3df;background:#fff;color:#125f52;box-shadow:0 2px 8px rgba(20,106,90,.08);
+            transition:transform .15s,box-shadow .15s,background .15s,border-color .15s;
+        }
+        .btn-cta svg{width:18px;height:18px}
+        .btn-cta:hover{background:#f2faf7;border-color:#b8ddd5;transform:translateY(-1px);box-shadow:0 4px 14px rgba(20,106,90,.16)}
+        .btn-cta.primary{background:linear-gradient(135deg,#146a5a 0%,#1e7a67 100%);color:#fff;border-color:transparent;box-shadow:0 6px 18px rgba(20,106,90,.28)}
+        .btn-cta.primary:hover{box-shadow:0 10px 28px rgba(20,106,90,.38);transform:translateY(-2px)}
+
+        .skeleton{animation:pulse 1.2s ease-in-out infinite;background:linear-gradient(90deg,#f3f6f5 25%,#e9f1ef 37%,#f3f6f5 63%);background-size:400% 100%}
+        @keyframes pulse{0%{background-position:100% 0}100%{background-position:0 0}}
+        .sk-card{height:220px;border-radius:16px}
+        
+        .quick-nav{position:fixed;top:12px;right:12px;z-index:1200;display:flex;gap:6px;flex-wrap:wrap;font-size:13px}
+        .quick-nav a{padding:8px 10px;border:1px solid var(--border);border-radius:10px;background:#fff;color:#0f3f37;text-decoration:none;font-weight:700;box-shadow:0 6px 16px rgba(16,24,40,.08);transition:all .15s ease}
+        .quick-nav a:hover{background:#f7fbfa;transform:translateY(-1px)}
+        .quick-nav a.is-active{background:#ecf5f3;color:#146a5a;border-color:#cfe4de;box-shadow:0 6px 16px rgba(20,106,90,.18)}
+
+        @media (max-width:1080px){
+            .page{grid-template-columns:1fr}
+            .leftCol,.rightCol{grid-column:1 / -1}
+            .card{flex:0 0 320px;max-width:320px;min-width:280px}
+        }
+        @media (max-width:768px){
+            .page{margin:16px auto 72px;padding:0 12px;grid-template-columns:1fr}
+            .card{flex:0 0 280px;max-width:300px;min-width:240px}
+            .hero-inner{padding:16px}
+            .hero h1{font-size:22px}
+            .hero p{font-size:13.5px}
+        }
+        @media (max-width:480px){
+            .page{margin:12px auto 60px;padding:0 12px}
+            .hero-inner{padding:14px 12px}
+            .hero h1{font-size:20px}
+            .card{flex:0 0 240px;max-width:260px;min-width:200px}
+            .info-grid{grid-template-columns:1fr}
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation (same as dashboard) -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+                            <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                            <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-xl font-semibold text-gray-900">Genovad</span>
+                    </a>
+                    
+                    <div class="hidden md:flex space-x-1">
+                        <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
+                        <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Projects</a>
+                        <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+                        <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Network</a>
+                        <a href="/browse.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
+                    </div>
+                </div>
+                
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/notifications.html" class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
+                    </a>
+                    <a href="/create-project.html" id="nav-cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <div class="relative" id="user-menu">
+                        <button id="user-menu-btn" class="flex items-center space-x-2">
+                            <div id="user-avatar"></div>
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                            <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
+                            <a href="/edit-profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Edit Profile</a>
+                            <hr class="my-1">
+                            <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-menu" class="hidden fixed inset-0 z-40 md:hidden">
+        <div class="fixed inset-0 bg-black bg-opacity-50" id="mobile-menu-backdrop"></div>
+        <div class="fixed top-0 left-0 w-64 h-full bg-white shadow-lg overflow-y-auto">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Menu</h3>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="/dashboard.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
+                <a href="/projects.html" class="block px-4 py-3 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg hover:bg-gray-100">Projects</a>
+                <a href="/messages.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+                <a href="/browse.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
+                <a href="/notifications.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Notifications</a>
+            </nav>
+            <div class="p-4 border-t border-gray-200">
+                <a href="/create-project.html" class="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Post Project</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Projects</h1>
+                <p class="text-gray-600 mt-1" id="projects-subtitle">Browse projects or track your bids</p>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-white rounded-lg border border-gray-200 mb-6">
+            <nav class="flex">
+                <button id="tab-my" class="project-tab px-6 py-3 text-sm font-medium border-b-2 border-gray-900 text-gray-900" style="display:none;">My Projects</button>
+                <button id="tab-browse" class="project-tab px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900">Browse Projects</button>
+            </nav>
+        </div>
+
+        <!-- Filters -->
+        <div id="filters-section" class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input type="text" id="search-input" placeholder="Search projects..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select id="category-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                        <option value="">All Categories</option>
+                        <option value="Residential">Residential</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="Industrial">Industrial</option>
+                        <option value="Renovation">Renovation</option>
+                        <option value="Landscaping">Landscaping</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select id="status-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+                        <option value="">All Status</option>
+                        <option value="open" selected>Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button id="filter-btn" class="w-full bg-gray-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800">Apply Filters</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div id="projects-container" class="grid grid-cols-1 gap-6">
+            <div class="text-center py-12">
+                <p class="text-gray-500">Loading projects...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite Vendor Modal -->
+    <div id="invite-vendor-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg max-w-lg w-full p-6">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="text-2xl">📧</span>
+                <h2 class="text-xl font-bold text-gray-900">Invite Vendor to Bid</h2>
+            </div>
+            
+            <form id="invite-vendor-form" class="space-y-4">
+                <input type="hidden" id="invite-project-id">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search Vendor or Enter Email</label>
+                    <input type="text" id="vendor-search" placeholder="Type name or email..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <div id="vendor-search-results" class="hidden absolute mt-2 max-h-48 overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-lg z-50 w-full">
+                        <!-- Results will appear here -->
+                    </div>
+                    <input type="hidden" id="selected-vendor-id">
+                    <input type="hidden" id="selected-vendor-email">
+                </div>
+
+                <div id="selected-vendor-display" class="hidden">
+                    <div class="flex items-center justify-between px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+                        <span id="selected-vendor-name" class="text-sm font-medium text-blue-900"></span>
+                        <button type="button" id="clear-vendor-selection" class="text-blue-600 hover:text-blue-700">✕</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Message (optional)</label>
+                    <textarea id="vendor-invite-message" rows="3" placeholder="Why you're inviting them to bid..." class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+
+                <div class="flex gap-3">
+                    <button type="button" onclick="closeInviteVendorModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg font-medium hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Send Invitation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        if (!requireAuth()) {
+            throw new Error('Not authenticated');
+        }
+
+        const user = getCurrentUser();
+        const userId = user._id || user.id;
+        document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+        
+        // Role-based nav button
+        const isVendor = user.role === 'vendor';
+        const navCta = document.getElementById('nav-cta-button');
+        if (isVendor && navCta) {
+            navCta.textContent = 'Find Work';
+            navCta.href = '/browse.html';
+        }
+
+        // Role-based tab and subtitle
+        const myTab = document.getElementById('tab-my');
+        const subtitle = document.getElementById('projects-subtitle');
+        if (isVendor) {
+            myTab.textContent = 'My Bids';
+            myTab.style.display = 'block';
+            subtitle.textContent = 'Browse projects and track your bids';
+        } else {
+            myTab.textContent = 'My Projects';
+            myTab.style.display = 'block';
+            subtitle.textContent = 'Browse projects and manage your postings';
+        }
+
+        // User menu toggle
+        document.getElementById('user-menu-btn').addEventListener('click', () => {
+            document.getElementById('user-dropdown').classList.toggle('hidden');
+        });
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
+        // Mobile Menu Handler
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
+        const mobileMenuLinks = mobileMenu.querySelectorAll('a');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+        
+        mobileMenuBackdrop.addEventListener('click', () => {
+            mobileMenu.classList.add('hidden');
+        });
+        
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        });
+
+        let allProjects = [];
+        let currentTab = 'my';
+
+        async function loadProjects() {
+            try {
+                const status = document.getElementById('status-filter').value;
+                const category = document.getElementById('category-filter').value;
+                const params = new URLSearchParams();
+                if (status) params.set('status', status);
+                if (category) params.set('category', category);
+                const url = params.toString() ? `/api/projects?${params.toString()}` : '/api/projects';
+
+                const res = await authFetch(url);
+                const ct = res.headers.get('content-type') || '';
+                if (!res.ok || !ct.includes('application/json')) {
+                    let err;
+                    try { err = await res.json(); } catch {}
+                    throw new Error((err && (err.error || err.message)) || `Failed to load projects (HTTP ${res.status})`);
+                }
+                const data = await res.json();
+                allProjects = data.projects || [];
+                filterProjects(); // apply search locally
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                document.getElementById('projects-container').innerHTML = `<div class="text-center py-12 text-red-500">${error.message || 'Failed to load projects'}</div>`;
+            }
+        }
+
+        function displayProjects(projects) {
+            const container = document.getElementById('projects-container');
+            
+            if (projects.length === 0) {
+                container.innerHTML = '<div class="text-center py-12"><p class="text-gray-500">No projects found</p></div>';
+                return;
+            }
+
+            container.innerHTML = projects.map(project => `
+                <div class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-xl font-semibold text-gray-900">${project.title}</h3>
+                                <span class="px-3 py-1 text-xs font-medium rounded-full ${
+                                    project.status === 'open' ? 'bg-green-50 text-green-700' :
+                                    project.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
+                                    project.status === 'completed' ? 'bg-gray-100 text-gray-700' :
+                                    'bg-red-50 text-red-700'
+                                }">${project.status.replace('_', ' ')}</span>
+                            </div>
+                            <p class="text-gray-600 mb-4">${project.description || ''}</p>
+                            
+                            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    ${project.location || ''}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Budget: ${formatCurrency(project.budget || 0)}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                    </svg>
+                                    ${project.category || ''}
+                                </span>
+                                ${(project.meetingDate || project.startDate || project.endDate) ? `
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    ${project.meetingDate ? `Meeting: ${new Date(project.meetingDate).toLocaleString()}` : (project.startDate && project.endDate) ? `Schedule: ${new Date(project.startDate).toLocaleDateString()} - ${new Date(project.endDate).toLocaleDateString()}` : project.startDate ? `Start: ${new Date(project.startDate).toLocaleDateString()}` : project.endDate ? `End: ${new Date(project.endDate).toLocaleDateString()}` : ''}
+                                </span>
+                                ` : ''}
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                    ${project.bids?.length || 0} bids
+                                </span>
+                            </div>
+
+                            ${project.skills && project.skills.length > 0 ? `
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    ${project.skills.map(skill => `<span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">${skill}</span>`).join('')}
+                                </div>
+                            ` : ''}
+
+                            <div class="flex items-center gap-3">
+                                ${project.owner ? `
+                                    <div class="flex items-center gap-2">
+                                        ${getAvatarHTML(project.owner, 'w-8 h-8')}
+                                        <div class="text-sm min-w-0 flex-1">
+                                            <div class="flex items-center gap-1.5">
+                                                <p class="font-medium text-gray-900 truncate">${project.owner.company || `${project.owner.firstName} ${project.owner.lastName}`}</p>
+                                                ${getVerificationBadge(project.owner, 'small')}
+                                            </div>
+                                            ${project.owner.company ? `<p class="text-gray-500 text-xs truncate">${project.owner.firstName} ${project.owner.lastName}</p>` : ''}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                                <span class="text-sm text-gray-500 ml-auto whitespace-nowrap">${formatDate(project.createdAt)}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3 mt-4 pt-4 border-t border-gray-200">
+                        <a href="/project-detail.html?id=${project._id}" class="flex-1 text-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">View Details</a>
+                        ${project.status === 'open' && (project.owner && project.owner._id !== user.id) ? `
+                            <a href="/project-detail.html?id=${project._id}#bid" class="flex-1 text-center px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Submit Bid</a>
+                        ` : ''}
+                        ${(project.owner && project.owner._id !== user.id) ? `
+                            <a href="/messages.html?user=${project.owner._id}&projectId=${project._id}&projectTitle=${encodeURIComponent(project.title)}" class="flex-1 text-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Message Client</a>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterProjects() {
+            const search = (document.getElementById('search-input').value || '').toLowerCase();
+            
+            const filtered = allProjects.filter(project => {
+                const title = (project.title || '').toLowerCase();
+                const desc = (project.description || '').toLowerCase();
+                const matchesSearch = !search || title.includes(search) || desc.includes(search);
+                return matchesSearch;
+            });
+
+            displayProjects(filtered);
+        }
+
+        document.getElementById('filter-btn').addEventListener('click', loadProjects);
+        document.getElementById('search-input').addEventListener('input', filterProjects);
+
+        // Tab switching
+        document.getElementById('tab-browse').addEventListener('click', () => {
+            currentTab = 'browse';
+            updateTabs();
+            loadProjects();
+        });
+
+        document.getElementById('tab-my').addEventListener('click', () => {
+            currentTab = 'my';
+            updateTabs();
+            if (isVendor) {
+                loadMyBids();
+            } else {
+                loadMyProjects();
+            }
+        });
+
+        function updateTabs() {
+            const tabs = document.querySelectorAll('.project-tab');
+            tabs.forEach(t => {
+                t.classList.remove('border-gray-900', 'text-gray-900');
+                t.classList.add('border-transparent', 'text-gray-600');
+            });
+            
+            const activeTab = currentTab === 'browse' ? 'tab-browse' : 'tab-my';
+            const tab = document.getElementById(activeTab);
+            tab.classList.remove('border-transparent', 'text-gray-600');
+            tab.classList.add('border-gray-900', 'text-gray-900');
+            
+            // Show/hide filters
+            document.getElementById('filters-section').style.display = currentTab === 'browse' ? 'block' : 'none';
+        }
+
+        async function loadMyProjects() {
+            try {
+                const response = await authFetch('/api/projects');
+                if (!response.ok) {
+                    const ct = response.headers.get('content-type') || '';
+                    const err = ct.includes('application/json') ? await response.json() : null;
+                    throw new Error((err && (err.error || err.message)) || `Failed to load projects (HTTP ${response.status})`);
+                }
+                const data = await response.json();
+                
+                // Filter projects owned by current user
+                const userId = user._id || user.id;
+                const myProjects = (data.projects || []).filter(p => 
+                    p.owner && (p.owner._id === userId || p.owner === userId)
+                );
+                
+                displayMyProjects(myProjects);
+            } catch (error) {
+                console.error('Error loading my projects:', error);
+                document.getElementById('projects-container').innerHTML = `<div class="text-center py-12 text-red-500">${error.message}</div>`;
+            }
+        }
+
+        function displayMyProjects(projects) {
+            const container = document.getElementById('projects-container');
+            
+            if (projects.length === 0) {
+                container.innerHTML = '<div class="text-center py-12"><p class="text-gray-500">You haven\'t posted any projects yet</p><a href="/create-project.html" class="text-blue-600 hover:underline">Post your first project</a></div>';
+                return;
+            }
+
+            container.innerHTML = projects.map(project => {
+                const statusColor = project.status === 'open' ? 'bg-green-50 text-green-700 border-green-200' :
+                                   project.status === 'in_progress' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                   project.status === 'completed' ? 'bg-gray-100 text-gray-700 border-gray-200' :
+                                   'bg-red-50 text-red-700 border-red-200';
+                const bidsCount = project.bids?.length || 0;
+                const pendingBids = (project.bids || []).filter(b => b.status === 'pending').length;
+                const acceptedBid = (project.bids || []).find(b => b.status === 'accepted');
+                
+                return `
+                <div class="bg-white rounded-lg border-2 ${project.status === 'in_progress' ? 'border-blue-300' : 'border-gray-200'} p-6 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-xl font-semibold text-gray-900">${project.title}</h3>
+                                <span class="px-3 py-1 text-xs font-medium rounded-full ${statusColor} border">
+                                    ${project.status.replace('_', ' ')}
+                                </span>
+                            </div>
+                            <p class="text-gray-600 mb-4">${project.description || ''}</p>
+                            
+                            <!-- Project Stats -->
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <div class="text-2xl font-bold text-gray-900">${bidsCount}</div>
+                                        <div class="text-sm text-gray-600">Total Bids</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold text-yellow-600">${pendingBids}</div>
+                                        <div class="text-sm text-gray-600">Pending Review</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-2xl font-bold ${acceptedBid ? 'text-green-600' : 'text-gray-400'}">${acceptedBid ? '1' : '0'}</div>
+                                        <div class="text-sm text-gray-600">Accepted</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    ${project.location || ''}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Budget: ${formatCurrency(project.budget || 0)}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                    </svg>
+                                    ${project.category || ''}
+                                </span>
+                                ${(project.meetingDate || project.startDate || project.endDate) ? `
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    ${project.meetingDate ? `Meeting: ${new Date(project.meetingDate).toLocaleString()}` : (project.startDate && project.endDate) ? `Schedule: ${new Date(project.startDate).toLocaleDateString()} - ${new Date(project.endDate).toLocaleDateString()}` : project.startDate ? `Start: ${new Date(project.startDate).toLocaleDateString()}` : project.endDate ? `End: ${new Date(project.endDate).toLocaleDateString()}` : ''}
+                                </span>
+                                ` : ''}
+                                <span class="text-gray-500">Posted ${formatDate(project.createdAt)}</span>
+                            </div>
+
+                            ${acceptedBid ? `
+                                <div class="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                        <div class="flex items-center gap-1.5">
+                                            <span class="text-sm font-medium text-green-900">Vendor Selected: ${acceptedBid.user.company || `${acceptedBid.user.firstName} ${acceptedBid.user.lastName}`}</span>
+                                            ${getVerificationBadge(acceptedBid.user, 'small')}
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-green-800"><strong>Accepted Bid:</strong> ${formatCurrency(acceptedBid.amount)}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200">
+                        <a href="/project-detail.html?id=${project._id}" class="flex-1 text-center px-3 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">View Details</a>
+                        ${project.status === 'open' && bidsCount > 0 ? `
+                            <a href="/project-detail.html?id=${project._id}#bids" class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Review Bids (${pendingBids})</a>
+                        ` : ''}
+                        ${project.status === 'open' ? `
+                            <button onclick="inviteToBid('${project._id}')" class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50" title="Invite specific vendors">
+                                <svg class="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                                </svg>
+                                Invite Vendor
+                            </button>
+                            <button onclick="closeProject('${project._id}', 'cancelled')" class="px-3 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50">Close</button>
+                        ` : ''}
+                        ${project.status === 'in_progress' ? `
+                            <button onclick="closeProject('${project._id}', 'completed')" class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">Mark Complete</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        async function inviteToBid(projectId) {
+            // Store project ID and show modal
+            document.getElementById('invite-project-id').value = projectId;
+            showInviteVendorModal();
+        }
+
+        async function closeProject(projectId, newStatus) {
+            try {
+                const action = newStatus === 'completed' ? 'mark this project as complete' : 'close this project';
+                if (!confirm(`Are you sure you want to ${action}?`)) return;
+                
+                // Use the project update endpoint if it exists, or create a new one
+                const res = await authFetch(`/api/projects/${projectId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    alert(data.error || 'Failed to update project');
+                    return;
+                }
+                
+                alert(`Project ${newStatus === 'completed' ? 'completed' : 'closed'} successfully`);
+                loadMyProjects();
+            } catch (e) {
+                console.error('Close project error', e);
+                alert('Failed to update project');
+            }
+        }
+
+        async function loadMyBids() {
+            try {
+                const response = await authFetch('/api/projects');
+                if (!response.ok) {
+                    const ct = response.headers.get('content-type') || '';
+                    const err = ct.includes('application/json') ? await response.json() : null;
+                    throw new Error((err && (err.error || err.message)) || `Failed to load bids (HTTP ${response.status})`);
+                }
+                const data = await response.json();
+                
+                // Filter projects where user has bid
+                const projectsWithMyBids = (data.projects || []).filter(p => 
+                    (p.bids || []).some(bid => (bid.user && bid.user._id ? bid.user._id : bid.user) === user.id)
+                );
+                
+                displayMyBids(projectsWithMyBids);
+            } catch (error) {
+                console.error('Error loading my bids:', error);
+                document.getElementById('projects-container').innerHTML = `<div class="text-center py-12 text-red-500">${error.message}</div>`;
+            }
+        }
+
+        function displayMyBids(projects) {
+            const container = document.getElementById('projects-container');
+            
+            if (projects.length === 0) {
+                container.innerHTML = '<div class="text-center py-12"><p class="text-gray-500">You haven\'t submitted any bids yet</p><br><a href="#" onclick="document.getElementById(\'tab-browse\').click(); return false;" class="text-blue-600 hover:underline font-medium">Browse projects to bid on</a></div>';
+                return;
+            }
+
+            container.innerHTML = projects.map(project => {
+                const myBid = project.bids.find(bid => (bid.user && bid.user._id ? bid.user._id : bid.user) === user.id);
+                const statusColor = myBid.status === 'accepted' ? 'bg-green-50 text-green-700 border-green-200' :
+                                   myBid.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
+                                   'bg-yellow-50 text-yellow-700 border-yellow-200';
+                const statusText = myBid.status === 'pending' ? 'Under Review' : myBid.status.charAt(0).toUpperCase() + myBid.status.slice(1);
+                
+                return `
+                <div class="bg-white rounded-lg border-2 ${myBid.status === 'accepted' ? 'border-green-300' : 'border-gray-200'} p-6 hover:shadow-md transition">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-xl font-semibold text-gray-900">${project.title}</h3>
+                                <span class="px-3 py-1 text-xs font-medium rounded-full ${statusColor} border">
+                                    ${statusText}
+                                </span>
+                            </div>
+                            <p class="text-gray-600 mb-4">${project.description}</p>
+                            
+                            <!-- My Bid Details -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-blue-900">Your Bid</span>
+                                    <span class="text-xl font-bold text-blue-900">${formatCurrency(myBid.amount)}</span>
+                                </div>
+                                <div class="text-sm text-blue-800 mb-2">
+                                    <strong>Timeline:</strong> ${myBid.timeline}
+                                </div>
+                                <div class="text-sm text-blue-800">
+                                    <strong>Submitted:</strong> ${formatDate(myBid.createdAt)}
+                                </div>
+                                ${myBid.proposal ? `
+                                    <details class="mt-2">
+                                        <summary class="text-sm font-medium text-blue-900 cursor-pointer">View Proposal</summary>
+                                        <p class="text-sm text-blue-800 mt-2">${myBid.proposal}</p>
+                                    </details>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                    ${project.location}
+                                </span>
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                    Budget: ${formatCurrency(project.budget)}
+                                </span>
+                                ${(project.meetingDate || project.startDate || project.endDate) ? `
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    ${project.meetingDate ? `Meeting: ${new Date(project.meetingDate).toLocaleString()}` : (project.startDate && project.endDate) ? `Schedule: ${new Date(project.startDate).toLocaleDateString()} - ${new Date(project.endDate).toLocaleDateString()}` : project.startDate ? `Start: ${new Date(project.startDate).toLocaleDateString()}` : project.endDate ? `End: ${new Date(project.endDate).toLocaleDateString()}` : ''}
+                                </span>
+                                ` : ''}
+                                <span class="flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                    </svg>
+                                    ${project.bids?.length || 0} total bids
+                                </span>
+                                <span class="px-3 py-1 text-xs font-medium rounded-full ${
+                                    project.status === 'open' ? 'bg-green-50 text-green-700' :
+                                    project.status === 'in_progress' ? 'bg-blue-50 text-blue-700' :
+                                    project.status === 'completed' ? 'bg-gray-100 text-gray-700' :
+                                    'bg-red-50 text-red-700'
+                                }">${project.status.replace('_', ' ')}</span>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                ${project.owner ? `
+                                    <div class="flex items-center gap-2">
+                                        ${getAvatarHTML(project.owner, 'w-8 h-8')}
+                                        <div class="text-sm min-w-0 flex-1">
+                                            <div class="flex items-center gap-1.5">
+                                                <p class="font-medium text-gray-900 truncate">${project.owner.company || `${project.owner.firstName} ${project.owner.lastName}`}</p>
+                                                ${getVerificationBadge(project.owner, 'small')}
+                                            </div>
+                                            ${project.owner.company ? `<p class="text-gray-500 text-xs truncate">${project.owner.firstName} ${project.owner.lastName}</p>` : ''}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex gap-3 mt-4 pt-4 border-t border-gray-200">
+                        <a href="/project-detail.html?id=${project._id}" class="flex-1 text-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">View Project</a>
+                        ${myBid.status === 'accepted' ? `
+                            <a href="/messages.html?user=${project.owner._id}&projectId=${project._id}" class="flex-1 text-center px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700">Go to Project Chat</a>
+                        ` : `
+                            <button onclick="editBid('${project._id}', '${myBid._id}')" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">Edit Bid</button>
+                            <button onclick="withdrawBid('${project._id}', '${myBid._id}')" class="px-4 py-2 border border-red-300 rounded-lg text-sm font-medium text-red-700 hover:bg-red-50">Withdraw</button>
+                        `}
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        async function editBid(projectId, bidId) {
+            try {
+                const amountStr = prompt('Enter new bid amount (USD):');
+                if (amountStr === null) return; // cancelled
+                const amount = Number(amountStr);
+                if (Number.isNaN(amount) || amount <= 0) { alert('Invalid amount'); return; }
+
+                const timeline = prompt('Enter new timeline (e.g., 6 weeks):');
+                if (timeline === null) return;
+
+                const proposal = prompt('Update proposal notes (optional):');
+                if (proposal === null) return;
+
+                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount, timeline, proposal })
+                });
+                const data = await res.json();
+                if (!res.ok) { alert(data.error || 'Failed to update bid'); return; }
+                alert('Bid updated');
+                loadMyBids();
+            } catch (e) {
+                console.error('Edit bid error', e);
+                alert('Failed to update bid');
+            }
+        }
+
+        async function withdrawBid(projectId, bidId) {
+            try {
+                if (!confirm('Withdraw your bid? This cannot be undone.')) return;
+                const res = await authFetch(`/api/projects/${projectId}/bids/${bidId}`, {
+                    method: 'DELETE'
+                });
+                const data = await res.json();
+                if (!res.ok) { alert(data.error || 'Failed to withdraw bid'); return; }
+                alert('Bid withdrawn');
+                loadMyBids();
+            } catch (e) {
+                console.error('Withdraw bid error', e);
+                alert('Failed to withdraw bid');
+            }
+        }
+
+        // Load appropriate tab on page load
+        // Vendors see Browse Projects first, owners see My Projects first
+        if (isVendor) {
+            document.getElementById('tab-browse').click();
+        } else {
+            loadMyProjects();
+        }
+        updateTabs();
+        
+        // Invite Vendor Modal Functions
+        let vendorSearchTimeout;
+        let selectedVendor = null;
+        
+        function showInviteVendorModal() {
+            resetInviteVendorForm();
+            document.getElementById('invite-vendor-modal').classList.remove('hidden');
+        }
+        
+        function closeInviteVendorModal() {
+            document.getElementById('invite-vendor-modal').classList.add('hidden');
+            resetInviteVendorForm();
+        }
+        
+        function resetInviteVendorForm() {
+            document.getElementById('invite-vendor-form').reset();
+            document.getElementById('vendor-search').value = '';
+            document.getElementById('vendor-search-results').classList.add('hidden');
+            document.getElementById('vendor-search-results').innerHTML = '';
+            document.getElementById('selected-vendor-display').classList.add('hidden');
+            document.getElementById('selected-vendor-id').value = '';
+            document.getElementById('selected-vendor-email').value = '';
+            selectedVendor = null;
+        }
+        
+        // Vendor Search with Debounce - Only show partners unless full email typed
+        document.getElementById('vendor-search')?.addEventListener('input', async (e) => {
+            clearTimeout(vendorSearchTimeout);
+            const query = e.target.value.trim();
+            
+            if (query.length === 0) {
+                document.getElementById('vendor-search-results').classList.add('hidden');
+                return;
+            }
+            
+            vendorSearchTimeout = setTimeout(async () => {
+                try {
+                    // Check if it's a full email
+                    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(query);
+                    
+                    if (isEmail) {
+                        // If full email, search all vendors
+                        const res = await authFetch(`/api/users/search?q=${encodeURIComponent(query)}&role=vendor`);
+                        const data = await res.json();
+                        
+                        if (data.users && data.users.length > 0) {
+                            const resultsDiv = document.getElementById('vendor-search-results');
+                            resultsDiv.innerHTML = data.users.map(vendor => `
+                                <div class="border-b last:border-b-0 border-gray-200 p-3 hover:bg-gray-50 cursor-pointer" onclick="selectVendor('${vendor._id || ''}', '${vendor.email}', '${(vendor.company || `${vendor.firstName || ''} ${vendor.lastName || ''}`).replace(/'/g, "\\'")}')">
+                                    <div class="font-medium text-gray-900">${vendor.company || `${vendor.firstName} ${vendor.lastName}`}</div>
+                                    <div class="text-sm text-gray-500">${vendor.email}</div>
+                                    ${!vendor._id ? '<span class="text-xs text-orange-600">Not registered - will receive invite</span>' : ''}
+                                </div>
+                            `).join('');
+                            resultsDiv.classList.remove('hidden');
+                        } else {
+                            document.getElementById('vendor-search-results').innerHTML = '<div class="p-3 text-center text-gray-500">No user found with this email</div>';
+                            document.getElementById('vendor-search-results').classList.remove('hidden');
+                        }
+                    } else {
+                        // Otherwise only search partners
+                        const partnersRes = await authFetch('/api/partners');
+                        const partnersData = await partnersRes.json();
+                        const partners = partnersData.partners || [];
+                        
+                        const searchLower = query.toLowerCase();
+                        const filtered = partners.filter(p => {
+                            const name = `${p.firstName} ${p.lastName}`.toLowerCase();
+                            const company = (p.company || '').toLowerCase();
+                            return name.includes(searchLower) || company.includes(searchLower);
+                        });
+                        
+                        if (filtered.length > 0) {
+                            const resultsDiv = document.getElementById('vendor-search-results');
+                            resultsDiv.innerHTML = filtered.map(vendor => `
+                                <div class="border-b last:border-b-0 border-gray-200 p-3 hover:bg-gray-50 cursor-pointer" onclick="selectVendor('${vendor._id}', '${vendor.email || ''}', '${(vendor.company || `${vendor.firstName} ${vendor.lastName}`).replace(/'/g, "\\'")}')">
+                                    <div class="flex items-center gap-2">
+                                        <div class="flex-1">
+                                            <div class="font-medium text-gray-900">${vendor.company || `${vendor.firstName} ${vendor.lastName}`}</div>
+                                        </div>
+                                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">Partner</span>
+                                    </div>
+                                </div>
+                            `).join('');
+                            resultsDiv.classList.remove('hidden');
+                        } else {
+                            document.getElementById('vendor-search-results').innerHTML = '<div class="p-3 text-center text-gray-500">No partners found. Type full email to invite others.</div>';
+                            document.getElementById('vendor-search-results').classList.remove('hidden');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Vendor search error:', error);
+                    document.getElementById('vendor-search-results').innerHTML = '<div class="p-3 text-center text-red-500">Search failed</div>';
+                    document.getElementById('vendor-search-results').classList.remove('hidden');
+                }
+            }, 200);
+        });
+        
+        function selectVendor(vendorId, vendorEmail, vendorName) {
+            selectedVendor = { id: vendorId, email: vendorEmail, name: vendorName };
+            document.getElementById('selected-vendor-id').value = vendorId;
+            document.getElementById('selected-vendor-email').value = vendorEmail;
+            document.getElementById('selected-vendor-name').textContent = `${vendorName} (${vendorEmail})`;
+            
+            document.getElementById('selected-vendor-display').classList.remove('hidden');
+            document.getElementById('vendor-search').value = '';
+            document.getElementById('vendor-search-results').classList.add('hidden');
+        }
+        
+        function clearVendorSelection() {
+            selectedVendor = null;
+            document.getElementById('selected-vendor-id').value = '';
+            document.getElementById('selected-vendor-email').value = '';
+            document.getElementById('selected-vendor-display').classList.add('hidden');
+            document.getElementById('vendor-search').value = '';
+            document.getElementById('vendor-search').focus();
+        }
+        
+        document.getElementById('clear-vendor-selection')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            clearVendorSelection();
+        });
+        
+        document.getElementById('invite-vendor-form')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            let vendorId = document.getElementById('selected-vendor-id').value;
+            let vendorEmail = document.getElementById('selected-vendor-email').value;
+            const message = document.getElementById('vendor-invite-message').value.trim();
+            const projectId = document.getElementById('invite-project-id').value;
+            const searchInput = document.getElementById('vendor-search').value.trim();
+            
+            // If no vendor selected but email-like text in search field, use it as email
+            if (!vendorId && !vendorEmail && searchInput) {
+                if (searchInput.includes('@')) {
+                    vendorEmail = searchInput;
+                } else {
+                    alert('Please select a vendor from search results or enter a valid email address');
+                    return;
+                }
+            }
+            
+            if (!vendorId && !vendorEmail) {
+                alert('Please select a vendor or enter an email address');
+                return;
+            }
+            
+            try {
+                const res = await authFetch(`/api/projects/${projectId}/invite-vendor`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        vendorId: vendorId || null,
+                        vendorEmail: vendorEmail || null,
+                        message
+                    })
+                });
+                
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || 'Failed to invite vendor');
+                }
+                
+                alert('Vendor invited successfully!');
+                closeInviteVendorModal();
+                loadMyProjects();
+            } catch (error) {
+                alert(error.message || 'Failed to invite vendor');
+            }
+        });
+    </script>
+</body>
+</html>

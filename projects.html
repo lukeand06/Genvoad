@@ -440,9 +440,7 @@
 
         async function fetchProjects(){
             try {
-                const token = getToken();
-                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
-                const res = await fetch(`${window.location.origin}/api/projects`, {credentials: 'include', headers});
+                const res = await authFetch('/api/projects');
                 
                 if(!res.ok) {
                     const errorText = await res.text();
@@ -451,6 +449,7 @@
                 }
                 const data = await res.json();
                 console.log('Projects data:', data);
+                console.log('Projects count:', (data.projects || data.items || []).length);
                 _projects = (data.projects || data.items || []).map(p => ({
                     _id: p._id || p.id,
                     title: p.title,
