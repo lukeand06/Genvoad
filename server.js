@@ -1118,6 +1118,28 @@ app.get('/api/projects', authMiddleware, async (req, res) => {
   }
 });
 
+// Get my projects (projects posted by current user)
+app.get('/api/my-projects', authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    console.log('Fetching my projects for user:', userId);
+    
+    const projects = await Project.find({ owner: userId })
+      .populate('owner', 'firstName lastName avatar company')
+      .populate('bids.user', 'firstName lastName avatar company')
+      .sort('-createdAt')
+      .limit(50);
+    
+    console.log(`Found ${projects.length} projects for user ${userId}`);
+    
+    res.json({ projects });
+  } catch (error) {
+    console.error('Failed to fetch my projects:', error);
+    res.status(500).json({ error: 'Failed to fetch my projects' });
+  }
+});
+
 // Get single project
 app.get('/api/projects/:id', authMiddleware, async (req, res) => {
   try {
