@@ -8,29 +8,31 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-clamp: 2; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(8px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
         .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
         
-        /* Custom card styles */
         .project-card {
             transition: all 0.2s ease;
             cursor: pointer;
         }
         .project-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(20,106,90,.15);
-            border-color: #c8e9e2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #e5e7eb;
         }
         
-        .card-section {
+        .card-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
             gap: 1.5rem;
         }
         
         @media (max-width: 768px) {
-            .card-section {
+            .card-grid {
                 grid-template-columns: 1fr;
             }
         }
@@ -60,7 +62,6 @@
                     </div>
                 </div>
 
-                <!-- Mobile Menu Button -->
                 <button id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
@@ -79,7 +80,7 @@
                         <button id="user-menu-btn" class="flex items-center space-x-2">
                             <div id="user-avatar"></div>
                         </button>
-                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1">
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                             <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
                             <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
                             <hr class="my-1">
@@ -116,95 +117,126 @@
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-900">Projects</h1>
-            <p class="text-gray-600 mt-2">Browse opportunities, discover projects, and grow your network</p>
+            <p class="text-gray-600 mt-1">Discover opportunities and manage your projects</p>
         </div>
 
-        <!-- Loading indicator -->
-        <div id="loading-indicator" class="text-center py-12">
-            <div class="inline-block">
-                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-                <p class="text-gray-600 mt-4">Loading projects...</p>
+        <!-- Tab Switching -->
+        <div class="mb-8 border-b border-gray-200">
+            <div class="flex gap-8">
+                <button id="tab-my-projects" class="tab-btn pb-4 px-1 border-b-2 border-gray-900 font-medium text-gray-900 transition" data-tab="my-projects">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    My Projects
+                </button>
+                <button id="tab-browse" class="tab-btn pb-4 px-1 border-b-2 border-transparent font-medium text-gray-600 hover:text-gray-900 transition" data-tab="browse">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    Browse
+                </button>
             </div>
         </div>
 
-        <!-- Filters & Search -->
-        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                <input type="text" id="f-search" placeholder="Search by keyword..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <select id="f-category" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                    <option value="all">All Categories</option>
-                    <option>Residential</option>
-                    <option>Commercial</option>
-                    <option>Industrial</option>
-                    <option>Renovation</option>
-                    <option>Landscaping</option>
-                    <option>Infrastructure</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                <select id="f-status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                    <option value="all">All Status</option>
-                    <option value="open">Open</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="completed">Completed</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">Budget Range</label>
-                <div class="flex gap-2">
-                    <input type="number" id="f-min" placeholder="Min" class="w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                    <input type="number" id="f-max" placeholder="Max" class="w-1/2 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
+        <!-- My Projects Tab -->
+        <div id="tab-content-my-projects" class="tab-content">
+            <div id="my-projects-loading" class="text-center py-12">
+                <div class="inline-block">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                    <p class="text-gray-600 mt-4">Loading your projects...</p>
                 </div>
             </div>
+            <div id="my-projects-container" class="card-grid hidden"></div>
         </div>
 
-        <!-- Filter Controls -->
-        <div class="flex gap-3 mb-8">
-            <button id="applyFilters" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Apply Filters</button>
-            <button id="clearFilters" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50">Clear</button>
-        </div>
+        <!-- Browse Tab -->
+        <div id="tab-content-browse" class="tab-content hidden">
+            <!-- Advanced Filters -->
+            <div class="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+                <div class="mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                    <!-- Search -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                        <input type="text" id="f-search" placeholder="Search projects..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                    </div>
 
-        <!-- Recommended Section -->
-        <div class="mb-12">
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Recommended For You</h2>
-                <p class="text-gray-600 mt-1">Projects matching your skills and experience</p>
+                    <!-- Category -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                        <select id="f-category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                            <option value="all">All Categories</option>
+                            <option>Residential</option>
+                            <option>Commercial</option>
+                            <option>Industrial</option>
+                            <option>Renovation</option>
+                            <option>Landscaping</option>
+                            <option>Infrastructure</option>
+                        </select>
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select id="f-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                            <option value="all">All Status</option>
+                            <option value="open">Open</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+
+                    <!-- Budget Min -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Min Budget</label>
+                        <input type="number" id="f-min" placeholder="$0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                    </div>
+
+                    <!-- Budget Max -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Max Budget</label>
+                        <input type="number" id="f-max" placeholder="$100k" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                    </div>
+                </div>
+
+                <!-- Filter Buttons -->
+                <div class="flex gap-3">
+                    <button id="applyFilters" class="px-6 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition">Apply Filters</button>
+                    <button id="clearFilters" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">Clear</button>
+                </div>
             </div>
-            <div id="cards-recommended" class="card-section"></div>
-        </div>
 
-        <!-- Recently Active Section -->
-        <div class="mb-12">
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Recently Active With</h2>
-                <p class="text-gray-600 mt-1">Projects from teams you've worked with</p>
+            <!-- Recommended Section -->
+            <div class="mb-12">
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">Recommended For You</h2>
+                    <p class="text-sm text-gray-600 mt-1">Projects matching your skills and experience</p>
+                </div>
+                <div id="cards-recommended" class="card-grid"></div>
             </div>
-            <div id="cards-recent" class="card-section"></div>
-        </div>
 
-        <!-- Near You Section -->
-        <div class="mb-12">
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Near You</h2>
-                <p class="text-gray-600 mt-1">Projects in your area (uses browser location when allowed)</p>
+            <!-- Recently Active Section -->
+            <div class="mb-12">
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">Recently Active</h2>
+                    <p class="text-sm text-gray-600 mt-1">Projects with recent activity</p>
+                </div>
+                <div id="cards-recent" class="card-grid"></div>
             </div>
-            <div id="cards-nearby" class="card-section"></div>
-        </div>
 
-        <!-- Browse All Section -->
-        <div class="mb-12">
-            <div class="mb-6">
-                <h2 class="text-2xl font-bold text-gray-900">Browse All Projects</h2>
-                <p class="text-gray-600 mt-1">Explore all opportunities with advanced filtering</p>
-            </div>
-            <div id="cards-browse" class="card-section"></div>
-            <div class="flex justify-center mt-8">
-                <button id="btn-show-more" class="px-8 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800" style="display:none;">Show More Projects</button>
+            <!-- Browse All Section -->
+            <div class="mb-12">
+                <div class="mb-4">
+                    <h2 class="text-xl font-bold text-gray-900">All Projects</h2>
+                    <p class="text-sm text-gray-600 mt-1">Explore all available opportunities</p>
+                </div>
+                <div id="cards-browse" class="card-grid"></div>
+                <div class="flex justify-center mt-8">
+                    <button id="btn-show-more" class="px-8 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800" style="display:none;">Show More Projects</button>
+                </div>
             </div>
         </div>
     </div>
@@ -237,7 +269,7 @@
                 mobileMenu.classList.add('hidden');
             });
         }
-        
+
         // User menu
         const userMenuBtn = document.getElementById('user-menu-btn');
         const userDropdown = document.getElementById('user-dropdown');
@@ -253,211 +285,153 @@
         }
 
         let _projects = [];
+        let _myProjects = [];
         let _displayedCount = 0;
-        const INITIAL_LOAD = 3;
-        const LOAD_INCREMENT = 6;
-        let _userLocation = null;
+        const INITIAL_LOAD = 6;
+        const LOAD_INCREMENT = 12;
 
-        function icon(path){
-            return `<svg viewBox="0 0 24 24" fill="none" class="w-4 h-4"><path d="${path}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-        }
-
-        const pin = "M12 21s7-4.35 7-10a7 7 0 10-14 0c0 5.65 7 10 7 10z M12 11a2 2 0 110-4 2 2 0 010 4z";
-        const coin = "M12 8v8m-4-4h8M7 3h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z";
-        const calendar = "M8 7V3m8 4V3M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z";
-
-        function daysLeft(dateStr){
-            if(!dateStr) return null;
-            const d = new Date(dateStr);
-            if (isNaN(d)) return null;
-            const ms = d.setHours(23,59,59,999) - Date.now();
-            return Math.ceil(ms/86400000);
-        }
-
-        function getStatusBadge(dueDays) {
-            if(dueDays === null) return '';
-            if(dueDays <= 3 && dueDays >= 0) {
-                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">⚡ Urgent - ${dueDays}d left</span>`;
-            } else if(dueDays > 3 && dueDays <= 14) {
-                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Due in ${dueDays} days</span>`;
-            } else if(dueDays > 14) {
-                return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Open</span>`;
-            }
-            return '';
-        }
-
-        function cardHTML(p) {
-            const dueDays = daysLeft(p.dueDate || p.createdAt);
-            const statusBadge = getStatusBadge(dueDays);
-            const initials = (p.ownerName || p.owner?.name || '•').split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+        function projectCard(p) {
+            const dueDays = p.dueDate ? Math.ceil((new Date(p.dueDate) - Date.now()) / 86400000) : null;
+            const status = p.status || 'open';
+            let statusColor = 'bg-green-50 text-green-700 border-green-200';
+            let statusLabel = 'Open';
             
-            const categoryShown = p.category || (p.tags && p.tags[0]) || 'General';
-            const budgetDisplay = p.budget ? '$' + Number(p.budget).toLocaleString() : 'Budget TBD';
-            const tagsToShow = (p.tags || []).filter(t => t !== categoryShown).slice(0, 3);
+            if (status === 'in_progress') {
+                statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                statusLabel = 'In Progress';
+            } else if (status === 'completed') {
+                statusColor = 'bg-gray-50 text-gray-700 border-gray-200';
+                statusLabel = 'Completed';
+            } else if (dueDays !== null && dueDays <= 3) {
+                statusColor = 'bg-red-50 text-red-700 border-red-200';
+                statusLabel = `${dueDays}d left`;
+            }
+
+            const category = p.category || (p.tags && p.tags[0]) || 'General';
+            const budget = p.budget ? '$' + Number(p.budget).toLocaleString() : 'Budget TBD';
+            const ownerName = p.ownerName || p.owner?.firstName || 'Anonymous';
+            const companyName = p.owner?.company || 'Individual';
+            const location = p.location || 'Location TBD';
 
             return `
-                <article class="project-card bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm" onclick="viewProject('${p._id}')">
-                    <!-- Card Header -->
-                    <div class="p-6 border-b border-gray-100">
-                        <div class="flex items-start gap-4">
-                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center font-bold text-sm text-gray-700 flex-shrink-0">
-                                ${p.icon || initials}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h3 class="text-lg font-bold text-gray-900 mb-2 line-clamp-2">${p.title}</h3>
-                                <div class="flex flex-wrap items-center gap-2">
-                                    <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-teal-50 text-teal-700 border border-teal-200">
-                                        ${categoryShown}
-                                    </span>
-                                    ${statusBadge}
-                                </div>
-                            </div>
+                <div class="project-card bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm hover:shadow-md" onclick="window.location.href='/project-detail.html?id=${p._id}'">
+                    <!-- Header -->
+                    <div class="p-5 border-b border-gray-100">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <h3 class="text-base font-bold text-gray-900 flex-1 line-clamp-2">${p.title}</h3>
+                            <span class="px-2.5 py-1 rounded text-xs font-semibold whitespace-nowrap border ${statusColor}">${statusLabel}</span>
                         </div>
-                        ${tagsToShow.length > 0 ? `
-                            <div class="flex flex-wrap gap-2 mt-3">
-                                ${tagsToShow.map(tag => `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">${tag}</span>`).join('')}
-                            </div>
-                        ` : ''}
+                        <p class="text-xs text-gray-600 mb-2">
+                            <span class="font-semibold text-gray-700">${companyName}</span> • ${ownerName}
+                        </p>
+                        <div class="flex gap-2 items-start">
+                            <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200">
+                                ${category}
+                            </span>
+                        </div>
                     </div>
 
-                    <!-- Card Body -->
-                    <div class="p-6">
+                    <!-- Body -->
+                    <div class="p-5">
                         ${p.description ? `<p class="text-sm text-gray-600 line-clamp-2 mb-4">${p.description}</p>` : ''}
                         
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            ${p.location ? `
-                                <div class="flex items-start gap-2">
-                                    <svg class="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                    </svg>
-                                    <div class="min-w-0">
-                                        <div class="text-xs font-medium text-gray-500">Location</div>
-                                        <div class="text-sm font-semibold text-gray-900 truncate">${p.location}</div>
-                                    </div>
-                                </div>
-                            ` : ''}
-                            <div class="flex items-start gap-2">
-                                <svg class="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                                <div class="min-w-0">
-                                    <div class="text-xs font-medium text-gray-500">Budget</div>
-                                    <div class="text-sm font-semibold text-gray-900">${budgetDisplay}</div>
-                                </div>
+                        <div class="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                                <p class="text-gray-500 font-medium mb-1">Budget</p>
+                                <p class="text-gray-900 font-semibold">${budget}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-500 font-medium mb-1">Location</p>
+                                <p class="text-gray-900 font-semibold truncate">${location}</p>
                             </div>
                             ${p.createdAt ? `
-                                <div class="flex items-start gap-2 col-span-2">
-                                    <svg class="w-4 h-4 text-teal-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/>
-                                    </svg>
-                                    <div class="min-w-0">
-                                        <div class="text-xs font-medium text-gray-500">Posted</div>
-                                        <div class="text-sm font-semibold text-gray-900">${new Date(p.createdAt).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}</div>
-                                    </div>
+                                <div class="col-span-2">
+                                    <p class="text-gray-500 font-medium mb-1">Posted</p>
+                                    <p class="text-gray-900 font-semibold">${new Date(p.createdAt).toLocaleDateString('en-US', {month: 'short', day: 'numeric'})}</p>
                                 </div>
                             ` : ''}
                         </div>
                     </div>
 
-                    <!-- Card Footer -->
-                    <div class="px-6 pb-6 flex gap-3">
-                        <button onclick="event.stopPropagation(); viewProject('${p._id}')" class="flex-1 px-4 py-2.5 bg-teal-600 text-white rounded-lg font-semibold text-sm hover:bg-teal-700 transition">
-                            View Details
+                    <!-- Footer -->
+                    <div class="px-5 py-4 bg-gray-50 border-t border-gray-100 flex gap-2">
+                        <button onclick="event.stopPropagation(); window.location.href='/project-detail.html?id=${p._id}'" class="flex-1 px-3 py-2 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-gray-800 transition">
+                            View
                         </button>
-                        <button onclick="event.stopPropagation(); messageOwner('${p._id}')" class="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-semibold text-sm hover:bg-gray-50 transition">
+                        <button onclick="event.stopPropagation(); window.location.href='/messages.html?projectId=${p._id}'" class="flex-1 px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition">
                             Message
                         </button>
                     </div>
-                </article>
+                </div>
             `;
         }
 
-        function renderGrid(hostId, list, limit = 0){
+        function renderGrid(hostId, list, limit = 0) {
             const host = document.getElementById(hostId);
-            if (!host) {
-                console.error('✗ Container not found:', hostId);
-                return;
-            }
-            host.innerHTML = '';
+            if (!host) return;
             
-            if(!list.length){
-                console.log(`⚠ No projects to render in ${hostId}`);
-                // Change grid to block for empty state to display properly
-                host.style.display = 'block';
-                host.innerHTML = '<div class="text-center py-12"><p class="text-gray-500">No projects found</p></div>';
+            if (!list.length) {
+                host.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No projects found</p></div>';
                 return;
             }
             
-            // Reset to grid display
-            host.style.display = 'grid';
-            
-            console.log(`✓ Rendering ${limit > 0 ? Math.min(limit, list.length) : list.length} projects in ${hostId}`);
             const toShow = limit > 0 ? list.slice(0, limit) : list;
-            toShow.forEach((p, index) => {
-                const wrapper = document.createElement('div');
-                wrapper.innerHTML = cardHTML(p);
-                wrapper.firstElementChild.style.animation = `fadeIn ${0.3 + index * 0.05}s ease forwards`;
-                wrapper.firstElementChild.style.opacity = '0';
-                host.appendChild(wrapper.firstElementChild);
-            });
+            host.innerHTML = toShow.map((p, i) => `<div style="animation: fadeIn ${0.1 + i * 0.05}s ease forwards; opacity: 0;">${projectCard(p)}</div>`).join('');
         }
 
-        function readFilters(){
-            const fSearch = document.getElementById('f-search');
-            const fCategory = document.getElementById('f-category');
-            const fStatus = document.getElementById('f-status');
-            const fMin = document.getElementById('f-min');
-            const fMax = document.getElementById('f-max');
-            
+        // Tab switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabName = btn.dataset.tab;
+                
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('border-gray-900', 'text-gray-900');
+                    b.classList.add('border-transparent', 'text-gray-600');
+                });
+                btn.classList.remove('border-transparent', 'text-gray-600');
+                btn.classList.add('border-gray-900', 'text-gray-900');
+                
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
+                
+                if (tabName === 'my-projects') {
+                    loadMyProjects();
+                } else if (tabName === 'browse') {
+                    loadBrowse();
+                }
+            });
+        });
+
+        // Filter functions
+        function readFilters() {
             return {
-                search: (fSearch?.value || '').toLowerCase(),
-                category: fCategory?.value || 'all',
-                status: fStatus?.value || 'all',
-                minBudget: fMin?.value ? Number(fMin.value) : null,
-                maxBudget: fMax?.value ? Number(fMax.value) : null,
+                search: (document.getElementById('f-search')?.value || '').toLowerCase(),
+                category: document.getElementById('f-category')?.value || 'all',
+                status: document.getElementById('f-status')?.value || 'all',
+                minBudget: document.getElementById('f-min')?.value ? Number(document.getElementById('f-min').value) : null,
+                maxBudget: document.getElementById('f-max')?.value ? Number(document.getElementById('f-max').value) : null,
             };
         }
 
-        function filterProjects(list){
+        function filterProjects(list) {
             const f = readFilters();
-            
             return list.filter(p => {
-                const search = f.search;
                 const title = (p.title || '').toLowerCase();
                 const desc = (p.description || '').toLowerCase();
-                const matchesSearch = !search || title.includes(search) || desc.includes(search);
-                
-                const matchesCategory = f.category === 'all' || !f.category || (p.category || '').toLowerCase() === f.category.toLowerCase();
-                const matchesStatus = f.status === 'all' || !f.status || (p.status || 'open') === f.status;
-                
+                const matchesSearch = !f.search || title.includes(f.search) || desc.includes(f.search);
+                const matchesCategory = f.category === 'all' || (p.category || '').toLowerCase() === f.category.toLowerCase();
+                const matchesStatus = f.status === 'all' || (p.status || 'open') === f.status;
                 const budget = Number(p.budget) || 0;
                 const matchesBudget = (!f.minBudget || budget >= f.minBudget) && (!f.maxBudget || budget <= f.maxBudget);
-                
                 return matchesSearch && matchesCategory && matchesStatus && matchesBudget;
             });
         }
 
-        function scoreProximity(p){
-            if(!_userLocation || !p.lat || !p.lon) return 0;
-            const dx = _userLocation.lat - Number(p.lat);
-            const dy = _userLocation.lon - Number(p.lon);
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            return 1 - (dist / 100);
-        }
-
-        async function fetchProjects(){
+        async function fetchProjects() {
             try {
-                console.log('Fetching projects from /api/projects...');
                 const res = await authFetch('/api/projects');
-                
-                if(!res.ok) {
-                    const errorText = await res.text();
-                    console.error('API Error:', res.status, errorText);
-                    throw new Error(`Failed to fetch: ${res.status}`);
-                }
+                if (!res.ok) throw new Error('Failed to fetch');
                 const data = await res.json();
-                console.log('✓ Projects data received:', data);
-                console.log('✓ Projects count:', (data.projects || data.items || []).length);
                 _projects = (data.projects || data.items || []).map(p => ({
                     _id: p._id || p.id,
                     title: p.title,
@@ -466,173 +440,107 @@
                     budget: Number(p.budget) || 0,
                     category: p.category || '',
                     status: p.status || 'open',
-                    tags: Array.isArray(p.tags) ? p.tags : (typeof p.tags === 'string' ? p.tags.split(',').map(t => t.trim()) : []),
+                    tags: Array.isArray(p.tags) ? p.tags : [],
                     createdAt: p.createdAt,
                     dueDate: p.dueDate,
-                    ownerName: p.owner?.firstName || p.ownerName || 'Owner',
+                    ownerName: p.owner?.firstName || 'Owner',
                     owner: p.owner,
-                    icon: p.icon || '📁',
-                    scope: p.scope || '',
-                    lat: p.lat,
-                    lon: p.lon
                 }));
-                console.log('Processed projects:', _projects.length);
-            } catch(e){
+            } catch (e) {
                 console.error('Failed to fetch projects:', e);
                 _projects = [];
             }
         }
 
-        function renderAllSections(){
-            console.log('✓ renderAllSections called, projects count:', _projects.length);
-            
-            // Hide loading indicator
-            const loadingIndicator = document.getElementById('loading-indicator');
-            if (loadingIndicator) {
-                loadingIndicator.style.display = 'none';
-                console.log('✓ Loading indicator hidden');
+        async function fetchMyProjects() {
+            try {
+                const res = await authFetch('/api/my-projects');
+                if (!res.ok) throw new Error('Failed to fetch');
+                const data = await res.json();
+                _myProjects = (data.projects || data.items || []).map(p => ({
+                    _id: p._id || p.id,
+                    title: p.title,
+                    description: p.description || '',
+                    location: p.location || '',
+                    budget: Number(p.budget) || 0,
+                    category: p.category || '',
+                    status: p.status || 'open',
+                    tags: Array.isArray(p.tags) ? p.tags : [],
+                    createdAt: p.createdAt,
+                    dueDate: p.dueDate,
+                    ownerName: p.ownerName || currentUser?.firstName || 'You',
+                    owner: p.owner || currentUser,
+                }));
+            } catch (e) {
+                console.error('Failed to fetch my projects:', e);
+                _myProjects = [];
             }
-            
-            if(!_projects.length){
-                console.log('⚠ No projects to display - showing empty state');
-                ['cards-recommended', 'cards-recent', 'cards-nearby', 'cards-browse'].forEach(id => {
-                    const elem = document.getElementById(id);
-                    if(elem) {
-                        elem.style.display = 'block';
-                        elem.innerHTML = '<div class="text-center py-12"><div class="text-6xl mb-4">📋</div><p class="text-gray-700 font-medium text-lg mb-2">No Projects Yet</p><p class="text-gray-500">Be the first to post a project or check back soon!</p></div>';
-                        console.log(`✓ Empty state rendered for ${id}`);
-                    } else {
-                        console.error(`✗ Container not found: ${id}`);
-                    }
-                });
-                return;
-            }
-            
-            console.log('✓ Rendering projects...');
+        }
 
-            const filtered = filterProjects(_projects);
+        async function loadMyProjects() {
+            const loading = document.getElementById('my-projects-loading');
+            const container = document.getElementById('my-projects-container');
             
+            await fetchMyProjects();
+            
+            if (loading) loading.classList.add('hidden');
+            if (container) {
+                if (_myProjects.length === 0) {
+                    container.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500 mb-4">You haven\'t posted any projects yet</p><a href="/create-project.html" class="inline-block px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Post Your First Project</a></div>';
+                } else {
+                    renderGrid('my-projects-container', _myProjects);
+                }
+                container.classList.remove('hidden');
+            }
+        }
+
+        async function loadBrowse() {
+            await fetchProjects();
+            const filtered = filterProjects(_projects);
             renderGrid('cards-recommended', filtered.slice(0, INITIAL_LOAD));
             renderGrid('cards-recent', filtered.slice(0, INITIAL_LOAD));
-            
-            const sorted = [...filtered].sort((a,b) => scoreProximity(b) - scoreProximity(a));
-            renderGrid('cards-nearby', sorted.slice(0, INITIAL_LOAD));
-
             _displayedCount = INITIAL_LOAD;
             renderGrid('cards-browse', filtered, INITIAL_LOAD);
             
             const browseBtn = document.getElementById('btn-show-more');
-            if(browseBtn){
-                if(filtered.length > INITIAL_LOAD){
-                    browseBtn.style.display = 'inline-block';
-                    browseBtn.onclick = () => showMoreProjects(filtered);
-                } else {
-                    browseBtn.style.display = 'none';
-                }
+            if (browseBtn) {
+                browseBtn.onclick = () => {
+                    _displayedCount += LOAD_INCREMENT;
+                    renderGrid('cards-browse', filtered, _displayedCount);
+                    if (_displayedCount >= filtered.length) browseBtn.style.display = 'none';
+                };
+                browseBtn.style.display = filtered.length > INITIAL_LOAD ? 'inline-block' : 'none';
             }
         }
 
-        function showMoreProjects(filtered){
-            const nextBatch = Math.min(_displayedCount + LOAD_INCREMENT, filtered.length);
-            renderGrid('cards-browse', filtered, nextBatch);
-            _displayedCount = nextBatch;
-
-            if(_displayedCount >= filtered.length){
-                const browseBtn = document.getElementById('btn-show-more');
-                if(browseBtn){
-                    browseBtn.style.display = 'none';
-                }
+        // Filter handlers
+        document.getElementById('applyFilters')?.addEventListener('click', () => {
+            if (document.getElementById('tab-browse').classList.contains('border-gray-900')) {
+                loadBrowse();
             }
-        }
+        });
 
-        function viewProject(projectId){
-            const p = _projects.find(x => x._id === projectId);
-            if(!p) return;
-            window.location.href = `/project-detail.html?id=${projectId}`;
-        }
+        document.getElementById('clearFilters')?.addEventListener('click', () => {
+            document.getElementById('f-search').value = '';
+            document.getElementById('f-category').value = 'all';
+            document.getElementById('f-status').value = 'all';
+            document.getElementById('f-min').value = '';
+            document.getElementById('f-max').value = '';
+            loadBrowse();
+        });
 
-        function messageOwner(projectId){
-            const p = _projects.find(x => x._id === projectId);
-            if(!p) return;
-            const ownerId = p.owner?._id || 'unknown';
-            window.location.href = `/messages.html?user=${ownerId}&projectId=${projectId}&projectTitle=${encodeURIComponent(p.title)}`;
-        }
+        document.getElementById('f-search')?.addEventListener('input', () => {
+            if (document.getElementById('tab-browse').classList.contains('border-gray-900')) {
+                loadBrowse();
+            }
+        });
 
-        // Get user location (async, non-blocking)
-        if(navigator.geolocation){
-            navigator.geolocation.getCurrentPosition(
-                pos => {
-                    _userLocation = {lat: pos.coords.latitude, lon: pos.coords.longitude};
-                    // Re-render to include proximity scores
-                    renderAllSections();
-                },
-                () => {
-                    // Permission denied or error - just continue without location
-                    console.log('Geolocation permission denied or unavailable');
-                },
-                {maximumAge: 600000, timeout: 3000}
-            );
-        }
-
-        // Event listeners
-        const applyFiltersBtn = document.getElementById('applyFilters');
-        const clearFiltersBtn = document.getElementById('clearFilters');
-        const searchInput = document.getElementById('f-search');
-        
-        if (applyFiltersBtn) {
-            applyFiltersBtn.addEventListener('click', renderAllSections);
-        }
-        
-        if (clearFiltersBtn) {
-            clearFiltersBtn.addEventListener('click', () => {
-                const fSearch = document.getElementById('f-search');
-                const fCategory = document.getElementById('f-category');
-                const fStatus = document.getElementById('f-status');
-                const fMin = document.getElementById('f-min');
-                const fMax = document.getElementById('f-max');
-                
-                if (fSearch) fSearch.value = '';
-                if (fCategory) fCategory.value = 'all';
-                if (fStatus) fStatus.value = 'all';
-                if (fMin) fMin.value = '';
-                if (fMax) fMax.value = '';
-                renderAllSections();
-            });
-        }
-        
-        if (searchInput) {
-            searchInput.addEventListener('input', renderAllSections);
-        }
-
-        // Initialize - Render projects immediately, geolocation is non-blocking
+        // Load my projects on init
         (async () => {
             try {
-                console.log('🚀 Starting projects page initialization...');
-                console.log('📡 User:', getCurrentUser());
-                console.log('🔑 Token:', getToken() ? 'Present' : 'Missing');
-                await fetchProjects();
-                console.log('✓ Projects fetched, rendering...');
-                renderAllSections();
-                console.log('✅ Rendering complete');
+                await loadMyProjects();
             } catch (error) {
                 console.error('❌ Initialization error:', error);
-                // Render error state
-                const loadingIndicator = document.getElementById('loading-indicator');
-                if (loadingIndicator) {
-                    loadingIndicator.style.display = 'none';
-                }
-                ['cards-recommended', 'cards-recent', 'cards-nearby', 'cards-browse'].forEach(id => {
-                    const elem = document.getElementById(id);
-                    if (elem) {
-                        elem.style.display = 'block';
-                        elem.innerHTML = `<div class="text-center py-12">
-                            <div class="text-6xl mb-4">⚠️</div>
-                            <p class="text-red-600 font-medium text-lg mb-2">Error Loading Projects</p>
-                            <p class="text-gray-600 mb-4">${error.message}</p>
-                            <button onclick="location.reload()" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Try Again</button>
-                        </div>`;
-                    }
-                });
             }
         })();
     </script>
