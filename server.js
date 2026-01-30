@@ -16,6 +16,7 @@ const Message = require('./models/Message');
 const Review = require('./models/Review');
 const Notification = require('./models/Notification');
 const Company = require('./models/Company');
+const Post = require('./models/Post');
 const { sendVerificationEmail, sendEmail } = require('./utils/email');
 
 const app = express();
@@ -4477,6 +4478,371 @@ app.get('/api/users/network-stats', authMiddleware, async (req, res) => {
     res.status(500).json({ error: 'Failed to load network stats' });
   }
 });
+
+// ======================== SOCIAL FEED ENDPOINTS ========================
+
+// Create a new post
+app.post('/api/posts', authMiddleware, upload.array('images', 5), async (req, res) => {
+  try {
+    const { content, title, type, visibility, tags, location, industry } = req.body;
+
+    // Validation
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Post content is required' });
+    }
+
+    if (content.length > 5000) {
+      return res.status(400).json({ error: 'Post content exceeds maximum length (5000 characters)' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Process uploaded images
+    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
+    // Create post
+    const post = new Post({
+      author: req.user._id,
+      authorName: `${user.firstName} ${user.lastName}`,
+      authorAvatar: user.avatar,
+      authorRole: user.role,
+      authorCompany: user.company,
+      content: content.trim(),
+      title: title || '',
+      type: type || 'post',
+      visibility: visibility || 'public',
+      images,
+      tags: tags ? tags.split(',').map(t => t.trim().toLowerCase()) : [],
+      location: location || '',
+      industry: industry || ''
+    });
+
+    await post.save();
+
+    // Populate author info before returning
+    await post.populate('author', 'firstName lastName avatar');
+
+    res.status(201).json({
+      success: true,
+      message: 'Post created successfully',
+      post
+    });
+  } catch (error) {
+    console.error('Post creation error:', error);
+    res.status(500).json({ error: 'Failed to create post' });
+  }
+});
+
+// Get personalized feed with smart ranking
+app.get('/api/feed', authMiddleware, async (req, res) => {
+  try {
+    const { page = 1, limit = 20 } = req.query;
+    const skip = (page - 1) * limit;
+
+    const user = await User.findById(req.user._id).populate('partners');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const partnerIds = user.partners ? user.partners.map(p => p._id) : [];
+
+    // PHASE 1: Get partner posts (highest priority)
+    const partnerPosts = await Post.find({
+      author: { $in: partnerIds },
+      visibility: { $in: ['public', 'partners'] }
+    })
+      .populate('author', 'firstName lastName avatar role company')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // PHASE 2: If we have enough partner posts, return them
+    let feedPosts = [];
+
+    if (partnerPosts.length >= limit) {
+      feedPosts = partnerPosts.slice(0, limit);
+    } else {
+      // Add all partner posts
+      feedPosts = [...partnerPosts];
+
+      // PHASE 3: Get sponsored posts (ads)
+      const sponsoredPosts = await Post.find({
+        isSponsored: true,
+        sponsorshipEndDate: { $gt: new Date() },
+        visibility: 'public'
+      })
+        .populate('author', 'firstName lastName avatar role company')
+        .sort({ engagementScore: -1 })
+        .limit(Math.ceil((limit - feedPosts.length) * 0.2)) // 20% sponsored
+        .lean();
+
+      feedPosts = [...feedPosts, ...sponsoredPosts];
+
+      // PHASE 4: Get high-partner-count users' posts (influential users)
+      if (feedPosts.length < limit) {
+        const remainingSlots = limit - feedPosts.length;
+
+        // Get users with many partners
+        const influentialUsers = await User.find({
+          _id: { $nin: [req.user._id, ...partnerIds] },
+          role: user.role, // Same role as current user
+          partners: { $exists: true, $ne: [] }
+        })
+          .sort({ 'partners': -1 })
+          .limit(10)
+          .lean();
+
+        const influentialUserIds = influentialUsers.map(u => u._id);
+
+        const influentialPosts = await Post.find({
+          author: { $in: influentialUserIds },
+          visibility: 'public'
+        })
+          .populate('author', 'firstName lastName avatar role company')
+          .sort({ engagementScore: -1, createdAt: -1 })
+          .limit(remainingSlots)
+          .lean();
+
+        feedPosts = [...feedPosts, ...influentialPosts];
+      }
+
+      // PHASE 5: Get relevant project recommendations (if still need more content)
+      if (feedPosts.length < limit && user.role === 'vendor') {
+        const remainingSlots = limit - feedPosts.length;
+
+        const relevantProjects = await Project.find({
+          status: 'open',
+          companyType: { $in: user.services || [] }
+        })
+          .populate('owner', 'firstName lastName avatar company')
+          .sort({ createdAt: -1 })
+          .limit(remainingSlots)
+          .lean();
+
+        // Convert projects to post-like format for display
+        const projectPosts = relevantProjects.map(proj => ({
+          _id: proj._id,
+          isProject: true,
+          title: proj.title,
+          content: proj.description,
+          author: proj.owner,
+          authorName: `${proj.owner.firstName} ${proj.owner.lastName}`,
+          authorAvatar: proj.owner.avatar,
+          authorRole: 'owner',
+          budget: proj.budget,
+          location: proj.location,
+          createdAt: proj.createdAt,
+          type: 'project_update'
+        }));
+
+        feedPosts = [...feedPosts, ...projectPosts];
+      }
+
+      // PHASE 6: Get general public posts as fallback
+      if (feedPosts.length < limit) {
+        const remainingSlots = limit - feedPosts.length;
+        const usedPostIds = feedPosts.map(p => p._id).filter(id => id);
+
+        const generalPosts = await Post.find({
+          _id: { $nin: usedPostIds },
+          visibility: 'public',
+          isSponsored: false
+        })
+          .populate('author', 'firstName lastName avatar role company')
+          .sort({ engagementScore: -1, createdAt: -1 })
+          .limit(remainingSlots)
+          .lean();
+
+        feedPosts = [...feedPosts, ...generalPosts];
+      }
+    }
+
+    // Calculate engagement rate and add metadata
+    const enrichedPosts = feedPosts.map(post => ({
+      ...post,
+      isLiked: post.likes ? post.likes.includes(req.user._id.toString()) : false,
+      engagementRate: post.likeCount + (post.commentCount * 2) + (post.shares * 3)
+    }));
+
+    res.json({
+      success: true,
+      posts: enrichedPosts.slice(0, limit),
+      hasMore: feedPosts.length > limit,
+      page,
+      limit
+    });
+  } catch (error) {
+    console.error('Feed error:', error);
+    res.status(500).json({ error: 'Failed to load feed' });
+  }
+});
+
+// Like/Unlike a post
+app.post('/api/posts/:postId/like', authMiddleware, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const userIdStr = req.user._id.toString();
+    const likeIndex = post.likes.findIndex(id => id.toString() === userIdStr);
+
+    if (likeIndex > -1) {
+      // Unlike
+      post.likes.splice(likeIndex, 1);
+    } else {
+      // Like
+      post.likes.push(req.user._id);
+    }
+
+    await post.save();
+
+    res.json({
+      success: true,
+      liked: likeIndex === -1,
+      likeCount: post.likes.length
+    });
+  } catch (error) {
+    console.error('Like error:', error);
+    res.status(500).json({ error: 'Failed to process like' });
+  }
+});
+
+// Add comment to post
+app.post('/api/posts/:postId/comments', authMiddleware, async (req, res) => {
+  try {
+    const { content } = req.body;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Comment content is required' });
+    }
+
+    if (content.length > 500) {
+      return res.status(400).json({ error: 'Comment exceeds maximum length' });
+    }
+
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const comment = {
+      author: req.user._id,
+      authorName: `${user.firstName} ${user.lastName}`,
+      authorAvatar: user.avatar,
+      content: content.trim(),
+      createdAt: new Date()
+    };
+
+    post.comments.push(comment);
+    await post.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Comment added successfully',
+      comment,
+      commentCount: post.comments.length
+    });
+  } catch (error) {
+    console.error('Comment error:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+// Get post comments
+app.get('/api/posts/:postId/comments', async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (page - 1) * limit;
+
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const totalComments = post.comments.length;
+    const paginatedComments = post.comments
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(skip, skip + limit);
+
+    res.json({
+      success: true,
+      comments: paginatedComments,
+      total: totalComments,
+      page,
+      limit,
+      hasMore: skip + limit < totalComments
+    });
+  } catch (error) {
+    console.error('Get comments error:', error);
+    res.status(500).json({ error: 'Failed to load comments' });
+  }
+});
+
+// Delete post
+app.delete('/api/posts/:postId', authMiddleware, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    // Check authorization
+    if (post.author.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Unauthorized to delete this post' });
+    }
+
+    // Delete associated images if needed
+    if (post.images && post.images.length > 0) {
+      post.images.forEach(imgPath => {
+        const fullPath = path.join(__dirname, imgPath);
+        if (fs.existsSync(fullPath)) {
+          fs.unlinkSync(fullPath);
+        }
+      });
+    }
+
+    await Post.deleteOne({ _id: req.params.postId });
+
+    res.json({
+      success: true,
+      message: 'Post deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete post error:', error);
+    res.status(500).json({ error: 'Failed to delete post' });
+  }
+});
+
+// Get single post
+app.get('/api/posts/:postId', async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.postId)
+      .populate('author', 'firstName lastName avatar role company');
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    res.json({
+      success: true,
+      post
+    });
+  } catch (error) {
+    console.error('Get post error:', error);
+    res.status(500).json({ error: 'Failed to load post' });
+  }
+});
+
+// ======================== END SOCIAL FEED ENDPOINTS ========================
 
 // Start server
 const PORT = process.env.PORT || 5000;

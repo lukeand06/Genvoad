@@ -138,6 +138,67 @@
         </div>
     </div>
 
+    <!-- Create Post Modal -->
+    <div id="post-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-4">
+        <div class="bg-white rounded-t-lg sm:rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-lg">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+                <h2 class="text-xl font-semibold text-gray-900">Create a Post</h2>
+                <button onclick="closePostModal()" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="post-form" class="p-6 space-y-4">
+                <!-- Title (optional) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Title (optional)</label>
+                    <input type="text" id="post-title" placeholder="Add a catchy title..." maxlength="200" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                </div>
+
+                <!-- Content -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">What's on your mind?</label>
+                    <textarea id="post-content" placeholder="Share your thoughts, articles, news, or achievements..." rows="6" maxlength="5000" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm resize-none" required></textarea>
+                    <p class="text-xs text-gray-500 mt-1"><span id="char-count">0</span>/5000 characters</p>
+                </div>
+
+                <!-- Image Upload -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Add Images (up to 5)</label>
+                    <input type="file" id="post-images" multiple accept="image/*" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" onchange="updateImagePreview()">
+                    <div id="image-preview" class="mt-3 flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- Post Type Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Post Type</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" onclick="currentPostType = 'post'">
+                            <input type="radio" name="post-type" value="post" checked onchange="currentPostType = this.value" class="mr-2">
+                            <span class="text-sm">Post</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" onclick="currentPostType = 'article'">
+                            <input type="radio" name="post-type" value="article" onchange="currentPostType = this.value" class="mr-2">
+                            <span class="text-sm">Article</span>
+                        </label>
+                        <label class="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50" onclick="currentPostType = 'news'">
+                            <input type="radio" name="post-type" value="news" onchange="currentPostType = this.value" class="mr-2">
+                            <span class="text-sm">News</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex gap-2 pt-4 border-t border-gray-200">
+                    <button type="button" onclick="closePostModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition">Cancel</button>
+                    <button type="button" id="post-submit-btn" onclick="createPost()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Post</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Welcome Header -->
@@ -271,7 +332,42 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Activity Feed (LinkedIn-style) -->
             <div class="lg:col-span-2">
-                <div class="bg-white rounded-lg border border-gray-200 mb-6">
+                <!-- Create Post Card -->
+                <div class="bg-white rounded-lg border border-gray-200 mb-6 shadow-sm">
+                    <div class="p-4 border-b border-gray-200">
+                        <div class="flex items-center gap-3">
+                            <div id="user-post-avatar" class="w-10 h-10 rounded-full bg-gray-200"></div>
+                            <button onclick="openPostModal()" class="flex-1 text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 text-sm cursor-pointer transition">
+                                Share your thoughts, articles, or news...
+                            </button>
+                        </div>
+                    </div>
+                    <div class="px-4 py-3 flex justify-between items-center border-t border-gray-200">
+                        <div class="flex gap-2">
+                            <button onclick="setPostType('article')" class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm hover:text-blue-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Article
+                            </button>
+                            <button onclick="setPostType('post')" class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm hover:text-green-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h10m7 6H3a2 2 0 01-2-2V7a2 2 0 012-2h3.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H17a2 2 0 012 2v10a2 2 0 01-2 2z"/>
+                                </svg>
+                                Post
+                            </button>
+                            <button onclick="setPostType('news')" class="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-50 rounded-lg text-sm hover:text-amber-600">
+                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v11l4-4"/>
+                                </svg>
+                                News
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feed Section -->
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
                     <div class="p-6 border-b border-gray-200">
                         <div class="flex items-center justify-between">
                             <h2 class="text-lg font-semibold text-gray-900">Your Feed</h2>
@@ -1126,6 +1222,7 @@
             await ensureUser();
             renderUserHeader();
             initializeRoleSwitcher();
+            initializePostUserAvatar();
             await loadDashboard();
             await loadFeed();
             await loadRecommendations();
@@ -1137,6 +1234,336 @@
                 document.getElementById('company-nav-link').classList.remove('hidden');
             }
         })();
+
+        // =================== FEED FUNCTIONS ===================
+        let currentPostType = 'post';
+        let feedPage = 1;
+        let isLoadingFeed = false;
+
+        function setPostType(type) {
+            currentPostType = type;
+            openPostModal();
+        }
+
+        function openPostModal() {
+            const modal = document.getElementById('post-modal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                document.getElementById('post-content').focus();
+            }
+        }
+
+        function closePostModal() {
+            const modal = document.getElementById('post-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+                document.getElementById('post-form').reset();
+                currentPostType = 'post';
+            }
+        }
+
+        async function createPost() {
+            const content = document.getElementById('post-content').value.trim();
+            const title = document.getElementById('post-title').value.trim();
+            const fileInput = document.getElementById('post-images');
+            const submitBtn = document.getElementById('post-submit-btn');
+
+            if (!content) {
+                alert('Please write something before posting');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="inline-block animate-spin">⏳</span> Posting...';
+
+            try {
+                const formData = new FormData();
+                formData.append('content', content);
+                formData.append('title', title);
+                formData.append('type', currentPostType);
+
+                if (fileInput.files.length > 0) {
+                    for (let file of fileInput.files) {
+                        formData.append('images', file);
+                    }
+                }
+
+                const res = await authFetch('/api/posts', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.error || 'Failed to create post');
+                }
+
+                const data = await res.json();
+                closePostModal();
+                alert('Post created successfully!');
+                await loadFeed(); // Reload feed to show new post
+            } catch (error) {
+                console.error('Post creation error:', error);
+                alert('Failed to create post: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Post';
+            }
+        }
+
+        async function loadFeed() {
+            if (isLoadingFeed) return;
+            isLoadingFeed = true;
+
+            try {
+                const res = await authFetch(`/api/feed?page=1&limit=20`);
+                if (!res.ok) throw new Error('Failed to load feed');
+
+                const data = await res.json();
+                const feedContainer = document.getElementById('activity-feed');
+                
+                if (!data.posts || data.posts.length === 0) {
+                    feedContainer.innerHTML = `
+                        <div class="p-12 text-center text-gray-500">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v11l4-4"/>
+                            </svg>
+                            <p class="text-sm">No posts yet. Follow partners or create your first post!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                feedContainer.innerHTML = data.posts.map(post => renderPostCard(post)).join('');
+                feedPage = 1;
+            } catch (error) {
+                console.error('Feed error:', error);
+                document.getElementById('activity-feed').innerHTML = `
+                    <div class="p-6 text-center text-red-500">
+                        <p class="text-sm">Failed to load feed</p>
+                    </div>
+                `;
+            } finally {
+                isLoadingFeed = false;
+            }
+        }
+
+        function renderPostCard(post) {
+            const user = getCurrentUser();
+            const isLiked = post.isLiked || false;
+            const isProject = post.isProject || false;
+
+            if (isProject) {
+                // Render project recommendation as post
+                return `
+                    <div class="p-6 hover:bg-gray-50 transition">
+                        <div class="flex items-start gap-3 mb-4">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
+                                ${post.author.firstName.charAt(0)}
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-900">${post.authorName}</p>
+                                <p class="text-xs text-gray-500">${post.author.company || 'Project Owner'} • ${getTimeAgo(new Date(post.createdAt))}</p>
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <h3 class="text-base font-semibold text-gray-900 mb-2">${post.title}</h3>
+                            <p class="text-gray-700 text-sm mb-3 line-clamp-3">${post.content}</p>
+                            ${post.location ? `<p class="text-xs text-gray-500 mb-2">📍 ${post.location}</p>` : ''}
+                            ${post.budget ? `<p class="text-sm font-semibold text-blue-600">Budget: ${formatCurrency(post.budget)}</p>` : ''}
+                        </div>
+                        <a href="/projects.html" class="inline-block px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-sm font-medium transition">
+                            View Project
+                        </a>
+                    </div>
+                `;
+            }
+
+            // Regular post
+            return `
+                <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="flex items-start gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-600 flex items-center justify-center text-white font-semibold">
+                            ${post.authorName.charAt(0)}
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-900">${post.authorName}</p>
+                            <p class="text-xs text-gray-500">
+                                ${post.authorCompany ? post.authorCompany + ' • ' : ''}
+                                ${getTimeAgo(new Date(post.createdAt))}
+                            </p>
+                        </div>
+                        ${post.author._id === user.id ? `
+                            <button onclick="deletePost('${post._id}')" class="text-gray-400 hover:text-red-600 text-sm">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M6 4a2 2 0 11-4 0 2 2 0 014 0zM4 12a2 2 0 11-4 0 2 2 0 014 0zm12-2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                                </svg>
+                            </button>
+                        ` : ''}
+                    </div>
+
+                    ${post.title ? `<h3 class="text-base font-semibold text-gray-900 mb-2">${post.title}</h3>` : ''}
+                    <p class="text-gray-800 text-sm mb-3 whitespace-pre-wrap">${post.content}</p>
+
+                    ${post.images && post.images.length > 0 ? `
+                        <div class="mb-4 flex flex-wrap gap-2">
+                            ${post.images.map(img => `
+                                <img src="${img}" alt="Post image" class="max-h-96 rounded-lg object-cover cursor-pointer hover:opacity-90" onclick="openImageModal('${img}')">
+                            `).join('')}
+                        </div>
+                    ` : ''}
+
+                    <div class="flex items-center gap-4 text-gray-600 text-sm pt-3 border-t border-gray-100">
+                        <button onclick="likePost('${post._id}')" class="flex items-center gap-1 hover:text-red-600 transition ${isLiked ? 'text-red-600' : ''}">
+                            <svg class="w-4 h-4" fill="${isLiked ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                            </svg>
+                            <span>${post.likeCount || 0}</span>
+                        </button>
+                        <button onclick="toggleComments('${post._id}')" class="flex items-center gap-1 hover:text-blue-600 transition">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                            </svg>
+                            <span>${post.commentCount || 0}</span>
+                        </button>
+                        <button class="flex items-center gap-1 hover:text-green-600 transition">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C9.577 14.591 10.92 15.55 12.448 15.999m0 0c1.528.45 2.871 1.409 3.764 2.658m-9.212-2.658a9 9 0 01-2.905-7.12m2.905 7.12a9.01 9.01 0 0016.122-9.231m-16.122 0c-.663-4.343 1.7-8.476 5.738-9.687m16.122 9.231c.663 4.343-1.7 8.476-5.738 9.687"/>
+                            </svg>
+                            Share
+                        </button>
+                    </div>
+
+                    <div id="comments-${post._id}" class="hidden mt-4 pt-4 border-t border-gray-100 space-y-3">
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="comment-input-${post._id}" placeholder="Write a comment..." class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-blue-500">
+                            <button onclick="postComment('${post._id}')" class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+                                Post
+                            </button>
+                        </div>
+                        <div id="comments-list-${post._id}" class="text-sm text-gray-500">
+                            Loading comments...
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function likePost(postId) {
+            try {
+                const res = await authFetch(`/api/posts/${postId}/like`, { method: 'POST' });
+                if (!res.ok) throw new Error('Failed to like post');
+                await loadFeed();
+            } catch (error) {
+                console.error('Like error:', error);
+            }
+        }
+
+        async function postComment(postId) {
+            const input = document.getElementById(`comment-input-${postId}`);
+            const content = input.value.trim();
+
+            if (!content) return;
+
+            try {
+                const res = await authFetch(`/api/posts/${postId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content })
+                });
+
+                if (!res.ok) throw new Error('Failed to post comment');
+                input.value = '';
+                await loadFeed();
+            } catch (error) {
+                console.error('Comment error:', error);
+                alert('Failed to post comment');
+            }
+        }
+
+        function toggleComments(postId) {
+            const commentsDiv = document.getElementById(`comments-${postId}`);
+            if (commentsDiv) {
+                commentsDiv.classList.toggle('hidden');
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!confirm('Are you sure you want to delete this post?')) return;
+
+            try {
+                const res = await authFetch(`/api/posts/${postId}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed to delete post');
+                alert('Post deleted successfully');
+                await loadFeed();
+            } catch (error) {
+                console.error('Delete error:', error);
+                alert('Failed to delete post');
+            }
+        }
+
+        function openImageModal(src) {
+            // Simple image view - could be enhanced with lightbox
+            window.open(src, '_blank');
+        }
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0
+            }).format(amount);
+        }
+
+        function updateImagePreview() {
+            const input = document.getElementById('post-images');
+            const preview = document.getElementById('image-preview');
+            preview.innerHTML = '';
+
+            for (let file of input.files) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'w-20 h-20 rounded-lg object-cover';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Update character count
+        document.getElementById('post-content').addEventListener('input', (e) => {
+            document.getElementById('char-count').textContent = e.target.value.length;
+        });
+
+        // Initialize user avatar in post creation
+        function initializePostUserAvatar() {
+            const user = getCurrentUser();
+            const avatarDiv = document.getElementById('user-post-avatar');
+            if (user.avatar) {
+                avatarDiv.style.backgroundImage = `url('${user.avatar}')`;
+                avatarDiv.style.backgroundSize = 'cover';
+            } else {
+                avatarDiv.textContent = user.firstName.charAt(0).toUpperCase();
+                avatarDiv.className = 'w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold';
+            }
+        }
+
+
     </script>
 </body>
 </html>

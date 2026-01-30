@@ -216,6 +216,11 @@
                                 <div class="animate-pulse">Loading top companies...</div>
                             </div>
                         </div>
+                        <div class="px-4 py-3 border-t border-gray-200 text-center">
+                            <button id="top-picks-show-more" style="display: none;" class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">
+                                Show More
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Companies You May Know Section -->
@@ -233,6 +238,11 @@
                                 <div class="animate-pulse">Loading...</div>
                             </div>
                         </div>
+                        <div class="px-4 py-3 border-t border-gray-200 text-center">
+                            <button id="may-know-show-more" style="display: none;" class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">
+                                Show More
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Recently Active Section -->
@@ -249,6 +259,11 @@
                             <div class="p-6 text-center text-gray-500">
                                 <div class="animate-pulse">Loading...</div>
                             </div>
+                        </div>
+                        <div class="px-4 py-3 border-t border-gray-200 text-center">
+                            <button id="recently-active-show-more" style="display: none;" class="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline">
+                                Show More
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -758,6 +773,7 @@
 
         function displayTopPicks(companies) {
             const container = document.getElementById('top-picks-container');
+            const showMoreBtn = document.getElementById('top-picks-show-more');
             
             if (!container) {
                 console.error('top-picks-container not found in DOM');
@@ -767,16 +783,32 @@
             if (companies.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
                 container.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
+                if (showMoreBtn) showMoreBtn.style.display = 'none';
                 return;
             }
 
-            const cardsHtml = companies.slice(0, 5).map(company => renderPersonCard(company)).join('');
+            const initialLimit = 3;
+            const cardsHtml = companies.slice(0, initialLimit).map(company => renderPersonCard(company)).join('');
             container.innerHTML = cardsHtml;
             container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
+            
+            // Store full data and manage show more button
+            container.dataset.allCompanies = JSON.stringify(companies);
+            container.dataset.isExpanded = 'false';
+            
+            if (showMoreBtn) {
+                if (companies.length > initialLimit) {
+                    showMoreBtn.style.display = 'block';
+                    showMoreBtn.onclick = () => expandSection('top-picks-container', 'top-picks-show-more');
+                } else {
+                    showMoreBtn.style.display = 'none';
+                }
+            }
         }
 
         function displayMayKnow(companies) {
             const container = document.getElementById('may-know-container');
+            const showMoreBtn = document.getElementById('may-know-show-more');
             
             if (!container) {
                 console.error('may-know-container not found in DOM');
@@ -786,16 +818,32 @@
             if (companies.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
                 container.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
+                if (showMoreBtn) showMoreBtn.style.display = 'none';
                 return;
             }
 
-            const cardsHtml = companies.slice(0, 5).map(company => renderPersonCard(company)).join('');
+            const initialLimit = 3;
+            const cardsHtml = companies.slice(0, initialLimit).map(company => renderPersonCard(company)).join('');
             container.innerHTML = cardsHtml;
             container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
+            
+            // Store full data and manage show more button
+            container.dataset.allCompanies = JSON.stringify(companies);
+            container.dataset.isExpanded = 'false';
+            
+            if (showMoreBtn) {
+                if (companies.length > initialLimit) {
+                    showMoreBtn.style.display = 'block';
+                    showMoreBtn.onclick = () => expandSection('may-know-container', 'may-know-show-more');
+                } else {
+                    showMoreBtn.style.display = 'none';
+                }
+            }
         }
 
         function displayRecentlyActive(companies) {
             const container = document.getElementById('recently-active-container');
+            const showMoreBtn = document.getElementById('recently-active-show-more');
             
             if (!container) {
                 console.error('recently-active-container not found in DOM');
@@ -805,12 +853,52 @@
             if (companies.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
                 container.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
+                if (showMoreBtn) showMoreBtn.style.display = 'none';
                 return;
             }
 
-            const cardsHtml = companies.slice(0, 5).map(company => renderPersonCard(company)).join('');
+            const initialLimit = 3;
+            const cardsHtml = companies.slice(0, initialLimit).map(company => renderPersonCard(company)).join('');
             container.innerHTML = cardsHtml;
             container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
+            
+            // Store full data and manage show more button
+            container.dataset.allCompanies = JSON.stringify(companies);
+            container.dataset.isExpanded = 'false';
+            
+            if (showMoreBtn) {
+                if (companies.length > initialLimit) {
+                    showMoreBtn.style.display = 'block';
+                    showMoreBtn.onclick = () => expandSection('recently-active-container', 'recently-active-show-more');
+                } else {
+                    showMoreBtn.style.display = 'none';
+                }
+            }
+        }
+
+        function expandSection(containerId, buttonId) {
+            const container = document.getElementById(containerId);
+            const button = document.getElementById(buttonId);
+            
+            if (!container || !button) return;
+            
+            const isExpanded = container.dataset.isExpanded === 'true';
+            const allCompanies = JSON.parse(container.dataset.allCompanies || '[]');
+            const initialLimit = 3;
+            
+            if (isExpanded) {
+                // Collapse - show only initial items
+                const cardsHtml = allCompanies.slice(0, initialLimit).map(company => renderPersonCard(company)).join('');
+                container.innerHTML = cardsHtml;
+                button.textContent = 'Show More';
+                container.dataset.isExpanded = 'false';
+            } else {
+                // Expand - show all items
+                const cardsHtml = allCompanies.map(company => renderPersonCard(company)).join('');
+                container.innerHTML = cardsHtml;
+                button.textContent = 'Show Less';
+                container.dataset.isExpanded = 'true';
+            }
         }
 
         function formatCompanyType(type) {
