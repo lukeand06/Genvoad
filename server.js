@@ -102,7 +102,30 @@ app.get('/sitemap.xml', (req, res) => {
 // Serve robots.txt// Connect to MongoDB
 if (process.env.MONGODB_URI) {
   mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('✓ Connected to MongoDB'))
+    .then(async () => {
+      console.log('✓ Connected to MongoDB');
+      
+      // Fix indexes: drop old unique email index if it exists
+      try {
+        const userCollection = mongoose.connection.collection('users');
+        const indexes = await userCollection.getIndexes();
+        
+        // Drop old email unique index if it exists
+        if (indexes['email_1']) {
+          console.log('Dropping old email index...');
+          await userCollection.dropIndex('email_1');
+        }
+        
+        // Ensure new compound index exists
+        await userCollection.createIndex(
+          { email: 1, role: 1 },
+          { unique: true, sparse: true }
+        );
+        console.log('✓ Database indexes configured correctly');
+      } catch (indexError) {
+        console.warn('⚠ Index configuration warning:', indexError.message);
+      }
+    })
     .catch(err => {
       console.error('MongoDB connection error:', err.message);
       console.warn('⚠ Running without database - some features will not work');
