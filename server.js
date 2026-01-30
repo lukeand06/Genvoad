@@ -269,8 +269,13 @@ app.post('/api/auth/signup', async (req, res) => {
       email: email.toLowerCase(),
       role: normalizedRole 
     });
-    if (existing) {
+    if (existing && existing.emailVerified) {
       return res.status(400).json({ error: `This email is already registered as a ${normalizedRole}. Please use a different email or login to your existing account.` });
+    }
+    
+    // If unverified account exists, delete it to allow fresh signup
+    if (existing && !existing.emailVerified) {
+      await User.deleteOne({ _id: existing._id });
     }
     
     // Hash password
@@ -339,10 +344,15 @@ app.post('/api/auth/signup', async (req, res) => {
 // Resend verification code
 app.post('/api/auth/resend', async (req, res) => {
   try {
-    const { email } = req.body;
+    const { email, role } = req.body;
     if (!email) return res.status(400).json({ error: 'Email required' });
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    let query = { email: email.toLowerCase() };
+    if (role && ['owner', 'vendor'].includes(role)) {
+      query.role = role;
+    }
+
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: 'User not found' });
     if (user.emailVerified) return res.status(400).json({ error: 'Email already verified' });
 

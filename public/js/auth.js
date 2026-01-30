@@ -137,6 +137,24 @@ function showSuccess(message, elementId = 'success-message') {
   }
 }
 
+// Clear error message
+function clearError(elementId = 'error-message') {
+  const errorDiv = document.getElementById(elementId);
+  if (errorDiv) {
+    errorDiv.classList.add('hidden');
+    errorDiv.textContent = '';
+  }
+}
+
+// Clear success message
+function clearSuccess(elementId = 'success-message') {
+  const successDiv = document.getElementById(elementId);
+  if (successDiv) {
+    successDiv.classList.add('hidden');
+    successDiv.textContent = '';
+  }
+}
+
 // Format date
 function formatDate(dateString) {
   const date = new Date(dateString);

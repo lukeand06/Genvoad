@@ -107,6 +107,11 @@
                     <button id="verify-btn" class="w-full bg-gray-900 text-white py-3 rounded-lg font-semibold hover:bg-gray-800 transition">
                         Verify Email
                     </button>
+                    
+                    <div class="text-center space-y-2 pt-2">
+                        <button id="resend-code-btn" type="button" class="text-sm text-gray-600 hover:text-gray-900 underline">Didn't receive code? Resend</button>
+                        <button id="try-again-btn" type="button" class="block w-full text-sm text-gray-600 hover:text-gray-900 underline">Try creating account again</button>
+                    </div>
                 </div>
 
                 <div class="mt-6 text-center text-sm">
@@ -213,6 +218,50 @@
                 btn.disabled = false;
                 btn.textContent = 'Verify Email';
             }
+        });
+
+        document.getElementById('resend-code-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const btn = e.target;
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            
+            try {
+                const response = await fetch(`${API_URL}/auth/resend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail, role: userRole })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to resend');
+                }
+                
+                showSuccess('Verification code resent! Check your email.');
+                btn.textContent = 'Code sent';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.textContent = 'Didn\'t receive code? Resend';
+                }, 3000);
+            } catch (error) {
+                showError(error.message);
+                btn.disabled = false;
+                btn.textContent = 'Didn\'t receive code? Resend';
+            }
+        });
+
+        document.getElementById('try-again-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('verification-form').classList.add('hidden');
+            document.getElementById('signup-form').classList.remove('hidden');
+            document.getElementById('verificationCode').value = '';
+            clearError();
+            clearSuccess();
+            
+            // Reset form
+            document.getElementById('signup-form').reset();
         });
     </script>
 </body>
