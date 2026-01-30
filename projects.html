@@ -375,16 +375,18 @@
         function renderGrid(hostId, list, limit = 0){
             const host = document.getElementById(hostId);
             if (!host) {
-                console.error('Container not found:', hostId);
+                console.error('✗ Container not found:', hostId);
                 return;
             }
             host.innerHTML = '';
             
             if(!list.length){
+                console.log(`⚠ No projects to render in ${hostId}`);
                 host.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No projects found</p></div>';
                 return;
             }
-
+            
+            console.log(`✓ Rendering ${limit > 0 ? Math.min(limit, list.length) : list.length} projects in ${hostId}`);
             const toShow = limit > 0 ? list.slice(0, limit) : list;
             toShow.forEach((p, index) => {
                 const wrapper = document.createElement('div');
@@ -440,6 +442,7 @@
 
         async function fetchProjects(){
             try {
+                console.log('Fetching projects from /api/projects...');
                 const res = await authFetch('/api/projects');
                 
                 if(!res.ok) {
@@ -448,8 +451,8 @@
                     throw new Error(`Failed to fetch: ${res.status}`);
                 }
                 const data = await res.json();
-                console.log('Projects data:', data);
-                console.log('Projects count:', (data.projects || data.items || []).length);
+                console.log('✓ Projects data received:', data);
+                console.log('✓ Projects count:', (data.projects || data.items || []).length);
                 _projects = (data.projects || data.items || []).map(p => ({
                     _id: p._id || p.id,
                     title: p.title,
@@ -476,23 +479,30 @@
         }
 
         function renderAllSections(){
-            console.log('renderAllSections called, projects count:', _projects.length);
+            console.log('✓ renderAllSections called, projects count:', _projects.length);
             
             // Hide loading indicator
             const loadingIndicator = document.getElementById('loading-indicator');
             if (loadingIndicator) {
                 loadingIndicator.style.display = 'none';
+                console.log('✓ Loading indicator hidden');
             }
             
             if(!_projects.length){
+                console.log('⚠ No projects to display - showing empty state');
                 ['cards-recommended', 'cards-recent', 'cards-nearby', 'cards-browse'].forEach(id => {
                     const elem = document.getElementById(id);
                     if(elem) {
-                        elem.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No projects available at this time. Check back soon!</p></div>';
+                        elem.innerHTML = '<div class="col-span-full text-center py-12"><div class="text-6xl mb-4">📋</div><p class="text-gray-700 font-medium text-lg mb-2">No Projects Yet</p><p class="text-gray-500">Be the first to post a project or check back soon!</p></div>';
+                        console.log(`✓ Empty state rendered for ${id}`);
+                    } else {
+                        console.error(`✗ Container not found: ${id}`);
                     }
                 });
                 return;
             }
+            
+            console.log('✓ Rendering projects...');
 
             const filtered = filterProjects(_projects);
             
@@ -591,14 +601,16 @@
         // Initialize - Render projects immediately, geolocation is non-blocking
         (async () => {
             try {
-                console.log('Starting projects page initialization...');
+                console.log('🚀 Starting projects page initialization...');
+                console.log('📡 User:', getCurrentUser());
+                console.log('🔑 Token:', getToken() ? 'Present' : 'Missing');
                 await fetchProjects();
-                console.log('Projects fetched, rendering...');
+                console.log('✓ Projects fetched, rendering...');
                 renderAllSections();
-                console.log('Rendering complete');
+                console.log('✅ Rendering complete');
             } catch (error) {
-                console.error('Initialization error:', error);
-                // Render empty state
+                console.error('❌ Initialization error:', error);
+                // Render error state
                 const loadingIndicator = document.getElementById('loading-indicator');
                 if (loadingIndicator) {
                     loadingIndicator.style.display = 'none';
@@ -606,7 +618,12 @@
                 ['cards-recommended', 'cards-recent', 'cards-nearby', 'cards-browse'].forEach(id => {
                     const elem = document.getElementById(id);
                     if (elem) {
-                        elem.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-red-600">Error loading projects. Please try refreshing the page.</p></div>';
+                        elem.innerHTML = `<div class="col-span-full text-center py-12">
+                            <div class="text-6xl mb-4">⚠️</div>
+                            <p class="text-red-600 font-medium text-lg mb-2">Error Loading Projects</p>
+                            <p class="text-gray-600 mb-4">${error.message}</p>
+                            <button onclick="location.reload()" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Try Again</button>
+                        </div>`;
                     }
                 });
             }
