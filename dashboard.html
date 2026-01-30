@@ -612,7 +612,9 @@
                     
                     let totalBids = 0;
                     userProjects.forEach(p => {
-                        totalBids += p.bids?.length || 0;
+                        // Count only pending and rejected bids (exclude accepted bids)
+                        const pendingBids = (p.bids || []).filter(b => b.status !== 'accepted');
+                        totalBids += pendingBids.length;
                     });
 
                     document.getElementById('active-projects').textContent = activeProjects.length;
@@ -903,19 +905,22 @@
 
         function loadNewBidsModal() {
             const content = document.getElementById('new-bids-content');
-            const projectsWithBids = userProjects.filter(p => p.bids && p.bids.length > 0);
+            const projectsWithBids = userProjects.filter(p => {
+                const pendingBids = (p.bids || []).filter(b => b.status !== 'accepted');
+                return pendingBids.length > 0;
+            });
             
             if (projectsWithBids.length === 0) {
-                content.innerHTML = '<p class="text-gray-500 text-center">No bids yet</p>';
+                content.innerHTML = '<p class="text-gray-500 text-center">No pending bids</p>';
                 return;
             }
 
             content.innerHTML = '<div class="space-y-6">' + projectsWithBids.map(project => {
-                const bids = project.bids || [];
+                const bids = (project.bids || []).filter(b => b.status !== 'accepted');
                 return `
                     <div class="border border-gray-200 rounded-lg p-4">
                         <h3 class="font-semibold text-gray-900 mb-2">${project.title}</h3>
-                        <p class="text-sm text-gray-600 mb-3">${bids.length} bid${bids.length !== 1 ? 's' : ''}</p>
+                        <p class="text-sm text-gray-600 mb-3">${bids.length} pending bid${bids.length !== 1 ? 's' : ''}</p>
                         <div class="space-y-3">
                             ${bids.slice(0, 3).map(bid => {
                                 const bidder = bid.user || {};
