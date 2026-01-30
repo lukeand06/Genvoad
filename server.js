@@ -367,9 +367,15 @@ app.post('/api/auth/resend', async (req, res) => {
 // Verify Email
 app.post('/api/auth/verify', async (req, res) => {
   try {
-    const { email, code } = req.body;
+    const { email, code, role } = req.body;
     
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // If role is provided, use it to find the correct user account
+    let query = { email: email.toLowerCase() };
+    if (role && ['owner', 'vendor'].includes(role)) {
+      query.role = role;
+    }
+    
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: 'User not found' });
     
     if (user.emailVerified) {
