@@ -4137,15 +4137,19 @@ app.get('/api/companies/:id/invitations', authMiddleware, async (req, res) => {
 // Includes both owners and vendors with filtering
 app.get('/api/discovery', authMiddleware, async (req, res) => {
   try {
-    const { search, role, location, minRating, minExperience, verified } = req.query;
+    const { search, role, location, minRating, minExperience, verified, includeUnverified } = req.query;
     const currentUser = await User.findById(req.user._id);
 
     // Build filter
     const filter = {
       _id: { $ne: req.user._id }, // Exclude self
-      deletedAt: null,
-      emailVerified: true
+      deletedAt: null
     };
+
+    // Only filter by emailVerified if includeUnverified is not true
+    if (includeUnverified !== 'true') {
+      filter.emailVerified = true;
+    }
 
     // Filter by role if specified
     if (role && ['owner', 'vendor'].includes(role)) {

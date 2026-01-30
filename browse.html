@@ -634,6 +634,9 @@
                     // Add filters if set
                     if (browseFilters.type) params.set('role', browseFilters.type);
                     if (browseFilters.verified) params.set('verified', browseFilters.verified);
+                    
+                    // Include unverified users in all companies browse
+                    params.set('includeUnverified', 'true');
 
                     const res = await authFetch(`/api/discovery?${params}`);
                     if (!res.ok) throw new Error('Failed to load companies');
