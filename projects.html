@@ -382,9 +382,14 @@
             
             if(!list.length){
                 console.log(`⚠ No projects to render in ${hostId}`);
-                host.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-500">No projects found</p></div>';
+                // Change grid to block for empty state to display properly
+                host.style.display = 'block';
+                host.innerHTML = '<div class="text-center py-12"><p class="text-gray-500">No projects found</p></div>';
                 return;
             }
+            
+            // Reset to grid display
+            host.style.display = 'grid';
             
             console.log(`✓ Rendering ${limit > 0 ? Math.min(limit, list.length) : list.length} projects in ${hostId}`);
             const toShow = limit > 0 ? list.slice(0, limit) : list;
@@ -493,7 +498,8 @@
                 ['cards-recommended', 'cards-recent', 'cards-nearby', 'cards-browse'].forEach(id => {
                     const elem = document.getElementById(id);
                     if(elem) {
-                        elem.innerHTML = '<div class="col-span-full text-center py-12"><div class="text-6xl mb-4">📋</div><p class="text-gray-700 font-medium text-lg mb-2">No Projects Yet</p><p class="text-gray-500">Be the first to post a project or check back soon!</p></div>';
+                        elem.style.display = 'block';
+                        elem.innerHTML = '<div class="text-center py-12"><div class="text-6xl mb-4">📋</div><p class="text-gray-700 font-medium text-lg mb-2">No Projects Yet</p><p class="text-gray-500">Be the first to post a project or check back soon!</p></div>';
                         console.log(`✓ Empty state rendered for ${id}`);
                     } else {
                         console.error(`✗ Container not found: ${id}`);
@@ -618,7 +624,8 @@
                 ['cards-recommended', 'cards-recent', 'cards-nearby', 'cards-browse'].forEach(id => {
                     const elem = document.getElementById(id);
                     if (elem) {
-                        elem.innerHTML = `<div class="col-span-full text-center py-12">
+                        elem.style.display = 'block';
+                        elem.innerHTML = `<div class="text-center py-12">
                             <div class="text-6xl mb-4">⚠️</div>
                             <p class="text-red-600 font-medium text-lg mb-2">Error Loading Projects</p>
                             <p class="text-gray-600 mb-4">${error.message}</p>
