@@ -593,20 +593,17 @@
 
         async function loadDiscovery() {
             try {
-                // Fetch users/partners instead of Company documents
-                // This is what messages.html and dashboard.html use successfully
+                // Fetch discovery recommendations
                 const res = await authFetch('/api/discovery');
                 if (!res.ok) throw new Error('Failed to load recommendations');
                 
                 const data = await res.json();
                 
-                // Transform users into company-like format for display
-                const users = data.users || [];
-                
+                // /api/discovery returns topPicks, mightKnow, activeToday sections
                 allRecommendations = {
-                    topPicks: users.slice(0, 10),
-                    mayKnow: users.slice(10, 20),
-                    recentlyActive: users.slice(20, 30)
+                    topPicks: data.topPicks || [],
+                    mayKnow: data.mightKnow || [],
+                    recentlyActive: data.activeToday || []
                 };
                 
                 displayCompanyRecommendations();
@@ -618,47 +615,40 @@
             }
         }
 
-        // Browse All Companies functionality
-        let allCompanies = [];
-        let currentSkip = 0;
-        const companiesLimit = 20;
-        let hasMoreCompanies = true;
         let browseFilters = { type: '', verified: '' };
+        let allBrowseUsers = [];
+        let currentPage = 1;
+        const browsePageSize = 20;
 
-        async function loadBrowseAllCompanies(append = false) {
+        async function loadBrowseAllCompanies(reset = false) {
             try {
-                if (!append) {
-                    currentSkip = 0;
-                    allCompanies = [];
+                if (reset) {
+                    currentPage = 1;
+                    allBrowseUsers = [];
                 }
 
-                // Use /api/discovery to get users (like dashboard and messages do)
-                const params = new URLSearchParams({
-                    limit: companiesLimit,
-                    skip: currentSkip
-                });
+                // First time loading? Fetch from API
+                if (allBrowseUsers.length === 0) {
+                    const params = new URLSearchParams();
+                    
+                    // Add filters if set
+                    if (browseFilters.type) params.set('role', browseFilters.type);
+                    if (browseFilters.verified) params.set('verified', browseFilters.verified);
 
-                // Add filters if set
-                if (browseFilters.type) params.set('role', browseFilters.type);
-                if (browseFilters.verified) params.set('verified', browseFilters.verified);
-
-                const res = await authFetch(`/api/discovery?${params}`);
-                if (!res.ok) throw new Error('Failed to load companies');
-                
-                const data = await res.json();
-                const users = data.users || [];
-                
-                if (append) {
-                    allCompanies = [...allCompanies, ...users];
-                } else {
-                    allCompanies = users;
+                    const res = await authFetch(`/api/discovery?${params}`);
+                    if (!res.ok) throw new Error('Failed to load companies');
+                    
+                    const data = await res.json();
+                    // Combine all sections into one browseable list
+                    allBrowseUsers = [
+                        ...(data.topPicks || []),
+                        ...(data.mightKnow || []),
+                        ...(data.activeToday || [])
+                    ];
                 }
-                
-                hasMoreCompanies = users.length >= companiesLimit;
-                currentSkip += users.length;
                 
                 displayAllCompanies();
-                updateCompaniesCount(data.total || users.length);
+                updateCompaniesCount(allBrowseUsers.length);
             } catch (error) {
                 console.error('Load all companies error:', error);
                 const container = document.getElementById('all-companies-container');
@@ -672,13 +662,20 @@
             
             if (!container) return;
             
-            if (allCompanies.length === 0) {
+            if (allBrowseUsers.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies found</div>';
                 loadMoreContainer.classList.add('hidden');
                 return;
             }
 
-            container.innerHTML = allCompanies.map(company => {
+            // Get page slice
+            const start = (currentPage - 1) * browsePageSize;
+            const end = start + browsePageSize;
+            const pageUsers = allBrowseUsers.slice(start, end);
+
+            // For first page, replace; for subsequent pages, append
+            const isFirstPage = currentPage === 1;
+            const html = pageUsers.map(company => {
                 // Handle both user objects and company objects
                 const isUser = company.firstName !== undefined;
                 const name = isUser ? (company.company || `${company.firstName} ${company.lastName}`) : company.name;
@@ -714,8 +711,15 @@
                 </div>
             `}).join('');
 
+            if (isFirstPage) {
+                container.innerHTML = html;
+            } else {
+                container.innerHTML += html;
+            }
+
             // Show/hide load more button
-            if (hasMoreCompanies) {
+            const hasMore = end < allBrowseUsers.length;
+            if (hasMore) {
                 loadMoreContainer.classList.remove('hidden');
             } else {
                 loadMoreContainer.classList.add('hidden');
@@ -732,16 +736,17 @@
         // Browse All event listeners
         document.getElementById('browse-type-filter')?.addEventListener('change', (e) => {
             browseFilters.type = e.target.value;
-            loadBrowseAllCompanies(false);
+            loadBrowseAllCompanies(true);
         });
 
         document.getElementById('browse-verified-filter')?.addEventListener('change', (e) => {
             browseFilters.verified = e.target.value;
-            loadBrowseAllCompanies(false);
+            loadBrowseAllCompanies(true);
         });
 
         document.getElementById('load-more-btn')?.addEventListener('click', () => {
-            loadBrowseAllCompanies(true);
+            currentPage++;
+            displayAllCompanies();
         });
 
         document.getElementById('browse-all-btn')?.addEventListener('click', () => {
