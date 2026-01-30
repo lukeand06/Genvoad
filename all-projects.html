@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Projects - Genovad</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(8px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+        
+        .project-card {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .project-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border-color: #e5e7eb;
+        }
+        
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <a href="/dashboard.html" class="flex items-center space-x-2">
+                        <svg class="w-8 h-8" viewBox="0 0 40 40" fill="none">
+                            <rect width="40" height="40" rx="8" fill="#1a1a1a"/>
+                            <path d="M12 20L18 14L24 20L30 14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            <path d="M12 26L18 20L24 26L30 20" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                        </svg>
+                        <span class="text-xl font-semibold text-gray-900">Genovad</span>
+                    </a>
+                    
+                    <div class="hidden md:flex space-x-1">
+                        <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
+                        <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Projects</a>
+                        <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+                        <a href="/browse.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
+                        <a href="/company.html" id="company-nav-link" class="hidden px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Company</a>
+                    </div>
+                </div>
+
+                <button id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+                
+                <div class="flex items-center space-x-4">
+                    <a href="/notifications.html" class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                        <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
+                    </a>
+                    <a href="/create-project.html" id="nav-cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <div class="relative" id="user-menu">
+                        <button id="user-menu-btn" class="flex items-center space-x-2">
+                            <div id="user-avatar"></div>
+                        </button>
+                        <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                            <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
+                            <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
+                            <hr class="my-1">
+                            <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-menu" class="hidden fixed inset-0 z-40 md:hidden">
+        <div class="fixed inset-0 bg-black bg-opacity-50" id="mobile-menu-backdrop"></div>
+        <div class="fixed top-0 left-0 w-64 h-full bg-white shadow-lg overflow-y-auto">
+            <div class="p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Menu</h3>
+            </div>
+            <nav class="p-4 space-y-2">
+                <a href="/dashboard.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
+                <a href="/projects.html" class="block px-4 py-3 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg hover:bg-gray-100">Projects</a>
+                <a href="/messages.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+                <a href="/browse.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Browse</a>
+                <a href="/notifications.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Notifications</a>
+            </nav>
+            <div class="p-4 border-t border-gray-200">
+                <a href="/create-project.html" class="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Post Project</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header with Back Button -->
+        <div class="mb-8">
+            <a href="/projects.html" class="inline-flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-4">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                <span>Back to Projects</span>
+            </a>
+            <h1 class="text-3xl font-bold text-gray-900">All Projects</h1>
+            <p class="text-gray-600 mt-1">Browse all available opportunities</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+            <div class="mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+                <!-- Search -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input type="text" id="f-search" placeholder="Search projects..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select id="f-category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                        <option value="all">All Categories</option>
+                        <option>Residential</option>
+                        <option>Commercial</option>
+                        <option>Industrial</option>
+                        <option>Renovation</option>
+                        <option>Landscaping</option>
+                        <option>Infrastructure</option>
+                    </select>
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select id="f-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                        <option value="all">All Status</option>
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+
+                <!-- Budget Min -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Min Budget</label>
+                    <input type="number" id="f-min" placeholder="$0" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                </div>
+
+                <!-- Budget Max -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Max Budget</label>
+                    <input type="number" id="f-max" placeholder="$100k" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                </div>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="flex gap-3">
+                <button id="applyFilters" class="px-6 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition">Apply Filters</button>
+                <button id="clearFilters" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition">Clear</button>
+            </div>
+        </div>
+
+        <!-- Projects Grid -->
+        <div id="projects-container" class="card-grid">
+            <div class="col-span-full text-center py-12">
+                <div class="inline-block">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                    <p class="text-gray-600 mt-4">Loading projects...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Load More Button -->
+        <div class="flex justify-center mt-8">
+            <button id="btn-load-more" class="px-8 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800" style="display:none;">Load More Projects</button>
+        </div>
+    </div>
+
+    <script src="/public/js/auth.js"></script>
+    <script>
+        if (!requireAuth()) {
+            throw new Error('Not authenticated');
+        }
+
+        const currentUser = getCurrentUser();
+        const userAvatarEl = document.getElementById('user-avatar');
+        if (userAvatarEl) {
+            userAvatarEl.innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
+        }
+
+        // Mobile Menu
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
+        
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+        
+        if (mobileMenuBackdrop && mobileMenu) {
+            mobileMenuBackdrop.addEventListener('click', () => {
+                mobileMenu.classList.add('hidden');
+            });
+        }
+
+        // User menu
+        const userMenuBtn = document.getElementById('user-menu-btn');
+        const userDropdown = document.getElementById('user-dropdown');
+        if (userMenuBtn && userDropdown) {
+            userMenuBtn.addEventListener('click', () => {
+                userDropdown.classList.toggle('hidden');
+            });
+        }
+        
+        const logoutBtn = document.getElementById('logout-btn');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', logout);
+        }
+
+        let _allProjects = [];
+        let _displayedCount = 0;
+        const INITIAL_LOAD = 12;
+        const LOAD_INCREMENT = 24;
+
+        function projectCard(p) {
+            const dueDays = p.dueDate ? Math.ceil((new Date(p.dueDate) - Date.now()) / 86400000) : null;
+            const status = p.status || 'open';
+            let statusColor = 'bg-green-50 text-green-700 border-green-200';
+            let statusLabel = 'Open';
+            
+            if (status === 'in_progress') {
+                statusColor = 'bg-blue-50 text-blue-700 border-blue-200';
+                statusLabel = 'In Progress';
+            } else if (status === 'completed') {
+                statusColor = 'bg-gray-50 text-gray-700 border-gray-200';
+                statusLabel = 'Completed';
+            } else if (dueDays !== null && dueDays <= 3 && dueDays >= 0) {
+                statusColor = 'bg-red-50 text-red-700 border-red-200';
+                statusLabel = 'Due Soon';
+            }
+
+            const ownerName = p.owner?.firstName && p.owner?.lastName ? `${p.owner.firstName} ${p.owner.lastName}` : 'Unknown';
+            const companyName = p.owner?.company || 'N/A';
+            const createdDate = new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+            return `
+                <a href="/project-detail.html?id=${p._id}" class="project-card bg-white rounded-lg border border-gray-200 p-6 block">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-1">${p.title || 'Untitled Project'}</h3>
+                            <p class="text-sm text-gray-600">${companyName}</p>
+                        </div>
+                        <span class="px-3 py-1 rounded-full text-xs font-medium border ${statusColor}">${statusLabel}</span>
+                    </div>
+                    
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">${p.description || 'No description provided'}</p>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-4 pb-4 border-b border-gray-200">
+                        <div>
+                            <p class="text-xs text-gray-500 font-medium mb-1">CATEGORY</p>
+                            <p class="text-sm font-medium text-gray-900">${p.category || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-medium mb-1">BUDGET</p>
+                            <p class="text-sm font-medium text-gray-900">$${(p.budget || 0).toLocaleString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-medium mb-1">LOCATION</p>
+                            <p class="text-sm font-medium text-gray-900">${p.location || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 font-medium mb-1">POSTED BY</p>
+                            <p class="text-sm font-medium text-gray-900">${ownerName}</p>
+                        </div>
+                    </div>
+                    
+                    <p class="text-xs text-gray-500">Posted on ${createdDate}</p>
+                </a>
+            `;
+        }
+
+        function renderGrid(hostId, list, limit = null) {
+            const host = document.getElementById(hostId);
+            if (!host) return;
+            
+            const displayList = limit ? list.slice(0, limit) : list;
+            if (displayList.length === 0) {
+                host.innerHTML = '<div class="col-span-full text-center py-12"><p class="text-gray-600">No projects found matching your filters.</p></div>';
+                return;
+            }
+            
+            host.innerHTML = displayList.map(projectCard).join('');
+        }
+
+        async function fetchProjects() {
+            try {
+                const res = await authFetch('/api/projects');
+                const data = await res.json();
+                
+                if (!Array.isArray(data.projects)) {
+                    console.error('Expected projects array:', data);
+                    return [];
+                }
+                
+                return data.projects.map(p => ({
+                    _id: p._id,
+                    title: p.title,
+                    description: p.description,
+                    category: p.category,
+                    budget: p.budget,
+                    location: p.location,
+                    status: p.status,
+                    createdAt: p.createdAt,
+                    dueDate: p.dueDate,
+                    owner: p.owner ? {
+                        firstName: p.owner.firstName,
+                        lastName: p.owner.lastName,
+                        company: p.owner.company
+                    } : {}
+                }));
+            } catch (error) {
+                console.error('Failed to fetch projects:', error);
+                return [];
+            }
+        }
+
+        function readFilters() {
+            return {
+                search: document.getElementById('f-search').value.toLowerCase(),
+                category: document.getElementById('f-category').value,
+                status: document.getElementById('f-status').value,
+                minBudget: parseInt(document.getElementById('f-min').value) || 0,
+                maxBudget: parseInt(document.getElementById('f-max').value) || Infinity
+            };
+        }
+
+        function filterProjects(list) {
+            const filters = readFilters();
+            return list.filter(p => {
+                const searchMatch = !filters.search || 
+                    p.title.toLowerCase().includes(filters.search) ||
+                    p.description.toLowerCase().includes(filters.search) ||
+                    p.location.toLowerCase().includes(filters.search);
+                
+                const categoryMatch = filters.category === 'all' || p.category === filters.category;
+                const statusMatch = filters.status === 'all' || p.status === filters.status;
+                const budgetMatch = p.budget >= filters.minBudget && p.budget <= filters.maxBudget;
+                
+                return searchMatch && categoryMatch && statusMatch && budgetMatch;
+            });
+        }
+
+        async function loadAllProjects() {
+            const container = document.getElementById('projects-container');
+            _allProjects = await fetchProjects();
+            _displayedCount = 0;
+            displayProjects();
+        }
+
+        function displayProjects() {
+            _displayedCount += LOAD_INCREMENT;
+            const filtered = filterProjects(_allProjects);
+            renderGrid('projects-container', filtered, _displayedCount);
+            
+            const loadMoreBtn = document.getElementById('btn-load-more');
+            if (filtered.length > _displayedCount) {
+                loadMoreBtn.style.display = 'block';
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('applyFilters').addEventListener('click', () => {
+            _displayedCount = 0;
+            displayProjects();
+        });
+
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            document.getElementById('f-search').value = '';
+            document.getElementById('f-category').value = 'all';
+            document.getElementById('f-status').value = 'all';
+            document.getElementById('f-min').value = '';
+            document.getElementById('f-max').value = '';
+            _displayedCount = 0;
+            displayProjects();
+        });
+
+        document.getElementById('btn-load-more').addEventListener('click', displayProjects);
+
+        // Initial load
+        loadAllProjects();
+    </script>
+</body>
+</html>

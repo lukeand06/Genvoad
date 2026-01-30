@@ -31,9 +31,43 @@
             gap: 1.5rem;
         }
         
+        .card-scroll {
+            display: flex;
+            gap: 1.5rem;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 0.5rem;
+            scroll-behavior: smooth;
+        }
+        
+        .card-scroll > * {
+            flex: 0 0 360px;
+        }
+        
+        .card-scroll::-webkit-scrollbar {
+            height: 6px;
+        }
+        
+        .card-scroll::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 10px;
+        }
+        
+        .card-scroll::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+        
+        .card-scroll::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+        
         @media (max-width: 768px) {
             .card-grid {
                 grid-template-columns: 1fr;
+            }
+            .card-scroll > * {
+                flex: 0 0 300px;
             }
         }
     </style>
@@ -211,27 +245,36 @@
 
             <!-- Recommended Section -->
             <div class="mb-12">
-                <div class="mb-4">
-                    <h2 class="text-xl font-bold text-gray-900">Recommended For You</h2>
-                    <p class="text-sm text-gray-600 mt-1">Projects matching your skills and experience</p>
+                <div class="mb-4 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Recommended For You</h2>
+                        <p class="text-sm text-gray-600 mt-1">Projects matching your skills and experience</p>
+                    </div>
+                    <a href="/all-projects.html" class="text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline">View all →</a>
                 </div>
-                <div id="cards-recommended" class="card-grid"></div>
+                <div id="cards-recommended" class="card-scroll"></div>
             </div>
 
             <!-- Recently Active Section -->
             <div class="mb-12">
-                <div class="mb-4">
-                    <h2 class="text-xl font-bold text-gray-900">Recently Active</h2>
-                    <p class="text-sm text-gray-600 mt-1">Projects with recent activity</p>
+                <div class="mb-4 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">Recently Active</h2>
+                        <p class="text-sm text-gray-600 mt-1">Projects with recent activity</p>
+                    </div>
+                    <a href="/all-projects.html" class="text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline">View all →</a>
                 </div>
-                <div id="cards-recent" class="card-grid"></div>
+                <div id="cards-recent" class="card-scroll"></div>
             </div>
 
             <!-- Browse All Section -->
             <div class="mb-12">
-                <div class="mb-4">
-                    <h2 class="text-xl font-bold text-gray-900">All Projects</h2>
-                    <p class="text-sm text-gray-600 mt-1">Explore all available opportunities</p>
+                <div class="mb-4 flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-900">All Projects</h2>
+                        <p class="text-sm text-gray-600 mt-1">Explore all available opportunities</p>
+                    </div>
+                    <a href="/all-projects.html" class="text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline">View all →</a>
                 </div>
                 <div id="cards-browse" class="card-grid"></div>
                 <div class="flex justify-center mt-8">
