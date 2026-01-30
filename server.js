@@ -241,10 +241,13 @@ app.post('/api/auth/signup', async (req, res) => {
       return res.status(400).json({ error: 'Invalid role' });
     }
     
-    // Check existing - email can only be used once (owner and vendor are separate accounts)
-    const existing = await User.findOne({ email: email.toLowerCase() });
+    // Check existing - same email can be used for different roles
+    const existing = await User.findOne({ 
+      email: email.toLowerCase(),
+      role: normalizedRole 
+    });
     if (existing) {
-      return res.status(400).json({ error: 'Email already registered. Please use a different email or login to your existing account.' });
+      return res.status(400).json({ error: `This email is already registered as a ${normalizedRole}. Please use a different email or login to your existing account.` });
     }
     
     // Hash password

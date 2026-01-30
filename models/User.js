@@ -4,7 +4,7 @@ const UserSchema = new mongoose.Schema({
   // Basic Info
   firstName: { type: String, required: true, trim: true },
   lastName: { type: String, required: true, trim: true },
-  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  email: { type: String, required: true, lowercase: true, trim: true },
   password: { type: String, required: true },
   // Single role per account - owner and vendor are completely separate user types
   role: { type: String, enum: ['owner', 'vendor'], required: true },
@@ -80,7 +80,8 @@ const UserSchema = new mongoose.Schema({
   lastActive: { type: Date, default: Date.now }
 });
 
-// Indexes - remove duplicate from schema definition above
+// Indexes
+UserSchema.index({ email: 1, role: 1 }, { unique: true });
 UserSchema.index({ skills: 1 });
 UserSchema.index({ services: 1 });
 
