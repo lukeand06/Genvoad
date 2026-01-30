@@ -211,7 +211,7 @@
                                 <svg class="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             </div>
                         </div>
-                        <div id="top-picks-container" class="divide-y divide-gray-200">
+                        <div id="top-picks-container" class="p-4">
                             <div class="p-6 text-center text-gray-500">
                                 <div class="animate-pulse">Loading top companies...</div>
                             </div>
@@ -228,7 +228,7 @@
                                 </svg>
                             </div>
                         </div>
-                        <div id="may-know-container" class="divide-y divide-gray-200">
+                        <div id="may-know-container" class="p-4">
                             <div class="p-6 text-center text-gray-500">
                                 <div class="animate-pulse">Loading...</div>
                             </div>
@@ -245,7 +245,7 @@
                                 </svg>
                             </div>
                         </div>
-                        <div id="recently-active-container" class="divide-y divide-gray-200">
+                        <div id="recently-active-container" class="p-4">
                             <div class="p-6 text-center text-gray-500">
                                 <div class="animate-pulse">Loading...</div>
                             </div>
@@ -292,7 +292,7 @@
                         </div>
                     </div>
                 </div>
-                <div id="all-companies-container" class="divide-y divide-gray-200">
+                <div id="all-companies-container" class="p-4">
                     <div class="p-6 text-center text-gray-500">
                         <div class="animate-pulse">Loading all companies...</div>
                     </div>
@@ -664,6 +664,7 @@
             
             if (allBrowseUsers.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies found</div>';
+                container.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'xl:grid-cols-4', 'gap-4');
                 loadMoreContainer.classList.add('hidden');
                 return;
             }
@@ -676,17 +677,12 @@
             // For first page, replace; for subsequent pages, append
             const isFirstPage = currentPage === 1;
             const cardsHtml = pageUsers.map(company => renderPersonCard(company)).join('');
-            const gridMarkup = `<div class="browse-card-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">${cardsHtml}</div>`;
 
             if (isFirstPage) {
-                container.innerHTML = gridMarkup;
+                container.innerHTML = cardsHtml;
+                container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'xl:grid-cols-4', 'gap-4');
             } else {
-                const grid = container.querySelector('.browse-card-grid');
-                if (grid) {
-                    grid.insertAdjacentHTML('beforeend', cardsHtml);
-                } else {
-                    container.innerHTML = gridMarkup;
-                }
+                container.insertAdjacentHTML('beforeend', cardsHtml);
             }
 
             // Show/hide load more button
@@ -767,11 +763,13 @@
             
             if (companies.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
+                container.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
                 return;
             }
 
             const cardsHtml = companies.slice(0, 5).map(company => renderPersonCard(company)).join('');
-            container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">${cardsHtml}</div>`;
+            container.innerHTML = cardsHtml;
+            container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
         }
 
         function displayMayKnow(companies) {
@@ -784,11 +782,13 @@
             
             if (companies.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
+                container.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
                 return;
             }
 
             const cardsHtml = companies.slice(0, 5).map(company => renderPersonCard(company)).join('');
-            container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">${cardsHtml}</div>`;
+            container.innerHTML = cardsHtml;
+            container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
         }
 
         function displayRecentlyActive(companies) {
@@ -801,11 +801,13 @@
             
             if (companies.length === 0) {
                 container.innerHTML = '<div class="p-6 text-center text-gray-500">No companies to show</div>';
+                container.classList.remove('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
                 return;
             }
 
             const cardsHtml = companies.slice(0, 5).map(company => renderPersonCard(company)).join('');
-            container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">${cardsHtml}</div>`;
+            container.innerHTML = cardsHtml;
+            container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'gap-4');
         }
 
         function formatCompanyType(type) {
