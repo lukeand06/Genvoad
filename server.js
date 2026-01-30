@@ -292,7 +292,24 @@ app.post('/api/auth/signup', async (req, res) => {
     });
   } catch (error) {
     console.error('Signup error:', error);
-    res.status(500).json({ error: 'Signup failed' });
+    
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      const value = error.keyValue[field];
+      if (field === 'email') {
+        return res.status(400).json({ error: `This email is already registered. Please use a different email or login to your existing account.` });
+      }
+      return res.status(400).json({ error: `This ${field} is already in use.` });
+    }
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({ error: messages[0] || 'Validation failed' });
+    }
+    
+    res.status(500).json({ error: 'Signup failed. Please try again.' });
   }
 });
 

@@ -81,7 +81,7 @@ const UserSchema = new mongoose.Schema({
 });
 
 // Indexes
-UserSchema.index({ email: 1, role: 1 }, { unique: true });
+UserSchema.index({ email: 1, role: 1 }, { unique: true, sparse: true });
 UserSchema.index({ skills: 1 });
 UserSchema.index({ services: 1 });
 
