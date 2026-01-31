@@ -369,12 +369,37 @@
                 <!-- Feed Section -->
                 <div class="bg-white rounded-lg border border-gray-200 shadow-sm">
                     <div class="p-6 border-b border-gray-200">
-                        <div class="flex items-center justify-between">
+                        <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold text-gray-900">Your Feed</h2>
-                            <button onclick="loadFeed()" class="text-sm text-gray-600 hover:text-gray-900">
+                            <button onclick="loadFeed()" class="text-sm text-gray-600 hover:text-gray-900" title="Refresh feed">
                                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                                 </svg>
+                            </button>
+                        </div>
+                        <!-- Feed Filters -->
+                        <div class="flex gap-2 flex-wrap">
+                            <select id="feed-type-filter" onchange="applyFeedFilters()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 bg-white cursor-pointer">
+                                <option value="">All Posts</option>
+                                <option value="post">Posts</option>
+                                <option value="article">Articles</option>
+                                <option value="news">News</option>
+                                <option value="project_update">Project Updates</option>
+                                <option value="achievement">Achievements</option>
+                            </select>
+                            <select id="feed-timeframe-filter" onchange="applyFeedFilters()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 bg-white cursor-pointer">
+                                <option value="">All Time</option>
+                                <option value="24h">Last 24 Hours</option>
+                                <option value="7d">Last 7 Days</option>
+                                <option value="30d">Last 30 Days</option>
+                            </select>
+                            <select id="feed-sort-filter" onchange="applyFeedFilters()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 bg-white cursor-pointer">
+                                <option value="recent">Most Recent</option>
+                                <option value="trending">Trending</option>
+                                <option value="engagement">Most Engaged</option>
+                            </select>
+                            <button onclick="loadFeed()" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-sm font-medium transition">
+                                Clear Filters
                             </button>
                         </div>
                     </div>
@@ -384,11 +409,35 @@
                             <p>Loading feed...</p>
                         </div>
                     </div>
+                    <!-- Load More Button -->
+                    <div id="load-more-container" class="p-6 text-center border-t border-gray-200 hidden">
+                        <button onclick="loadMorePosts()" id="load-more-btn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-medium transition">
+                            Load More Posts
+                        </button>
+                    </div>
                 </div>
             </div>
 
             <!-- Sidebar -->
             <div class="lg:col-span-1">
+                <!-- Trending Posts -->
+                <div class="bg-white rounded-lg border border-gray-200 mb-6">
+                    <div class="p-6 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+                            </svg>
+                            Trending Now
+                        </h2>
+                        <p class="text-xs text-gray-500 mt-1">Most engaged posts</p>
+                    </div>
+                    <div id="trending-posts" class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                        <div class="p-6 text-center text-gray-500">
+                            <p class="text-sm">Loading trending posts...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Notifications Inbox -->
                 <div class="bg-white rounded-lg border border-gray-200 mb-6">
                     <div class="p-6 border-b border-gray-200">
@@ -637,7 +686,7 @@
         
         if (isVendor) {
             ctaBtn.textContent = 'Find Work';
-            ctaBtn.href = '/browse.html';
+            ctaBtn.href = '/projects.html';
             subtitle.textContent = 'Track your bids and discover new opportunities';
         } else {
             ctaBtn.textContent = 'Post Project';
@@ -785,6 +834,8 @@
         let currentPostType = 'post';
         let feedPage = 1;
         let isLoadingFeed = false;
+        let currentFeedFilters = {};
+        let totalFeedPages = 1;
 
         function setPostType(type) {
             currentPostType = type;
@@ -857,12 +908,33 @@
             }
         }
 
+        function applyFeedFilters() {
+            const typeFilter = document.getElementById('feed-type-filter').value;
+            const timeframeFilter = document.getElementById('feed-timeframe-filter').value;
+            const sortFilter = document.getElementById('feed-sort-filter').value;
+
+            currentFeedFilters = {};
+            if (typeFilter) currentFeedFilters.postType = typeFilter;
+            if (timeframeFilter) currentFeedFilters.timeframe = timeframeFilter;
+            if (sortFilter) currentFeedFilters.sort = sortFilter;
+
+            feedPage = 1;
+            loadFeed();
+        }
+
         async function loadFeed() {
             if (isLoadingFeed) return;
             isLoadingFeed = true;
 
             try {
-                const res = await authFetch(`/api/feed?page=1&limit=20`);
+                let url = `/api/feed?page=1&limit=20`;
+                
+                // Add filters to URL if applied
+                if (currentFeedFilters.postType) {
+                    url = `/api/feed/filtered?postType=${currentFeedFilters.postType}&page=1&limit=20`;
+                }
+
+                const res = await authFetch(url);
                 if (!res.ok) throw new Error('Failed to load feed');
 
                 const data = await res.json();
@@ -877,11 +949,28 @@
                             <p class="text-sm">No posts yet. Follow partners or create your first post!</p>
                         </div>
                     `;
+                    document.getElementById('load-more-container').classList.add('hidden');
                     return;
                 }
 
                 feedContainer.innerHTML = data.posts.map(post => renderPostCard(post)).join('');
                 feedPage = 1;
+
+                // Track views for each post
+                data.posts.forEach(post => {
+                    trackPostView(post._id);
+                });
+
+                // Show/hide load more button
+                totalFeedPages = data.pagination?.pages || 1;
+                if (totalFeedPages > 1) {
+                    document.getElementById('load-more-container').classList.remove('hidden');
+                } else {
+                    document.getElementById('load-more-container').classList.add('hidden');
+                }
+
+                // Load trending posts
+                loadTrendingPosts();
             } catch (error) {
                 console.error('Feed error:', error);
                 document.getElementById('activity-feed').innerHTML = `
@@ -894,6 +983,166 @@
             }
         }
 
+        async function loadMorePosts() {
+            if (isLoadingFeed || feedPage >= totalFeedPages) return;
+            isLoadingFeed = true;
+
+            const loadMoreBtn = document.getElementById('load-more-btn');
+            loadMoreBtn.disabled = true;
+            loadMoreBtn.innerHTML = '<span class="inline-block animate-spin">⏳</span> Loading...';
+
+            try {
+                feedPage++;
+                let url = `/api/feed?page=${feedPage}&limit=20`;
+                
+                if (currentFeedFilters.postType) {
+                    url = `/api/feed/filtered?postType=${currentFeedFilters.postType}&page=${feedPage}&limit=20`;
+                }
+
+                const res = await authFetch(url);
+                if (!res.ok) throw new Error('Failed to load more posts');
+
+                const data = await res.json();
+                const feedContainer = document.getElementById('activity-feed');
+                
+                // Append new posts
+                feedContainer.innerHTML += data.posts.map(post => renderPostCard(post)).join('');
+
+                // Track views for new posts
+                data.posts.forEach(post => {
+                    trackPostView(post._id);
+                });
+
+                // Hide load more if no more pages
+                if (feedPage >= totalFeedPages) {
+                    document.getElementById('load-more-container').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Load more error:', error);
+                alert('Failed to load more posts');
+                feedPage--; // Revert page count
+            } finally {
+                isLoadingFeed = false;
+                loadMoreBtn.disabled = false;
+                loadMoreBtn.innerHTML = 'Load More Posts';
+            }
+        }
+
+        async function loadTrendingPosts() {
+            try {
+                const res = await authFetch('/api/trending-posts?timeframe=7d&limit=5');
+                if (!res.ok) return;
+
+                const data = await res.json();
+                const trendingContainer = document.getElementById('trending-posts');
+
+                if (!data.posts || data.posts.length === 0) {
+                    trendingContainer.innerHTML = `
+                        <div class="p-4 text-center text-gray-500 text-sm">
+                            No trending posts yet
+                        </div>
+                    `;
+                    return;
+                }
+
+                trendingContainer.innerHTML = data.posts.map((post, idx) => `
+                    <div class="p-4 hover:bg-gray-50 transition cursor-pointer" onclick="scrollToPost('${post._id}')">
+                        <div class="flex items-start gap-2">
+                            <div class="font-bold text-amber-500 text-sm">#${idx + 1}</div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">${post.title || post.content.substring(0, 50)}</p>
+                                <div class="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                                    <span>❤️ ${post.likeCount || 0}</span>
+                                    <span>💬 ${post.commentCount || 0}</span>
+                                    <span>👁️ ${post.viewCount || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Trending posts error:', error);
+            }
+        }
+
+        function scrollToPost(postId) {
+            const postElement = document.querySelector(`[data-post-id="${postId}"]`);
+            if (postElement) {
+                postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                postElement.style.backgroundColor = '#fef3c7';
+                setTimeout(() => {
+                    postElement.style.backgroundColor = '';
+                }, 2000);
+            }
+        }
+
+        async function trackPostView(postId) {
+            try {
+                await authFetch(`/api/posts/${postId}/view`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ timeSpent: 0 })
+                });
+            } catch (error) {
+                console.error('View tracking error:', error);
+            }
+        }
+
+        async function loadRecommendations() {
+            try {
+                const user = getCurrentUser();
+                const res = await authFetch('/api/projects?status=open&limit=5');
+                if (!res.ok) return;
+
+                const data = await res.json();
+                const recommendationsContainer = document.getElementById('recommendations');
+
+                if (!data.projects || data.projects.length === 0) {
+                    recommendationsContainer.innerHTML = `
+                        <div class="p-6 text-center text-gray-500">
+                            <p class="text-sm">No recommendations available</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Filter out user's own projects and get top 5
+                const recommendations = data.projects
+                    .filter(p => p.owner && p.owner._id !== user.id)
+                    .slice(0, 5);
+
+                if (recommendations.length === 0) {
+                    recommendationsContainer.innerHTML = `
+                        <div class="p-6 text-center text-gray-500">
+                            <p class="text-sm">No recommendations available</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                recommendationsContainer.innerHTML = recommendations.map(project => `
+                    <div class="p-4 hover:bg-gray-50 transition cursor-pointer" onclick="window.location.href='/project-detail.html?id=${project._id}'">
+                        <h4 class="text-sm font-semibold text-gray-900 mb-1 line-clamp-1">${project.title}</h4>
+                        <p class="text-xs text-gray-600 mb-2 line-clamp-2">${project.description || 'No description'}</p>
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-500">${project.owner?.company || 'Company'}</span>
+                            ${project.budget ? `<span class="font-semibold text-blue-600">$${Number(project.budget).toLocaleString()}</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Load recommendations error:', error);
+                const recommendationsContainer = document.getElementById('recommendations');
+                if (recommendationsContainer) {
+                    recommendationsContainer.innerHTML = `
+                        <div class="p-6 text-center text-gray-500">
+                            <p class="text-sm">Failed to load recommendations</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
         function renderPostCard(post) {
             const user = getCurrentUser();
             const isLiked = post.isLiked || false;
@@ -902,7 +1151,7 @@
             if (isProject) {
                 // Render project recommendation as post
                 return `
-                    <div class="p-6 hover:bg-gray-50 transition">
+                    <div class="p-6 hover:bg-gray-50 transition" data-post-id="${post._id}">
                         <div class="flex items-start gap-3 mb-4">
                             <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
                                 ${post.author.firstName.charAt(0)}
@@ -927,7 +1176,7 @@
 
             // Regular post
             return `
-                <div class="p-6 hover:bg-gray-50 transition">
+                <div class="p-6 hover:bg-gray-50 transition" data-post-id="${post._id}">
                     <div class="flex items-start gap-3 mb-4">
                         <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-600 flex items-center justify-center text-white font-semibold">
                             ${post.authorName.charAt(0)}
