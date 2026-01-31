@@ -1182,16 +1182,39 @@ app.get('/api/projects', authMiddleware, async (req, res) => {
 app.get('/api/my-projects', authMiddleware, async (req, res) => {
   try {
     const userId = req.user.id;
+    const user = await User.findById(userId);
     
-    console.log('Fetching my projects for user:', userId);
+    console.log('Fetching my projects for user:', userId, 'role:', user.role);
     
-    const projects = await Project.find({ owner: userId })
-      .populate('owner', 'firstName lastName avatar company')
-      .populate('bids.user', 'firstName lastName avatar company')
-      .sort('-createdAt')
-      .limit(50);
+    let projects;
     
-    console.log(`Found ${projects.length} projects for user ${userId}`);
+    if (user.role === 'vendor') {
+      // For vendors, return projects they've bid on
+      projects = await Project.find({ 'bids.user': userId })
+        .populate('owner', 'firstName lastName avatar company')
+        .populate('bids.user', 'firstName lastName avatar company')
+        .sort('-createdAt')
+        .limit(50);
+      
+      // Add bid info for each project
+      projects = projects.map(project => {
+        const projectObj = project.toObject();
+        const userBid = projectObj.bids.find(bid => bid.user._id.toString() === userId.toString());
+        projectObj.myBid = userBid;
+        return projectObj;
+      });
+      
+      console.log(`Found ${projects.length} projects with bids from user ${userId}`);
+    } else {
+      // For owners, return projects they own
+      projects = await Project.find({ owner: userId })
+        .populate('owner', 'firstName lastName avatar company')
+        .populate('bids.user', 'firstName lastName avatar company')
+        .sort('-createdAt')
+        .limit(50);
+      
+      console.log(`Found ${projects.length} projects owned by user ${userId}`);
+    }
     
     res.json({ projects });
   } catch (error) {
@@ -4139,11 +4162,17 @@ app.get('/api/companies/:id/invitations', authMiddleware, async (req, res) => {
 app.get('/api/discovery', authMiddleware, async (req, res) => {
   try {
     const { search, role, location, minRating, minExperience, verified, includeUnverified } = req.query;
-    const currentUser = await User.findById(req.user._id);
+    const currentUser = await User.findById(req.user._id).populate('partners');
+
+    // Get list of partner IDs to exclude from discovery
+    const partnerIds = (currentUser.partners || []).map(p => p._id ? p._id.toString() : p.toString());
 
     // Build filter
     const filter = {
-      _id: { $ne: req.user._id }, // Exclude self
+      _id: { 
+        $ne: req.user._id, // Exclude self
+        $nin: partnerIds // Exclude existing partners
+      },
       deletedAt: null
     };
 
@@ -4679,6 +4708,334 @@ app.get('/api/feed', authMiddleware, async (req, res) => {
   }
 });
 
+// ======================== FEED OPTIMIZATION ENDPOINTS ========================
+
+// Get trending posts
+app.get('/api/trending-posts', authMiddleware, async (req, res) => {
+  try {
+    const { limit = 10, timeframe = '24h' } = req.query;
+
+    // Calculate timeframe filter
+    let timeframeDate = new Date();
+    switch(timeframe) {
+      case '24h':
+        timeframeDate.setHours(timeframeDate.getHours() - 24);
+        break;
+      case '7d':
+        timeframeDate.setDate(timeframeDate.getDate() - 7);
+        break;
+      case '30d':
+        timeframeDate.setDate(timeframeDate.getDate() - 30);
+        break;
+      default:
+        timeframeDate.setHours(timeframeDate.getHours() - 24);
+    }
+
+    const trendingPosts = await Post.find({
+      visibility: 'public',
+      createdAt: { $gte: timeframeDate },
+      status: 'published',
+      isSponsored: false
+    })
+      .populate('author', 'firstName lastName avatar role company')
+      .sort({ engagementScore: -1, trendingScore: -1 })
+      .limit(parseInt(limit))
+      .lean();
+
+    // Calculate trending metadata
+    const enrichedPosts = trendingPosts.map(post => ({
+      ...post,
+      isTrending: true,
+      trendScore: post.engagementScore
+    }));
+
+    res.json({
+      success: true,
+      posts: enrichedPosts,
+      timeframe,
+      count: enrichedPosts.length
+    });
+  } catch (error) {
+    console.error('Trending posts error:', error);
+    res.status(500).json({ error: 'Failed to load trending posts' });
+  }
+});
+
+// Track post view/impression
+app.post('/api/posts/:postId/view', authMiddleware, async (req, res) => {
+  try {
+    const { timeSpent = 0 } = req.body;
+    const post = await Post.findById(req.params.postId);
+
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    const userIdStr = req.user._id.toString();
+    
+    // Track unique views
+    if (!post.viewedBy.some(id => id.toString() === userIdStr)) {
+      post.viewedBy.push(req.user._id);
+      post.viewCount = post.viewedBy.length;
+    }
+
+    // Calculate average time spent
+    if (timeSpent > 0) {
+      const currentAvg = post.timeSpentAvg || 0;
+      const viewCount = post.viewCount || 1;
+      post.timeSpentAvg = (currentAvg * (viewCount - 1) + timeSpent) / viewCount;
+    }
+
+    await post.save();
+
+    res.json({
+      success: true,
+      viewCount: post.viewCount,
+      engagementScore: post.engagementScore
+    });
+  } catch (error) {
+    console.error('View tracking error:', error);
+    res.status(500).json({ error: 'Failed to track view' });
+  }
+});
+
+// Rate post (1-5 stars)
+app.post('/api/posts/:postId/rate', authMiddleware, async (req, res) => {
+  try {
+    const { rating } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+    }
+
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    // Update feedback score (weighted average)
+    const currentRatings = post.feedbackScore || 0;
+    const viewCount = Math.max(post.viewCount || 1, 1);
+    post.feedbackScore = (currentRatings * (viewCount - 1) + rating) / viewCount;
+
+    await post.save();
+
+    res.json({
+      success: true,
+      feedbackScore: post.feedbackScore,
+      engagementScore: post.engagementScore
+    });
+  } catch (error) {
+    console.error('Rating error:', error);
+    res.status(500).json({ error: 'Failed to rate post' });
+  }
+});
+
+// Save draft post
+app.post('/api/posts/draft', authMiddleware, upload.array('images', 5), async (req, res) => {
+  try {
+    const { content, title, type } = req.body;
+
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ error: 'Post content is required' });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const images = req.files ? req.files.map(file => `/uploads/${file.filename}`) : [];
+
+    const draft = new Post({
+      author: req.user._id,
+      authorName: `${user.firstName} ${user.lastName}`,
+      authorAvatar: user.avatar,
+      authorRole: user.role,
+      authorCompany: user.company,
+      content: content.trim(),
+      title: title || '',
+      type: type || 'post',
+      images,
+      isDraft: true,
+      status: 'draft',
+      visibility: 'private'
+    });
+
+    await draft.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Draft saved successfully',
+      draft
+    });
+  } catch (error) {
+    console.error('Draft save error:', error);
+    res.status(500).json({ error: 'Failed to save draft' });
+  }
+});
+
+// Get user drafts
+app.get('/api/drafts', authMiddleware, async (req, res) => {
+  try {
+    const drafts = await Post.find({
+      author: req.user._id,
+      isDraft: true,
+      status: 'draft'
+    })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      drafts,
+      count: drafts.length
+    });
+  } catch (error) {
+    console.error('Get drafts error:', error);
+    res.status(500).json({ error: 'Failed to load drafts' });
+  }
+});
+
+// Schedule a post for later
+app.post('/api/posts/:postId/schedule', authMiddleware, async (req, res) => {
+  try {
+    const { scheduledFor } = req.body;
+
+    if (!scheduledFor) {
+      return res.status(400).json({ error: 'Scheduled time is required' });
+    }
+
+    const scheduledDate = new Date(scheduledFor);
+    if (scheduledDate < new Date()) {
+      return res.status(400).json({ error: 'Scheduled time must be in the future' });
+    }
+
+    const post = await Post.findById(req.params.postId);
+    if (!post) {
+      return res.status(404).json({ error: 'Post not found' });
+    }
+
+    if (post.author.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Unauthorized to schedule this post' });
+    }
+
+    post.scheduledFor = scheduledDate;
+    post.status = 'scheduled';
+    post.isDraft = false;
+
+    await post.save();
+
+    res.json({
+      success: true,
+      message: 'Post scheduled successfully',
+      scheduledFor: post.scheduledFor
+    });
+  } catch (error) {
+    console.error('Schedule post error:', error);
+    res.status(500).json({ error: 'Failed to schedule post' });
+  }
+});
+
+// Get scheduled posts
+app.get('/api/scheduled-posts', authMiddleware, async (req, res) => {
+  try {
+    const scheduled = await Post.find({
+      author: req.user._id,
+      status: 'scheduled',
+      scheduledFor: { $gte: new Date() }
+    })
+      .sort({ scheduledFor: 1 })
+      .lean();
+
+    res.json({
+      success: true,
+      scheduledPosts: scheduled,
+      count: scheduled.length
+    });
+  } catch (error) {
+    console.error('Get scheduled posts error:', error);
+    res.status(500).json({ error: 'Failed to load scheduled posts' });
+  }
+});
+
+// Get feed analytics
+app.get('/api/feed-analytics', authMiddleware, async (req, res) => {
+  try {
+    const userPosts = await Post.find({ author: req.user._id });
+
+    const analytics = {
+      totalPosts: userPosts.length,
+      totalViews: userPosts.reduce((sum, p) => sum + (p.viewCount || 0), 0),
+      totalLikes: userPosts.reduce((sum, p) => sum + (p.likeCount || 0), 0),
+      totalComments: userPosts.reduce((sum, p) => sum + (p.commentCount || 0), 0),
+      totalEngagement: userPosts.reduce((sum, p) => sum + (p.engagementScore || 0), 0),
+      avgEngagementPerPost: userPosts.length > 0 ? 
+        userPosts.reduce((sum, p) => sum + (p.engagementScore || 0), 0) / userPosts.length : 0,
+      avgViewTime: userPosts.length > 0 ?
+        userPosts.reduce((sum, p) => sum + (p.timeSpentAvg || 0), 0) / userPosts.length : 0,
+      topPost: userPosts.sort((a, b) => (b.engagementScore || 0) - (a.engagementScore || 0))[0] || null,
+      trendingPosts: userPosts.filter(p => p.isTrending).length
+    };
+
+    res.json({
+      success: true,
+      analytics
+    });
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({ error: 'Failed to load analytics' });
+  }
+});
+
+// Filter feed by preferences
+app.get('/api/feed/filtered', authMiddleware, async (req, res) => {
+  try {
+    const { postType, authorRole, minEngagement = 0, page = 1, limit = 20 } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = {
+      visibility: 'public',
+      status: 'published',
+      engagementScore: { $gte: minEngagement }
+    };
+
+    if (postType) {
+      query.type = postType;
+    }
+
+    if (authorRole) {
+      query.authorRole = authorRole;
+    }
+
+    const filteredPosts = await Post.find(query)
+      .populate('author', 'firstName lastName avatar role company')
+      .sort({ engagementScore: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await Post.countDocuments(query);
+
+    res.json({
+      success: true,
+      posts: filteredPosts,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit),
+        hasMore: skip + parseInt(limit) < total
+      }
+    });
+  } catch (error) {
+    console.error('Filtered feed error:', error);
+    res.status(500).json({ error: 'Failed to load filtered feed' });
+  }
+});
+
+// ======================== END FEED OPTIMIZATION ========================
+
 // Like/Unlike a post
 app.post('/api/posts/:postId/like', authMiddleware, async (req, res) => {
   try {
@@ -4841,6 +5198,34 @@ app.get('/api/posts/:postId', async (req, res) => {
     res.status(500).json({ error: 'Failed to load post' });
   }
 });
+
+// ======================== SCHEDULED POST AUTO-PUBLISHING JOB ========================
+
+// Auto-publish scheduled posts when their scheduled time arrives
+setInterval(async () => {
+  try {
+    const now = new Date();
+    
+    const scheduledPosts = await Post.find({
+      status: 'scheduled',
+      scheduledFor: { $lte: now }
+    });
+
+    for (const post of scheduledPosts) {
+      post.status = 'published';
+      post.publishedAt = now;
+      post.isDraft = false;
+      await post.save();
+      console.log(`✅ Auto-published scheduled post: ${post._id}`);
+    }
+
+    if (scheduledPosts.length > 0) {
+      console.log(`📅 Auto-published ${scheduledPosts.length} scheduled posts at ${now.toISOString()}`);
+    }
+  } catch (error) {
+    console.error('Scheduled post publishing job error:', error);
+  }
+}, 60000); // Run every minute
 
 // ======================== END SOCIAL FEED ENDPOINTS ========================
 
