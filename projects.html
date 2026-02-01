@@ -620,7 +620,9 @@
         const user = getCurrentUser();
         if (user.role === 'vendor') {
             const label = document.getElementById('my-projects-label');
+            const labelShort = document.getElementById('my-projects-label-short');
             if (label) label.textContent = 'My Bids';
+            if (labelShort) labelShort.textContent = 'My Bids';
         }
 
         // Load browse tab on init (vendors see this first)
