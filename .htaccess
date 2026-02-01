@@ -1,0 +1,40 @@
+# Apache configuration for Genovad
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Remove .html extension
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule ^([^\.]+)$ $1.html [NC,L]
+  
+  # Redirect www to non-www
+  RewriteCond %{HTTP_HOST} ^www\. [NC]
+  RewriteRule ^(.*)$ http://%{HTTP_HOST:www.}%{REQUEST_URI} [R=301,L]
+  
+  # Force HTTPS
+  RewriteCond %{HTTPS} off
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+</IfModule>
+
+# Serve robots.txt and sitemap.xml with proper content type
+<FilesMatch "\.(xml|txt)$">
+  AddType text/plain .txt
+  AddType application/xml .xml
+</FilesMatch>
+
+# Set proper caching headers
+<FilesMatch "\.(jpg|jpeg|png|gif|ico|css|js|svg|woff|woff2)$">
+  Header set Cache-Control "max-age=31536000, public"
+</FilesMatch>
+
+# Prevent caching of HTML files
+<FilesMatch "\.(html|htm)$">
+  Header set Cache-Control "no-cache, no-store, must-revalidate"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+</FilesMatch>
+
+# Prevent access to sensitive files
+<FilesMatch "\.(env|config|json)$">
+  Deny from all
+</FilesMatch>

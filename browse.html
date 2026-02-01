@@ -130,68 +130,7 @@
         <div id="search-section" class="bg-white rounded-lg border border-gray-200 p-4 mb-8">
             <div class="flex flex-col sm:flex-row gap-3">
                 <input type="text" id="search-input" placeholder="Search by name, skills, or company..." class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent">
-                <button id="toggle-filters-btn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 flex items-center justify-center gap-2 whitespace-nowrap">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
-                    </svg>
-                    Filters
-                </button>
                 <button id="search-btn" class="px-6 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 whitespace-nowrap">Search</button>
-            </div>
-
-            <!-- Expandable Filter Panel -->
-            <div id="filter-panel" class="hidden border-t border-gray-200 pt-4 mt-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                    <!-- Account Type Filter -->
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Account Type</label>
-                        <select id="filter-role" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
-                            <option value="">All Types</option>
-                            <option value="owner">Project Owners</option>
-                            <option value="vendor">Service Providers</option>
-                        </select>
-                    </div>
-
-                    <!-- Location Filter -->
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Location</label>
-                        <input type="text" id="filter-location" placeholder="City or State" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
-                    </div>
-
-                    <!-- Min. Experience Filter -->
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Experience</label>
-                        <select id="filter-experience" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
-                            <option value="">Any</option>
-                            <option value="1">1+ years</option>
-                            <option value="3">3+ years</option>
-                            <option value="5">5+ years</option>
-                            <option value="10">10+ years</option>
-                        </select>
-                    </div>
-
-                    <!-- Rating Filter -->
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Rating</label>
-                        <select id="filter-rating" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
-                            <option value="">Any</option>
-                            <option value="4">4+ stars</option>
-                            <option value="4.5">4.5+ stars</option>
-                            <option value="5">5 stars</option>
-                        </select>
-                    </div>
-
-                    <!-- Verified Filter -->
-                    <div class="flex items-end">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="verified-only" class="w-4 h-4 text-gray-900 border-gray-300 rounded focus:ring-gray-900">
-                            <span class="text-sm font-medium text-gray-700">Verified Only</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="mt-3 flex justify-end">
-                    <button id="clear-filters-btn" class="text-sm font-medium text-gray-600 hover:text-gray-900">Clear All</button>
-                </div>
             </div>
         </div>
 
@@ -287,23 +226,71 @@
 
         <!-- Browse All Companies Tab -->
         <div id="tab-content-browse-all" class="tab-content hidden">
+            <!-- Browse All Filters -->
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm mb-6">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Filter Companies</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <!-- Search Filter -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Search</label>
+                            <input type="text" id="browse-search-filter" placeholder="Company or name..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                        </div>
+                        
+                        <!-- Account Type Filter -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Account Type</label>
+                            <select id="browse-type-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                                <option value="">All Types</option>
+                                <option value="owner">Project Owners</option>
+                                <option value="vendor">Service Providers</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Industry Filter -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Industry</label>
+                            <select id="browse-industry-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                                <option value="">All Industries</option>
+                                <option value="general_contracting">General Contracting</option>
+                                <option value="landscaping">Landscaping</option>
+                                <option value="electrical">Electrical</option>
+                                <option value="plumbing">Plumbing</option>
+                                <option value="hvac">HVAC</option>
+                                <option value="roofing">Roofing</option>
+                                <option value="carpentry">Carpentry</option>
+                                <option value="masonry">Masonry</option>
+                                <option value="painting">Painting</option>
+                                <option value="architecture">Architecture</option>
+                                <option value="engineering">Engineering</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Verification Filter -->
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-2 uppercase">Verification</label>
+                            <select id="browse-verified-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent text-sm">
+                                <option value="">All Companies</option>
+                                <option value="true">Verified Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-between">
+                        <button id="browse-clear-filters" class="text-sm font-medium text-gray-600 hover:text-gray-900">Clear Filters</button>
+                        <div class="space-x-2">
+                            <span id="browse-filter-count" class="text-xs font-medium text-gray-500"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Companies List -->
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm">
                 <div class="p-5 border-b border-gray-200">
                     <div class="flex items-center justify-between">
                         <div>
                             <h2 class="text-xl font-bold text-gray-900">All Companies</h2>
                             <p class="text-sm text-gray-600 mt-1" id="companies-count">Loading companies...</p>
-                        </div>
-                        <div class="flex gap-2">
-                            <select id="browse-type-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-900">
-                                <option value="">All Types</option>
-                                <option value="owner">Project Owners</option>
-                                <option value="vendor">Service Providers</option>
-                            </select>
-                            <select id="browse-verified-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gray-900">
-                                <option value="">All Companies</option>
-                                <option value="true">Verified Only</option>
-                            </select>
                         </div>
                     </div>
                 </div>
@@ -394,9 +381,13 @@
                 tabContents.forEach(content => content.classList.add('hidden'));
                 document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
                 
-                // Hide search section - not needed for any tabs
+                // Keep search section visible for browse-all tab
                 const searchSection = document.getElementById('search-section');
-                searchSection.style.display = 'none';
+                if (tabName === 'browse-all') {
+                    searchSection.style.display = 'block';
+                } else {
+                    searchSection.style.display = 'none';
+                }
                 
                 // Load appropriate content
                 if (tabName === 'discover') {
@@ -717,7 +708,7 @@
 
             if (isFirstPage) {
                 container.innerHTML = cardsHtml;
-                container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-3', 'xl:grid-cols-4', 'gap-4');
+                container.classList.add('grid', 'grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-2', 'xl:grid-cols-3', 'gap-6');
             } else {
                 container.insertAdjacentHTML('beforeend', cardsHtml);
             }
@@ -746,6 +737,27 @@
 
         document.getElementById('browse-verified-filter')?.addEventListener('change', (e) => {
             browseFilters.verified = e.target.value;
+            loadBrowseAllCompanies(true);
+        });
+
+        document.getElementById('browse-industry-filter')?.addEventListener('change', (e) => {
+            browseFilters.industry = e.target.value;
+            loadBrowseAllCompanies(true);
+        });
+
+        document.getElementById('browse-search-filter')?.addEventListener('input', (e) => {
+            browseFilters.search = e.target.value.toLowerCase();
+            if (browseFilters.search.length > 0) {
+                loadBrowseAllCompanies(true);
+            }
+        });
+
+        document.getElementById('browse-clear-filters')?.addEventListener('click', () => {
+            browseFilters = {};
+            document.getElementById('browse-type-filter').value = '';
+            document.getElementById('browse-verified-filter').value = '';
+            document.getElementById('browse-industry-filter').value = '';
+            document.getElementById('browse-search-filter').value = '';
             loadBrowseAllCompanies(true);
         });
 
@@ -934,6 +946,35 @@
             return types[type] || type;
         }
 
+        function formatIndustryType(industry) {
+            if (!industry) return null;
+            
+            const industries = {
+                'landscaping': 'Landscaping',
+                'general_contracting': 'General Contracting',
+                'electrical': 'Electrical',
+                'plumbing': 'Plumbing',
+                'hvac': 'HVAC',
+                'roofing': 'Roofing',
+                'carpentry': 'Carpentry',
+                'masonry': 'Masonry',
+                'painting': 'Painting',
+                'flooring': 'Flooring',
+                'construction': 'Construction',
+                'architecture': 'Architecture',
+                'engineering': 'Engineering',
+                'real_estate': 'Real Estate',
+                'design': 'Design',
+                'it': 'IT Services',
+                'consulting': 'Consulting',
+                'project_management': 'Project Management',
+                'supply': 'Supply',
+                'equipment_rental': 'Equipment Rental'
+            };
+            
+            return industries[industry] || (typeof industry === 'string' ? industry.charAt(0).toUpperCase() + industry.slice(1).replace(/_/g, ' ') : industry);
+        }
+
         function showError(containerId) {
             const elem = document.getElementById(containerId);
             if (elem) {
@@ -960,6 +1001,10 @@
             const roleKey = normalized.role || 'vendor';
             const accountType = formatCompanyType(roleKey);
             const accountTypeColor = roleKey === 'vendor' ? 'bg-purple-100 text-purple-700' : roleKey === 'owner' ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-700';
+            
+            // Get industry/business type
+            const industry = normalized.industry || normalized.companyIndustry || normalized.businessType;
+            const industryDisplay = industry ? formatIndustryType(industry) : null;
             
             // Show top 3 skills
             const topSkills = normalized.skills ? normalized.skills.slice(0, 3) : [];
@@ -988,75 +1033,82 @@
             const personName = isUser ? `${normalized.firstName || ''} ${normalized.lastName || ''}`.trim() : (normalized.name || normalized.company || normalized.firstName || 'Company');
 
             return `
-                <div class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200 overflow-hidden flex flex-col h-full group">
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-200 overflow-hidden flex flex-col h-full group">
                     <!-- Header Section - Company First -->
-                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 border-b border-gray-200">
-                        <div class="mb-3">
-                            ${normalized.company ? `<h3 class="font-bold text-gray-900 text-sm leading-snug line-clamp-2 mb-1">${normalized.company}</h3>` : ''}
-                            <span class="inline-block px-2 py-1 ${accountTypeColor} text-xs font-bold rounded">${accountType}</span>
-                        </div>
-                        <div class="flex gap-2.5 items-start">
-                            <div class="flex-shrink-0 mt-0.5">
-                                ${getAvatarHTML(normalized, 'w-10 h-10 border border-white shadow-sm')}
+                    <div class="bg-gradient-to-br from-blue-50 via-white to-white p-6 border-b border-gray-100">
+                        <div class="flex items-start gap-4 mb-4">
+                            <div class="flex-shrink-0">
+                                ${getAvatarHTML(normalized, 'w-16 h-16 border-2 border-white shadow-md')}
                             </div>
                             <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-1.5">
-                                    <p class="font-semibold text-gray-900 text-sm truncate">${personName}</p>
+                                ${normalized.company ? `<h3 class="font-bold text-gray-900 text-base leading-tight mb-2">${normalized.company}</h3>` : ''}
+                                <div class="flex items-center gap-2 mb-2">
+                                    <p class="font-semibold text-gray-800 text-sm">${personName}</p>
                                     ${verificationHTML}
                                 </div>
-                                ${normalized.title ? `<p class="text-xs text-gray-600 truncate">${normalized.title}</p>` : ''}
+                                ${normalized.title ? `<p class="text-sm text-gray-600 mb-2">${normalized.title}</p>` : ''}
+                                <span class="inline-block px-2.5 py-1 ${accountTypeColor} text-xs font-bold rounded-md">${accountType}</span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Body Section -->
-                    <div class="p-4 flex-1 flex flex-col gap-3">
+                    <div class="p-6 flex-1 flex flex-col gap-4">
                         <!-- Rating -->
-                        <div>
+                        <div class="pb-3 border-b border-gray-100">
                             ${ratingHTML}
                         </div>
 
-                        <!-- Location -->
-                        ${locationLabel ? `
-                            <div class="flex items-center gap-2 text-xs text-gray-700">
-                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                                </svg>
-                                <span class="font-medium">${locationLabel}</span>
-                            </div>
-                        ` : ''}
+                        <!-- Location & Experience -->
+                        <div class="space-y-2.5">
+                            ${industryDisplay ? `
+                                <div class="flex items-center gap-2.5 text-sm">
+                                    <span class="inline-block px-3 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full border border-indigo-200">${industryDisplay}</span>
+                                </div>
+                            ` : ''}
+                            
+                            ${locationLabel ? `
+                                <div class="flex items-center gap-2.5 text-sm text-gray-700">
+                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    <span class="font-medium">${locationLabel}</span>
+                                </div>
+                            ` : ''}
 
-                        <!-- Experience -->
-                        ${normalized.yearsExperience ? `
-                            <div class="flex items-center gap-2 text-xs text-gray-700">
-                                <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10.5 1.5H3.75A2.25 2.25 0 001.5 3.75v12.5A2.25 2.25 0 003.75 18.5h12.5a2.25 2.25 0 002.25-2.25V9.5M10.5 1.5v8m0 0H2m8.5 0h8.5M10.5 9.5V1.5m0 8v8.5"/>
-                                </svg>
-                                <span class="font-medium">${normalized.yearsExperience}+ years</span>
-                            </div>
-                        ` : ''}
+                            ${normalized.yearsExperience ? `
+                                <div class="flex items-center gap-2.5 text-sm text-gray-700">
+                                    <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                                    </svg>
+                                    <span class="font-medium">${normalized.yearsExperience}+ years experience</span>
+                                </div>
+                            ` : ''}
+                        </div>
 
                         <!-- Top Skills -->
                         ${topSkills.length > 0 ? `
-                            <div class="pt-1">
-                                <div class="flex flex-wrap gap-1.5">
-                                    ${topSkills.map(skill => `<span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-100">${skill}</span>`).join('')}
-                                    ${normalized.skills && normalized.skills.length > 3 ? `<span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">+${normalized.skills.length - 3}</span>` : ''}
+                            <div class="pt-3 border-t border-gray-100">
+                                <p class="text-xs font-semibold text-gray-500 uppercase mb-2.5">Top Skills</p>
+                                <div class="flex flex-wrap gap-2">
+                                    ${topSkills.map(skill => `<span class="px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full border border-blue-200">${skill}</span>`).join('')}
+                                    ${normalized.skills && normalized.skills.length > 3 ? `<span class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">+${normalized.skills.length - 3} more</span>` : ''}
                                 </div>
                             </div>
                         ` : ''}
 
                         <!-- Reason Tag (if applicable) -->
-                        ${reasonHTML ? `<div class="pt-1">${reasonHTML}</div>` : ''}
+                        ${reasonHTML ? `<div class="pt-3">${reasonHTML}</div>` : ''}
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="border-t border-gray-200 bg-gray-50 p-3 flex gap-2">
-                        <a href="${profileHref}" class="flex-1 px-3 py-2 text-center text-xs font-semibold text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition">View Profile</a>
-                        <button onclick="addPartnerFromBrowse('${normalized._id}', this)" class="partner-btn px-3 py-2 bg-gray-900 text-white rounded-lg text-xs font-semibold hover:bg-gray-800 transition flex items-center justify-center" title="Add as Partner">
+                    <div class="border-t border-gray-200 bg-gradient-to-br from-gray-50 to-white p-4 flex gap-3">
+                        <a href="${profileHref}" class="flex-1 px-4 py-2.5 text-center text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">View Profile</a>
+                        <button onclick="addPartnerFromBrowse('${normalized._id}', this)" class="partner-btn px-4 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:border-gray-400 hover:bg-gray-50 transition-all flex items-center justify-center gap-2" title="Add as Partner">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
+                            <span>Connect</span>
                         </button>
                     </div>
                 </div>

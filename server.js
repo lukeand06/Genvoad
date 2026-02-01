@@ -100,6 +100,22 @@ app.get('/sitemap.xml', (req, res) => {
   res.sendFile(require('path').join(__dirname, 'sitemap.xml'));
 });
 
+// Serve robots.txt with correct content type
+app.get('/robots.txt', (req, res) => {
+  res.setHeader('Content-Type', 'text/plain');
+  res.sendFile(require('path').join(__dirname, 'robots.txt'));
+});
+
+// Handle www to non-www redirect and https redirect
+app.use((req, res, next) => {
+  // Redirect www to non-www
+  if (req.headers.host && req.headers.host.startsWith('www.')) {
+    const host = req.headers.host.slice(4);
+    return res.redirect(301, `${req.protocol}://${host}${req.originalUrl}`);
+  }
+  next();
+});
+
 // Serve robots.txt// Connect to MongoDB
 if (process.env.MONGODB_URI) {
   mongoose.connect(process.env.MONGODB_URI)
@@ -5228,6 +5244,65 @@ setInterval(async () => {
 }, 60000); // Run every minute
 
 // ======================== END SOCIAL FEED ENDPOINTS ========================
+
+// ======================== HTML PAGE SERVING ========================
+// Serve HTML pages with proper routing
+const htmlPages = [
+  'index.html', 'dashboard.html', 'projects.html', 'browse.html', 'profile.html',
+  'messages.html', 'notifications.html', 'settings.html', 'create-project.html',
+  'project-detail.html', 'signup.html', 'login.html', 'owner-signup.html',
+  'owner-login.html', 'vendor-signup.html', 'vendor-login.html', 'company.html',
+  'company-invite.html', 'all-projects.html', 'admin-companies.html', 'browse.html',
+  'network.html', 'feed.html'
+];
+
+// Route each HTML page
+htmlPages.forEach(page => {
+  const pagePath = page.replace('.html', '').replace(/^index$/, '');
+  
+  // Route /page-name to page-name.html
+  app.get(`/${pagePath === '' ? '' : pagePath}`, (req, res, next) => {
+    // Skip if it looks like an API route
+    if (req.path.startsWith('/api/') || req.path.startsWith('/public/') || req.path.startsWith('/uploads/')) {
+      return next();
+    }
+    
+    const filePath = path.join(__dirname, page);
+    if (fs.existsSync(filePath)) {
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      return res.sendFile(filePath);
+    }
+    next();
+  });
+});
+
+// Catch 404 and serve index.html for SPA routing fallback
+app.use((req, res, next) => {
+  // Only for GET requests and not API routes
+  if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+    const filePath = path.join(__dirname, 'index.html');
+    if (fs.existsSync(filePath)) {
+      return res.sendFile(filePath);
+    }
+  }
+  
+  // Return 404 for API routes and other methods
+  res.status(404).json({ error: 'Not found' });
+});
+
+// ======================== ERROR HANDLER ========================
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(err.status || 500).json({
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Internal server error' 
+      : err.message
+  });
+});
 
 // Start server
 const PORT = process.env.PORT || 5000;

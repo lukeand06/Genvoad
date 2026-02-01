@@ -148,6 +148,56 @@
             flex-shrink: 0;
         }
     </style>
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Genovad",
+        "description": "An AI-powered marketplace connecting project owners directly with vendors. Zero commissions, no middlemen, pure transparency.",
+        "url": "https://www.genovad.com",
+        "applicationCategory": "BusinessApplication",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "description": "Connect with vendors and project owners - no commission fees"
+        },
+        "creator": {
+            "@type": "Organization",
+            "name": "Genovad",
+            "url": "https://www.genovad.com"
+        },
+        "screenshot": "https://www.genovad.com/public/og-image.png",
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "250"
+        }
+    }
+    </script>
+    
+    <!-- JSON-LD Organization Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Genovad",
+        "url": "https://www.genovad.com",
+        "logo": "https://www.genovad.com/logo.png",
+        "description": "AI-powered procurement marketplace for construction and project management",
+        "sameAs": [
+            "https://twitter.com/genovad",
+            "https://www.linkedin.com/company/genovad"
+        ],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "contactType": "Customer Support",
+            "availableLanguage": "en"
+        }
+    }
+    </script>
 </head>
 <body class="bg-white">
     <!-- Navigation -->

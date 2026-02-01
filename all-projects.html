@@ -245,8 +245,8 @@
 
         let _allProjects = [];
         let _displayedCount = 0;
-        const INITIAL_LOAD = 12;
-        const LOAD_INCREMENT = 24;
+        const INITIAL_LOAD = 24;
+        const LOAD_INCREMENT = 36;
 
         function projectCard(p) {
             const dueDays = p.dueDate ? Math.ceil((new Date(p.dueDate) - Date.now()) / 86400000) : null;

@@ -54,8 +54,27 @@ const PostSchema = new mongoose.Schema({
   sponsorshipCost: { type: Number, default: 0 },
   sponsorshipEndDate: { type: Date, default: null },
   
+  // Scheduling & Drafts
+  scheduledFor: { type: Date, default: null },
+  isDraft: { type: Boolean, default: false },
+  status: { type: String, enum: ['draft', 'scheduled', 'published'], default: 'published' },
+  
+  // Analytics & Performance
+  viewedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  viewCount: { type: Number, default: 0 },
+  clickThrough: { type: Number, default: 0 }, // External links clicked
+  shareCount: { type: Number, default: 0 },
+  feedbackScore: { type: Number, default: 0 }, // 1-5 user rating
+  timeSpentAvg: { type: Number, default: 0 }, // Average time spent viewing in seconds
+  
+  // Trending & Discovery
+  isTrending: { type: Boolean, default: false },
+  trendingScore: { type: Number, default: 0 },
+  trendingRank: { type: Number, default: null },
+  
   createdAt: { type: Date, default: Date.now, index: true },
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
+  publishedAt: { type: Date, default: null }
 });
 
 // Index for efficient queries
@@ -64,17 +83,33 @@ PostSchema.index({ author: 1, createdAt: -1 });
 PostSchema.index({ type: 1, createdAt: -1 });
 PostSchema.index({ isSponsored: 1, createdAt: -1 });
 PostSchema.index({ authorRole: 1, createdAt: -1 });
+PostSchema.index({ status: 1, scheduledFor: 1 });
+PostSchema.index({ isTrending: 1, trendingScore: -1 });
+PostSchema.index({ visibility: 1, createdAt: -1 });
+PostSchema.index({ tags: 1 });
 
 // Update engagement score on post changes
 PostSchema.pre('save', function(next) {
   const likes = this.likes ? this.likes.length : 0;
   const comments = this.comments ? this.comments.length : 0;
-  const shares = this.shares || 0;
+  const shares = this.shareCount || 0;
+  const views = this.viewCount || 0;
   
-  // Simple engagement scoring: likes(1) + comments(3) + shares(5)
-  this.engagementScore = likes + (comments * 3) + (shares * 5);
+  // Advanced engagement scoring: views(0.1) + likes(1) + comments(3) + shares(5) + feedback(2)
+  this.engagementScore = (views * 0.1) + likes + (comments * 3) + (shares * 5) + (this.feedbackScore || 0) * 2;
   this.likeCount = likes;
   this.commentCount = comments;
+  
+  // Update published date if transitioning to published
+  if (this.status === 'published' && !this.publishedAt) {
+    this.publishedAt = new Date();
+  }
+  
+  // Update trending score based on engagement
+  const hoursSinceCreation = (new Date() - this.createdAt) / (1000 * 60 * 60);
+  if (hoursSinceCreation > 0) {
+    this.trendingScore = this.engagementScore / Math.sqrt(hoursSinceCreation + 1);
+  }
   
   next();
 });
