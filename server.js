@@ -72,6 +72,30 @@ app.use((req, res, next) => {
   next();
 });
 
+// Blocker-safe alias rewrites (Chrome extensions can block /messages or /notifications)
+app.use((req, res, next) => {
+  const queryIndex = req.originalUrl.indexOf('?');
+  const query = queryIndex !== -1 ? req.originalUrl.slice(queryIndex) : '';
+  const path = req.path;
+  let target = null;
+
+  if (path.startsWith('/x/convos')) {
+    target = '/api/messages/conversations';
+  } else if (path.startsWith('/x/updates')) {
+    target = path.replace('/x/updates', '/api/notifications');
+  } else if (path.startsWith('/x/feed')) {
+    target = path.replace('/x/feed', '/api/feed');
+  } else if (path.startsWith('/x/projects')) {
+    target = path.replace('/x/projects', '/api/projects');
+  }
+
+  if (target) {
+    req.url = `${target}${query}`;
+  }
+
+  next();
+});
+
 // Middleware
 // Allow multiple origins for development
 const allowedOrigins = [

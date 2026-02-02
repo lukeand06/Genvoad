@@ -38,9 +38,13 @@ function getBlockerSafeUrl(fullUrl) {
     let path = parsed.pathname;
 
     if (path.startsWith('/api/messages/conversations')) {
-      path = path.replace('/api/messages/conversations', '/api/inbox/convos');
+      path = path.replace('/api/messages/conversations', '/x/convos');
     } else if (path.startsWith('/api/notifications')) {
-      path = path.replace('/api/notifications', '/api/updates');
+      path = path.replace('/api/notifications', '/x/updates');
+    } else if (path.startsWith('/api/feed')) {
+      path = path.replace('/api/feed', '/x/feed');
+    } else if (path.startsWith('/api/projects')) {
+      path = path.replace('/api/projects', '/x/projects');
     } else {
       return null;
     }
