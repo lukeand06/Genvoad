@@ -36,4 +36,3 @@ Crawl-delay: 1
 
 # Sitemap
 Sitemap: https://www.genovad.com/sitemap.xml
-Sitemap: http://genovad.com/sitemap.xml

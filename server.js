@@ -110,15 +110,24 @@ app.get('/robots.txt', (req, res) => {
 // This ensures req.protocol and req.headers['x-forwarded-proto'] are correctly interpreted
 app.set('trust proxy', 1);
 
-// Handle www to non-www redirect and HTTPS redirect
+// Handle HTTPS and www to non-www redirects
 app.use((req, res, next) => {
-  // Redirect www to non-www
-  if (req.headers.host && req.headers.host.startsWith('www.')) {
-    const host = req.headers.host.slice(4);
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-    return res.redirect(301, `${protocol}://${host}${req.originalUrl}`);
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  let host = req.headers.host;
+  
+  // Force HTTPS in production
+  if (process.env.NODE_ENV === 'production' && protocol !== 'https') {
+    return res.redirect(301, `https://${host}${req.originalUrl}`);
   }
-  next()});
+  
+  // Redirect www to non-www
+  if (host && host.startsWith('www.')) {
+    const nonWwwHost = host.slice(4);
+    return res.redirect(301, `${protocol}://${nonWwwHost}${req.originalUrl}`);
+  }
+  
+  next();
+});
 
 // Connect to MongoDB
 if (process.env.MONGODB_URI) {
