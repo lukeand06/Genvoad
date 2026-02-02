@@ -1,5 +1,13 @@
 // Authentication utilities
-const API_URL = `${window.location.origin}/api`;
+// Force HTTPS in production to prevent mixed content errors
+const API_URL = (() => {
+  const origin = window.location.origin;
+  // If we're in production (not localhost), ensure HTTPS
+  if (!origin.includes('localhost') && origin.startsWith('http:')) {
+    return origin.replace('http:', 'https:') + '/api';
+  }
+  return origin + '/api';
+})();
 
 // Get token from localStorage
 function getToken() {
@@ -102,6 +110,11 @@ async function authFetch(url, options = {}) {
     fullUrl = `${window.location.origin}${url}`;
   } else {
     fullUrl = `${API_URL}${url}`;
+  }
+  
+  // Force HTTPS in production to prevent mixed content
+  if (!fullUrl.includes('localhost') && fullUrl.startsWith('http:')) {
+    fullUrl = fullUrl.replace('http:', 'https:');
   }
 
   const response = await fetch(fullUrl, {
