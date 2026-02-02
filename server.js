@@ -116,13 +116,24 @@ if (process.env.NODE_ENV === 'production') {
     }
   }));
 } else {
-  app.use(express.static('.'));
+  // Serve static files with NO CACHE for HTML to ensure updates are immediate
+  app.use(express.static('.', {
+    setHeaders: (res, path) => {
+      if (path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+    }
+  }));
 }
 // Serve public files with short cache for JS to allow quick updates
 app.use('/public', express.static('public', {
   setHeaders: (res, path) => {
     if (path.endsWith('.js')) {
-      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes for JS
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); // No cache for JS
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
     }
   }
 }));
