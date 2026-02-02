@@ -5,11 +5,19 @@
 const SAFE_ORIGIN = (() => {
   const { hostname, origin, protocol } = window.location;
   const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+  
   if (isLocal) {
     return origin;
   }
-  // Always use canonical production origin (HTTPS)
-  return 'https://www.genovad.com';
+  
+  // Production: Always use canonical HTTPS origin
+  // This prevents any http:// or non-www variants from being used
+  if (hostname && hostname.includes('genovad.com')) {
+    return 'https://www.genovad.com';
+  }
+  
+  // Fallback for any other environment
+  return protocol === 'https:' ? origin : origin.replace('http://', 'https://');
 })();
 
 const API_URL = `${SAFE_ORIGIN}/api`;
