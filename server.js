@@ -118,7 +118,14 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   app.use(express.static('.'));
 }
-app.use('/public', express.static('public'));
+// Serve public files with short cache for JS to allow quick updates
+app.use('/public', express.static('public', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'public, max-age=300'); // 5 minutes for JS
+    }
+  }
+}));
 app.use('/uploads', express.static(uploadDir));
 
 // Serve sitemap.xml with correct content type
