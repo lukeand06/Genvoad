@@ -6,11 +6,21 @@ const SAFE_ORIGIN = (() => {
   if (isLocal) {
     return origin;
   }
-  // Always enforce HTTPS for non-local hosts
-  return `https://${host}`;
+  // Always enforce HTTPS for non-local hosts - use canonical www domain
+  const cleanHost = host.replace(/^www\./, '');
+  return `https://www.${cleanHost}`;
 })();
 
 const API_URL = `${SAFE_ORIGIN}/api`;
+
+// Aggressive HTTP to HTTPS rewriter for any URL
+function forceHTTPS(url) {
+  if (!url) return url;
+  // Force any genovad.com URL to HTTPS with www
+  return url
+    .replace(/^http:\/\/(www\.)?genovad\.com/gi, 'https://www.genovad.com')
+    .replace(/^https:\/\/genovad\.com/gi, 'https://www.genovad.com');
+}
 
 // Get token from localStorage
 function getToken() {
@@ -106,7 +116,7 @@ async function authFetch(url, options = {}) {
   // Build full URL robustly to avoid double "/api"
   let fullUrl = '';
   if (/^https?:\/\//i.test(url)) {
-    fullUrl = url;
+    fullUrl = forceHTTPS(url);
   } else if (url.startsWith('/api/')) {
     fullUrl = `${SAFE_ORIGIN}${url}`;
   } else if (url.startsWith('/')) {
@@ -115,14 +125,8 @@ async function authFetch(url, options = {}) {
     fullUrl = `${API_URL}${url}`;
   }
   
-  // Force HTTPS in production to prevent mixed content
-  if (!fullUrl.includes('localhost') && !fullUrl.includes('127.0.0.1') && fullUrl.startsWith('http:')) {
-    fullUrl = fullUrl.replace('http:', 'https:');
-  }
-  // Extra safety: upgrade any genovad.com http URLs
-  fullUrl = fullUrl.replace(/^http:\/\/(www\.)?genovad\.com/i, (match, www) => {
-    return `https://${www || ''}genovad.com`;
-  });
+  // Final aggressive HTTPS enforcement
+  fullUrl = forceHTTPS(fullUrl);
 
   const response = await fetch(fullUrl, {
     ...options,
