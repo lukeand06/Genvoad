@@ -2166,8 +2166,8 @@ app.post('/api/messages/email-invite', authMiddleware, async (req, res) => {
   }
 });
 
-// Get conversations
-app.get('/api/messages/conversations', authMiddleware, async (req, res) => {
+// Get conversations (blocker-safe alias available at /api/inbox/convos)
+async function getConversationsHandler(req, res) {
   try {
     const currentUser = await User.findById(req.user._id).select('partners blockedUsers');
     const partnerIds = (currentUser.partners || []).map(p => p.toString());
@@ -2211,7 +2211,10 @@ app.get('/api/messages/conversations', authMiddleware, async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch conversations' });
   }
-});
+}
+
+app.get('/api/messages/conversations', authMiddleware, getConversationsHandler);
+app.get('/api/inbox/convos', authMiddleware, getConversationsHandler);
 
 // Get messages with user
 app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
@@ -2822,9 +2825,8 @@ app.post('/api/feedback/submit', authMiddleware, async (req, res) => {
   }
 });
 
-// Notification Endpoints
-// Get all notifications for a user
-app.get('/api/notifications', authMiddleware, async (req, res) => {
+// Notification Endpoints (blocker-safe alias available at /api/updates)
+async function getNotificationsHandler(req, res) {
   try {
     const { filter, limit = 50, skip = 0 } = req.query;
     const userId = req.user.id;
@@ -2855,10 +2857,13 @@ app.get('/api/notifications', authMiddleware, async (req, res) => {
     console.error('Notifications fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
-});
+}
+
+app.get('/api/notifications', authMiddleware, getNotificationsHandler);
+app.get('/api/updates', authMiddleware, getNotificationsHandler);
 
 // Get notifications by category
-app.get('/api/notifications/category/:category', authMiddleware, async (req, res) => {
+async function getNotificationsByCategoryHandler(req, res) {
   try {
     const { category } = req.params;
     const { limit = 50, skip = 0 } = req.query;
@@ -2880,10 +2885,13 @@ app.get('/api/notifications/category/:category', authMiddleware, async (req, res
     console.error('Notifications category fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch notifications' });
   }
-});
+}
+
+app.get('/api/notifications/category/:category', authMiddleware, getNotificationsByCategoryHandler);
+app.get('/api/updates/category/:category', authMiddleware, getNotificationsByCategoryHandler);
 
 // Mark notification as read
-app.patch('/api/notifications/:id/read', authMiddleware, async (req, res) => {
+async function markNotificationReadHandler(req, res) {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -2903,10 +2911,13 @@ app.patch('/api/notifications/:id/read', authMiddleware, async (req, res) => {
     console.error('Mark read error:', error);
     res.status(500).json({ error: 'Failed to update notification' });
   }
-});
+}
+
+app.patch('/api/notifications/:id/read', authMiddleware, markNotificationReadHandler);
+app.patch('/api/updates/:id/read', authMiddleware, markNotificationReadHandler);
 
 // Mark all notifications as read
-app.patch('/api/notifications/read-all', authMiddleware, async (req, res) => {
+async function markAllNotificationsReadHandler(req, res) {
   try {
     const userId = req.user.id;
 
@@ -2920,10 +2931,13 @@ app.patch('/api/notifications/read-all', authMiddleware, async (req, res) => {
     console.error('Mark all read error:', error);
     res.status(500).json({ error: 'Failed to update notifications' });
   }
-});
+}
+
+app.patch('/api/notifications/read-all', authMiddleware, markAllNotificationsReadHandler);
+app.patch('/api/updates/read-all', authMiddleware, markAllNotificationsReadHandler);
 
 // Delete notification
-app.delete('/api/notifications/:id', authMiddleware, async (req, res) => {
+async function deleteNotificationHandler(req, res) {
   try {
     const { id } = req.params;
     const userId = req.user.id;
@@ -2941,10 +2955,13 @@ app.delete('/api/notifications/:id', authMiddleware, async (req, res) => {
     console.error('Delete notification error:', error);
     res.status(500).json({ error: 'Failed to delete notification' });
   }
-});
+}
+
+app.delete('/api/notifications/:id', authMiddleware, deleteNotificationHandler);
+app.delete('/api/updates/:id', authMiddleware, deleteNotificationHandler);
 
 // Clear all notifications
-app.delete('/api/notifications', authMiddleware, async (req, res) => {
+async function clearNotificationsHandler(req, res) {
   try {
     const userId = req.user.id;
 
@@ -2955,7 +2972,10 @@ app.delete('/api/notifications', authMiddleware, async (req, res) => {
     console.error('Clear notifications error:', error);
     res.status(500).json({ error: 'Failed to clear notifications' });
   }
-});
+}
+
+app.delete('/api/notifications', authMiddleware, clearNotificationsHandler);
+app.delete('/api/updates', authMiddleware, clearNotificationsHandler);
 
 // Internal helper function to create notifications
 async function createNotification(userId, type, category, data) {

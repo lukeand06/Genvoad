@@ -31,6 +31,27 @@ function forceHTTPS(url) {
     .replace(/^https:\/\/genovad\.com/gi, 'https://www.genovad.com');
 }
 
+// Remap URLs that may be blocked by privacy/ad blockers
+function getBlockerSafeUrl(fullUrl) {
+  try {
+    const parsed = new URL(fullUrl, window.location.origin);
+    let path = parsed.pathname;
+
+    if (path.startsWith('/api/messages/conversations')) {
+      path = path.replace('/api/messages/conversations', '/api/inbox/convos');
+    } else if (path.startsWith('/api/notifications')) {
+      path = path.replace('/api/notifications', '/api/updates');
+    } else {
+      return null;
+    }
+
+    parsed.pathname = path;
+    return parsed.toString();
+  } catch (error) {
+    return null;
+  }
+}
+
 // Get token from localStorage
 function getToken() {
   return localStorage.getItem('token');
@@ -137,10 +158,25 @@ async function authFetch(url, options = {}) {
   // Final aggressive HTTPS enforcement
   fullUrl = forceHTTPS(fullUrl);
 
-  const response = await fetch(fullUrl, {
-    ...options,
-    headers
-  });
+  let response;
+  try {
+    response = await fetch(fullUrl, {
+      ...options,
+      headers
+    });
+  } catch (error) {
+    const method = (options.method || 'GET').toUpperCase();
+    const fallbackUrl = method === 'GET' ? getBlockerSafeUrl(fullUrl) : null;
+
+    if (fallbackUrl && fallbackUrl !== fullUrl) {
+      response = await fetch(fallbackUrl, {
+        ...options,
+        headers
+      });
+    } else {
+      throw error;
+    }
+  }
   
   if (response.status === 401) {
     logout();
