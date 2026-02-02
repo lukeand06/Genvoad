@@ -1,13 +1,16 @@
 // Authentication utilities
 // Force HTTPS in production to prevent mixed content errors
-const API_URL = (() => {
-  const origin = window.location.origin;
-  // If we're in production (not localhost), ensure HTTPS
-  if (!origin.includes('localhost') && origin.startsWith('http:')) {
-    return origin.replace('http:', 'https:') + '/api';
+const SAFE_ORIGIN = (() => {
+  const { hostname, host, protocol, origin } = window.location;
+  const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+  if (isLocal) {
+    return origin;
   }
-  return origin + '/api';
+  // Always enforce HTTPS for non-local hosts
+  return `https://${host}`;
 })();
+
+const API_URL = `${SAFE_ORIGIN}/api`;
 
 // Get token from localStorage
 function getToken() {
@@ -105,15 +108,15 @@ async function authFetch(url, options = {}) {
   if (/^https?:\/\//i.test(url)) {
     fullUrl = url;
   } else if (url.startsWith('/api/')) {
-    fullUrl = `${window.location.origin}${url}`;
+    fullUrl = `${SAFE_ORIGIN}${url}`;
   } else if (url.startsWith('/')) {
-    fullUrl = `${window.location.origin}${url}`;
+    fullUrl = `${SAFE_ORIGIN}${url}`;
   } else {
     fullUrl = `${API_URL}${url}`;
   }
   
   // Force HTTPS in production to prevent mixed content
-  if (!fullUrl.includes('localhost') && fullUrl.startsWith('http:')) {
+  if (!fullUrl.includes('localhost') && !fullUrl.includes('127.0.0.1') && fullUrl.startsWith('http:')) {
     fullUrl = fullUrl.replace('http:', 'https:');
   }
 

@@ -5231,8 +5231,19 @@ app.get('/api/posts/:postId', async (req, res) => {
 // ======================== SCHEDULED POST AUTO-PUBLISHING JOB ========================
 
 // Auto-publish scheduled posts when their scheduled time arrives
+let loggedSchedulerDbUnavailable = false;
 setInterval(async () => {
   try {
+    // Skip scheduler if DB is not connected
+    if (mongoose.connection.readyState !== 1) {
+      if (!loggedSchedulerDbUnavailable) {
+        console.warn('⚠ Skipping scheduled post publisher: database not connected');
+        loggedSchedulerDbUnavailable = true;
+      }
+      return;
+    }
+
+    loggedSchedulerDbUnavailable = false;
     const now = new Date();
     
     const scheduledPosts = await Post.find({
