@@ -82,8 +82,6 @@ const allowedOrigins = [
   'http://localhost:8000',
   'https://www.genovad.com',
   'https://genovad.com',
-  'http://www.genovad.com', // (keep for local dev if needed)
-  // 'http://genovad.com', // Removed: do not allow insecure origin in production
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -2048,14 +2046,14 @@ app.post('/api/projects/:projectId/invite-vendor', authMiddleware, async (req, r
             </p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.APP_URL || 'http://localhost:3000'}/signup.html" 
+              <a href="${process.env.APP_URL || 'https://www.genovad.com'}/signup.html" 
                  style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
                 Join & Bid Now
               </a>
             </div>
             
             <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-              Already have an account? <a href="${process.env.APP_URL || 'http://localhost:3000'}/vendor-login.html" style="color: #1a1a1a;">Log in</a> to bid immediately.
+              Already have an account? <a href="${process.env.APP_URL || 'https://www.genovad.com'}/vendor-login.html" style="color: #1a1a1a;">Log in</a> to bid immediately.
             </p>
           </div>
           
@@ -2136,14 +2134,14 @@ app.post('/api/messages/email-invite', authMiddleware, async (req, res) => {
           </p>
           
           <div style=\"text-align: center; margin: 30px 0;\">
-            <a href=\"${process.env.APP_URL || 'http://localhost:3000'}/signup.html\" 
+            <a href=\"${process.env.APP_URL || 'https://www.genovad.com'}/signup.html\" 
                style=\"display: inline-block; background: #1a1a1a; color: white; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;\">
               Join Genovad & Reply
             </a>
           </div>
           
           <p style=\"color: #6b7280; font-size: 14px; margin-top: 30px;\">
-            Already have an account? <a href=\"${process.env.APP_URL || 'http://localhost:3000'}/login.html\" style=\"color: #1a1a1a;\">Log in</a> to view this message.
+            Already have an account? <a href=\"${process.env.APP_URL || 'https://www.genovad.com'}/login.html\" style=\"color: #1a1a1a;\">Log in</a> to view this message.
           </p>
         </div>
         
@@ -3867,7 +3865,7 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
     await company.save();
 
     // Send invitation email
-    const inviteUrl = `${process.env.APP_URL || 'http://localhost:3000'}/company-invite?token=${token}`;
+    const inviteUrl = `${process.env.APP_URL || 'https://www.genovad.com'}/company-invite?token=${token}`;
     const inviter = await User.findById(req.user._id);
     
     await sendEmail(
