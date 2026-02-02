@@ -49,6 +49,29 @@ const avatarUpload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB for avatars
 });
 
+// Trust proxy - important for HTTPS when behind reverse proxy (Heroku, Vercel, AWS, Cloudflare, etc)
+// This ensures req.protocol and req.headers['x-forwarded-proto'] are correctly interpreted
+app.set('trust proxy', 1);
+
+// Handle HTTPS and non-www to www redirects FIRST (before CORS)
+app.use((req, res, next) => {
+  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+  let host = req.headers.host;
+  const canonicalHost = 'www.genovad.com';
+  
+  // Force HTTPS in production
+  if (process.env.NODE_ENV === 'production' && protocol !== 'https') {
+    return res.redirect(301, `https://${host}${req.originalUrl}`);
+  }
+  
+  // Redirect non-www to www (canonical)
+  if (process.env.NODE_ENV === 'production' && host && !host.startsWith('www.')) {
+    return res.redirect(301, `https://${canonicalHost}${req.originalUrl}`);
+  }
+  
+  next();
+});
+
 // Middleware
 // Allow multiple origins for development
 const allowedOrigins = [
@@ -57,6 +80,10 @@ const allowedOrigins = [
   'http://localhost:5000',
   'http://127.0.0.1:5000',
   'http://localhost:8000',
+  'https://www.genovad.com',
+  'https://genovad.com',
+  'http://www.genovad.com',
+  'http://genovad.com',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -104,29 +131,6 @@ app.get('/sitemap.xml', (req, res) => {
 app.get('/robots.txt', (req, res) => {
   res.setHeader('Content-Type', 'text/plain');
   res.sendFile(require('path').join(__dirname, 'robots.txt'));
-});
-
-// Trust proxy - important for HTTPS when behind reverse proxy (Heroku, Vercel, AWS, Cloudflare, etc)
-// This ensures req.protocol and req.headers['x-forwarded-proto'] are correctly interpreted
-app.set('trust proxy', 1);
-
-// Handle HTTPS and www to non-www redirects
-app.use((req, res, next) => {
-  const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-  let host = req.headers.host;
-  
-  // Force HTTPS in production
-  if (process.env.NODE_ENV === 'production' && protocol !== 'https') {
-    return res.redirect(301, `https://${host}${req.originalUrl}`);
-  }
-  
-  // Redirect www to non-www
-  if (host && host.startsWith('www.')) {
-    const nonWwwHost = host.slice(4);
-    return res.redirect(301, `${protocol}://${nonWwwHost}${req.originalUrl}`);
-  }
-  
-  next();
 });
 
 // Connect to MongoDB

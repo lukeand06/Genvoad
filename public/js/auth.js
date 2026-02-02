@@ -119,6 +119,10 @@ async function authFetch(url, options = {}) {
   if (!fullUrl.includes('localhost') && !fullUrl.includes('127.0.0.1') && fullUrl.startsWith('http:')) {
     fullUrl = fullUrl.replace('http:', 'https:');
   }
+  // Extra safety: upgrade any genovad.com http URLs
+  fullUrl = fullUrl.replace(/^http:\/\/(www\.)?genovad\.com/i, (match, www) => {
+    return `https://${www || ''}genovad.com`;
+  });
 
   const response = await fetch(fullUrl, {
     ...options,
