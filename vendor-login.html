@@ -45,21 +45,7 @@
         </div>
       </div>
     </div>
-  </div>    <!-- Force HTTPS globally before any other scripts load -->
-    <script>
-        (function() {
-            // Override fetch to force HTTPS
-            const originalFetch = window.fetch;
-            window.fetch = function(url, options) {
-                if (typeof url === 'string') {
-                    url = url
-                        .replace(/^http:\/\/(www\.)?genovad\.com/gi, 'https://www.genovad.com')
-                        .replace(/^https:\/\/genovad\.com/gi, 'https://www.genovad.com');
-                }
-                return originalFetch(url, options);
-            };
-        })();
-    </script>
+  </div>
 
 
   <script src="/public/js/auth.js"></script>

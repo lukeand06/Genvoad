@@ -330,21 +330,7 @@
     <button id="browse-all-btn" class="fixed bottom-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-800 transition-all hover:shadow-xl flex items-center gap-2 font-semibold text-sm z-50">
         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
         Browse All
-    </button>    <!-- Force HTTPS globally before any other scripts load -->
-    <script>
-        (function() {
-            // Override fetch to force HTTPS
-            const originalFetch = window.fetch;
-            window.fetch = function(url, options) {
-                if (typeof url === 'string') {
-                    url = url
-                        .replace(/^http:\/\/(www\.)?genovad\.com/gi, 'https://www.genovad.com')
-                        .replace(/^https:\/\/genovad\.com/gi, 'https://www.genovad.com');
-                }
-                return originalFetch(url, options);
-            };
-        })();
-    </script>
+    </button>
 
 
     <script src="/public/js/auth.js"></script>
