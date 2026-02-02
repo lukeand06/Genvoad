@@ -106,17 +106,21 @@ app.get('/robots.txt', (req, res) => {
   res.sendFile(require('path').join(__dirname, 'robots.txt'));
 });
 
-// Handle www to non-www redirect and https redirect
+// Trust proxy - important for HTTPS when behind reverse proxy (Heroku, Vercel, AWS, Cloudflare, etc)
+// This ensures req.protocol and req.headers['x-forwarded-proto'] are correctly interpreted
+app.set('trust proxy', 1);
+
+// Handle www to non-www redirect and HTTPS redirect
 app.use((req, res, next) => {
   // Redirect www to non-www
   if (req.headers.host && req.headers.host.startsWith('www.')) {
     const host = req.headers.host.slice(4);
-    return res.redirect(301, `${req.protocol}://${host}${req.originalUrl}`);
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    return res.redirect(301, `${protocol}://${host}${req.originalUrl}`);
   }
-  next();
-});
+  next()});
 
-// Serve robots.txt// Connect to MongoDB
+// Connect to MongoDB
 if (process.env.MONGODB_URI) {
   mongoose.connect(process.env.MONGODB_URI)
     .then(async () => {
