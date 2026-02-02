@@ -82,8 +82,8 @@ const allowedOrigins = [
   'http://localhost:8000',
   'https://www.genovad.com',
   'https://genovad.com',
-  'http://www.genovad.com',
-  'http://genovad.com',
+  'http://www.genovad.com', // (keep for local dev if needed)
+  // 'http://genovad.com', // Removed: do not allow insecure origin in production
   process.env.FRONTEND_URL
 ].filter(Boolean);
 

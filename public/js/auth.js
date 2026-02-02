@@ -1,14 +1,15 @@
 // Authentication utilities
 // Force HTTPS in production to prevent mixed content errors
+
+// Enforce HTTPS for all API requests in production
 const SAFE_ORIGIN = (() => {
-  const { hostname, host, protocol, origin } = window.location;
+  const { hostname, origin, protocol } = window.location;
   const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
   if (isLocal) {
     return origin;
   }
-  // Always enforce HTTPS for non-local hosts - use canonical www domain
-  const cleanHost = host.replace(/^www\./, '');
-  return `https://www.${cleanHost}`;
+  // Always use canonical production origin (HTTPS)
+  return 'https://www.genovad.com';
 })();
 
 const API_URL = `${SAFE_ORIGIN}/api`;
