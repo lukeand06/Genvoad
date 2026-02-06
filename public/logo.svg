@@ -1,6 +1,8 @@
-<svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="40" height="40" rx="8" fill="#166534"/>
-  <path d="M10 14L16 20L10 26V14Z" fill="white"/>
-  <path d="M16 14L22 20L16 26V14Z" fill="white"/>
-  <path d="M22 14L28 20L22 26V14Z" fill="white"/>
+<svg viewBox="0 0 140 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Improved chevrons with better proportions and smoother curves -->
+  <path d="M 4 16 L 11 22 L 4 28 Q 3.5 22 4 16" fill="#2d5016" stroke="#2d5016" stroke-width="0.5" stroke-linejoin="round"/>
+  <path d="M 12 16 L 19 22 L 12 28 Q 11.5 22 12 16" fill="#3f5649" stroke="#3f5649" stroke-width="0.5" stroke-linejoin="round"/>
+  <path d="M 20 16 L 27 22 L 20 28 Q 19.5 22 20 16" fill="#2d5016" stroke="#2d5016" stroke-width="0.5" stroke-linejoin="round"/>
+  <!-- Enhanced GENOVAD text with better kerning and weight -->
+  <text x="36" y="27" font-family="'Segoe UI', -apple-system, sans-serif" font-size="17" font-weight="800" letter-spacing="0.5" fill="#2d5016">GENOVAD</text>
 </svg>
