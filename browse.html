@@ -720,17 +720,17 @@
 
         async function loadDiscovery() {
             try {
-                // Fetch discovery recommendations
-                const res = await authFetch('/api/discovery');
+                // Fetch company recommendations
+                const res = await authFetch('/api/companies/recommendations');
                 if (!res.ok) throw new Error('Failed to load recommendations');
                 
                 const data = await res.json();
                 
-                // /api/discovery returns topPicks, mightKnow, activeToday sections
+                // /api/companies/recommendations returns topPicks, mayKnow, recentlyActive sections
                 allRecommendations = {
                     topPicks: data.topPicks || [],
-                    mayKnow: data.mightKnow || [],
-                    recentlyActive: data.activeToday || []
+                    mayKnow: data.mayKnow || [],
+                    recentlyActive: data.recentlyActive || []
                 };
                 
                 displayCompanyRecommendations();
@@ -759,30 +759,27 @@
                     const params = new URLSearchParams();
                     
                     // Add filters if set
-                    if (browseFilters.type) params.set('role', browseFilters.type);
+                    if (browseFilters.type) params.set('type', browseFilters.type);
                     if (browseFilters.verified) params.set('verified', browseFilters.verified);
-                    
-                    // Include unverified users in all companies browse
-                    params.set('includeUnverified', 'true');
 
-                    const res = await authFetch(`/api/discovery?${params}`);
+                    const res = await authFetch(`/api/companies/recommendations?${params}`);
                     if (!res.ok) throw new Error('Failed to load companies');
                     
                     const data = await res.json();
                     // Combine all sections into one browseable list, removing duplicates
-                    const allUsers = [
+                    const allCompanies = [
                         ...(data.topPicks || []),
-                        ...(data.mightKnow || []),
-                        ...(data.activeToday || [])
+                        ...(data.mayKnow || []),
+                        ...(data.recentlyActive || [])
                     ];
                     
-                    // Remove duplicates by user ID
+                    // Remove duplicates by company ID
                     const seenIds = new Set();
-                    allBrowseUsers = allUsers.filter(user => {
-                        if (seenIds.has(user._id)) {
+                    allBrowseUsers = allCompanies.filter(company => {
+                        if (seenIds.has(company._id)) {
                             return false;
                         }
-                        seenIds.add(user._id);
+                        seenIds.add(company._id);
                         return true;
                     });
                 }
