@@ -1,0 +1,328 @@
+/* Mobile Optimizations for Genovad */
+
+/* Ensure proper viewport and touch behavior */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+/* Improve readability on mobile */
+@media (max-width: 640px) {
+    body {
+        font-size: 16px; /* Prevents zoom-on-focus in mobile browsers */
+    }
+
+    /* Navigation Improvements */
+    nav {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+    }
+
+    .max-w-7xl {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* Header padding */
+    nav .flex {
+        height: 14rem; /* Increase touch targets */
+    }
+
+    /* Button sizing for touch */
+    button, a.px-4.py-2, input[type="button"], input[type="submit"] {
+        min-height: 44px;
+        min-width: 44px;
+        padding: 12px 16px;
+    }
+
+    /* Input field improvements */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+        min-height: 44px;
+        font-size: 16px; /* Prevents auto-zoom on focus */
+        padding: 12px 16px;
+    }
+
+    /* Text size improvements */
+    h1 {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+        margin-bottom: 0.875rem;
+    }
+
+    h3 {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    /* Card grid - single column on mobile */
+    .card-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Modal improvements */
+    .fixed.inset-0 {
+        padding: 16px;
+    }
+
+    .max-w-md,
+    .max-w-lg,
+    .max-w-2xl,
+    .max-w-4xl {
+        max-width: 100% !important;
+    }
+
+    /* Modal bottom sheet style on mobile */
+    .rounded-t-lg,
+    .sm\\:rounded-lg {
+        border-radius: 16px 16px 0 0 !important;
+    }
+
+    /* Form grid adjustments */
+    .grid.grid-cols-2,
+    .grid.grid-cols-3 {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Spacing improvements */
+    .gap-4 {
+        gap: 1rem;
+    }
+
+    .gap-6 {
+        gap: 1.5rem;
+    }
+
+    .space-y-4 > * + * {
+        margin-top: 1rem;
+    }
+
+    .space-y-6 > * + * {
+        margin-top: 1.5rem;
+    }
+
+    /* Icon sizing */
+    svg.w-6,
+    svg.h-6 {
+        min-width: 24px;
+        min-height: 24px;
+        padding: 8px;
+    }
+
+    /* CTA Button prominent on mobile */
+    #cta-button {
+        padding: 12px 16px;
+        font-size: 14px;
+        border-radius: 8px;
+    }
+
+    /* Dropdown menu width */
+    #user-dropdown {
+        width: 100vw;
+        max-width: calc(100vw - 32px) !important;
+        right: 0 !important;
+        left: 16px !important;
+    }
+
+    /* Content padding */
+    main,
+    .max-w-7xl {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    /* List items with better touch targets */
+    li, .block.px-4 {
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    /* Scrollable content */
+    .overflow-y-auto {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Better flex wrapping */
+    .flex-wrap {
+        gap: 0.5rem;
+    }
+
+    /* Improve textarea and input visibility */
+    textarea,
+    input {
+        border-radius: 8px;
+    }
+
+    textarea:focus,
+    input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1), inset 0 0 0 1px rgb(59, 130, 246);
+    }
+
+    /* Table responsiveness */
+    table {
+        font-size: 14px;
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Badge sizing */
+    .badge, .px-2.py-1 {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    /* Improve long text handling */
+    .line-clamp-1,
+    .line-clamp-2,
+    .line-clamp-3 {
+        word-break: break-word;
+    }
+}
+
+/* Tablet adjustments (640px - 1024px) */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .card-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .grid.grid-cols-3 {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea {
+        font-size: 16px;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) {
+    nav {
+        height: 48px;
+    }
+
+    nav .flex {
+        gap: 1rem !important;
+        height: 48px;
+    }
+
+    h1 {
+        font-size: 1.25rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    h2 {
+        font-size: 1.1rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+}
+
+/* High DPI screens (retina) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Slightly adjust tap targets for better precision on high DPI */
+    button:active,
+    a:active {
+        opacity: 0.8;
+    }
+}
+
+/* Improve touch feedback */
+@media (hover: none) and (pointer: coarse) {
+    /* Mobile devices */
+    a:hover,
+    button:hover {
+        background-color: inherit;
+    }
+
+    a:active,
+    button:active {
+        opacity: 0.7;
+        transform: scale(0.98);
+    }
+
+    /* Remove hover states that don't apply to touch */
+    .hover\\:bg-gray-50:hover,
+    .hover\\:bg-gray-100:hover,
+    .hover\\:shadow-lg:hover,
+    .hover\\:text-gray-900:hover {
+        background-color: inherit;
+        box-shadow: none;
+        color: inherit;
+    }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+    body {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+        padding-top: max(1rem, env(safe-area-inset-top));
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    nav {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+    }
+}
+
+/* Hide scrollbars on iOS but keep functionality */
+@media (pointer: coarse) {
+    ::-webkit-scrollbar {
+        display: none;
+    }
+
+    .card-scroll::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Improve form field usability */
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+/* Better link target sizes */
+a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* Fix sticky positioning on mobile */
+.sticky {
+    position: sticky;
+    will-change: transform;
+}

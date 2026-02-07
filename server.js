@@ -965,7 +965,19 @@ app.delete('/api/users/profile', authMiddleware, async (req, res) => {
 app.get('/api/users', authMiddleware, async (req, res) => {
   try {
     const { search, skills, services, city, registeredOnly } = req.query;
-    const query = { emailVerified: true, deletedAt: { $exists: false } };
+    
+    // Get current user's partners to exclude them from results
+    const currentUser = await User.findById(req.user._id).select('partners');
+    const partnerIds = (currentUser.partners || []).map(p => p.toString());
+    
+    const query = { 
+      emailVerified: true, 
+      deletedAt: { $exists: false },
+      _id: { 
+        $ne: req.user._id, // Exclude self
+        $nin: partnerIds // Exclude existing partners
+      }
+    };
     
     if (search) {
       query.$or = [
@@ -2275,20 +2287,31 @@ async function getConversationsHandler(req, res) {
       
       if (!conversations[otherUserId]) {
         const isPartner = partnerIds.includes(otherUserId);
+        const otherUser = msg.sender._id.toString() === req.user._id.toString() ? msg.recipient : msg.sender;
         conversations[otherUserId] = {
-          user: msg.sender._id.toString() === req.user._id.toString() ? msg.recipient : msg.sender,
-          lastMessage: msg,
+          otherUser: otherUser,
+          otherUserId: otherUserId,
+          lastMessage: msg.content || msg.text || '',
+          lastMessageTime: msg.createdAt,
           unread: 0,
+          unreadCount: 0,
           type: isPartner ? 'partner' : 'direct'
         };
       }
       
       if (!msg.read && msg.recipient._id.toString() === req.user._id.toString()) {
         conversations[otherUserId].unread++;
+        conversations[otherUserId].unreadCount++;
       }
     });
     
-    res.json({ conversations: Object.values(conversations) });
+    const conversationsList = Object.values(conversations);
+    const totalUnread = conversationsList.reduce((sum, conv) => sum + conv.unread, 0);
+    
+    res.json({ 
+      conversations: conversationsList,
+      unreadCount: totalUnread
+    });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch conversations' });
   }

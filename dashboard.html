@@ -8,9 +8,35 @@
     <meta http-equiv="Expires" content="0">
     <title>Dashboard - Genovad</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/public/css/mobile-optimizations.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
+        
+        /* Visible scrollbars for modals */
+        .modal-scrollable::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .modal-scrollable::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+        
+        .modal-scrollable::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+        
+        .modal-scrollable::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+        
+        /* Firefox scrollbar styling */
+        .modal-scrollable {
+            scrollbar-width: thin;
+            scrollbar-color: #d1d5db #f3f4f6;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -488,8 +514,8 @@
     <!-- Modals -->
     <!-- Active Projects Modal -->
     <div id="active-projects-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-scrollable">
+            <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
                 <h2 class="text-xl font-semibold text-gray-900">Active Projects</h2>
                 <button onclick="closeModal('active-projects-modal')" class="text-gray-500 hover:text-gray-700">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
