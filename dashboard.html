@@ -14,6 +14,9 @@
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Notification Toast Container -->
+    <div id="notification-toast-container" class="fixed top-4 right-4 z-[9999] flex flex-col gap-3 max-w-md pointer-events-none"></div>
+
     <!-- Navigation -->
     <nav class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -963,6 +966,75 @@
             }
         }
 
+        // Mark notification as read
+        async function markNotificationAsRead(notificationId) {
+            try {
+                const res = await authFetch(`/api/notifications/${notificationId}/read`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (res.ok) {
+                    loadRecentNotifications();
+                }
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        // Set up real-time notification polling
+        let notificationPollInterval;
+        let lastNotificationCheck = null;
+
+        function startNotificationPolling() {
+            // Check for notifications every 10 seconds
+            notificationPollInterval = setInterval(async () => {
+                try {
+                    const res = await authFetch('/api/notifications?limit=1');
+                    if (!res.ok) return;
+                    
+                    const data = await res.json();
+                    if (data.notifications && data.notifications.length > 0) {
+                        const latestNotif = data.notifications[0];
+                        
+                        // Only show toast if it's new and unread
+                        if (!latestNotif.read && (!lastNotificationCheck || new Date(latestNotif.createdAt) > new Date(lastNotificationCheck))) {
+                            lastNotificationCheck = latestNotif.createdAt;
+                            let toastMessage = '';
+                            
+                            switch(latestNotif.type) {
+                                case 'partnership_request':
+                                    toastMessage = `${latestNotif.data.userName} wants to add you as a partner`;
+                                    break;
+                                case 'partnership_accepted':
+                                    toastMessage = `${latestNotif.data.userName} accepted your partnership request`;
+                                    break;
+                                case 'project_update':
+                                    toastMessage = `Project "${latestNotif.data.projectTitle || 'Update'}" has been updated`;
+                                    break;
+                                case 'message':
+                                    toastMessage = `New message from ${latestNotif.data.userName || 'Someone'}`;
+                                    break;
+                                default:
+                                    toastMessage = 'You have a new notification';
+                            }
+                            
+                            showNotificationToast(toastMessage, 'info', 8000);
+                            loadRecentNotifications();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Notification polling error:', error);
+                }
+            }, 10000);
+        }
+
+        function stopNotificationPolling() {
+            if (notificationPollInterval) {
+                clearInterval(notificationPollInterval);
+            }
+        }
+
         // Initialize dashboard
         (async () => {
             await ensureUser();
@@ -973,6 +1045,9 @@
             await loadFeed();
             await loadRecommendations();
             await loadRecentNotifications();
+            
+            // Start notification polling for real-time updates
+            startNotificationPolling();
             
             // Show company link if user has company
             const user = getCurrentUser();
@@ -1294,6 +1369,78 @@
             }
         }
 
+        // Toast notification system
+        function showNotificationToast(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('notification-toast-container');
+            const toastId = `toast-${Date.now()}`;
+            
+            const typeConfig = {
+                success: { bg: 'bg-green-500', icon: '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>' },
+                error: { bg: 'bg-red-500', icon: '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' },
+                warning: { bg: 'bg-yellow-500', icon: '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0-6a9 9 0 110 18 9 9 0 010-18z"/></svg>' },
+                info: { bg: 'bg-blue-500', icon: '<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' }
+            };
+
+            const config = typeConfig[type] || typeConfig.info;
+            
+            const toast = document.createElement('div');
+            toast.id = toastId;
+            toast.className = `${config.bg} text-white px-6 py-4 rounded-lg shadow-lg flex items-start gap-3 animate-slideIn pointer-events-auto`;
+            toast.innerHTML = `
+                <div class="flex-shrink-0 mt-0.5">${config.icon}</div>
+                <div class="flex-1 text-sm font-medium">${message}</div>
+                <button onclick="document.getElementById('${toastId}').remove()" class="text-white/80 hover:text-white">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto-remove after duration
+            if (duration) {
+                setTimeout(() => {
+                    if (document.getElementById(toastId)) {
+                        document.getElementById(toastId).style.animation = 'slideOut 0.3s ease-out forwards';
+                        setTimeout(() => {
+                            const el = document.getElementById(toastId);
+                            if (el) el.remove();
+                        }, 300);
+                    }
+                }, duration);
+            }
+        }
+
+        // Add toast animations to head
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+            .animate-slideIn {
+                animation: slideIn 0.3s ease-out;
+            }
+        `;
+        document.head.appendChild(style);
+
         async function loadRecentNotifications() {
             try {
                 const res = await authFetch('/api/notifications?limit=5');
@@ -1312,6 +1459,42 @@
                 }
 
                 const notifications = data.notifications.slice(0, 5);
+                
+                // Show toast for unread notifications
+                const unreadNotifications = notifications.filter(n => !n.read);
+                if (unreadNotifications.length > 0) {
+                    // Show the most recent unread notification as a toast
+                    const latestUnread = unreadNotifications[0];
+                    let toastMessage = '';
+                    
+                    switch(latestUnread.type) {
+                        case 'partnership_request':
+                            toastMessage = `${latestUnread.data.userName} wants to add you as a partner`;
+                            break;
+                        case 'partnership_accepted':
+                            toastMessage = `${latestUnread.data.userName} accepted your partnership request`;
+                            break;
+                        case 'project_update':
+                            toastMessage = `Project "${latestUnread.data.projectTitle || 'Update'}" has been updated`;
+                            break;
+                        case 'message':
+                            toastMessage = `New message from ${latestUnread.data.userName || 'Someone'}`;
+                            break;
+                        default:
+                            toastMessage = `You have a new notification`;
+                    }
+                    
+                    showNotificationToast(toastMessage, 'info', 8000);
+                }
+
+                // Update notification badge
+                const badgeEl = document.getElementById('notification-badge');
+                if (unreadNotifications.length > 0) {
+                    badgeEl.textContent = unreadNotifications.length > 9 ? '9+' : unreadNotifications.length;
+                    badgeEl.classList.remove('hidden');
+                } else {
+                    badgeEl.classList.add('hidden');
+                }
 
                 notificationsContainer.innerHTML = notifications.map(notif => {
                     let icon, message;
@@ -1360,7 +1543,7 @@
                     }
 
                     return `
-                        <div class="p-4 hover:bg-gray-50 transition ${notif.read ? '' : 'bg-blue-50'}">
+                        <div class="p-4 hover:bg-gray-50 transition cursor-pointer ${notif.read ? '' : 'bg-blue-50'}" onclick="markNotificationAsRead('${notif._id}')">
                             <div class="flex items-start gap-3">
                                 ${icon}
                                 <div class="flex-1 min-w-0">
