@@ -834,7 +834,7 @@
             let filtered = users.slice();
 
             if (browseFilters.type) {
-                filtered = filtered.filter(u => (u.role || u.companyType) === browseFilters.type);
+                filtered = filtered.filter(u => (u.type || u.companyType || u.role) === browseFilters.type);
             }
             if (browseFilters.verified) {
                 filtered = filtered.filter(u => Boolean(u.verified));
@@ -846,7 +846,7 @@
             if (browseFilters.search) {
                 const term = browseFilters.search.toLowerCase();
                 filtered = filtered.filter(u =>
-                    (u.company || '').toLowerCase().includes(term) ||
+                    (u.name || u.company || '').toLowerCase().includes(term) ||
                     (u.firstName || '').toLowerCase().includes(term) ||
                     (u.lastName || '').toLowerCase().includes(term) ||
                     (u.bio || u.description || '').toLowerCase().includes(term)
@@ -856,8 +856,8 @@
                 const loc = browseFilters.location.toLowerCase();
                 filtered = filtered.filter(u =>
                     (u.location || '').toLowerCase().includes(loc) ||
-                    (u.city || '').toLowerCase().includes(loc) ||
-                    (u.state || '').toLowerCase().includes(loc)
+                    (u.city || u.address?.city || '').toLowerCase().includes(loc) ||
+                    (u.state || u.address?.state || '').toLowerCase().includes(loc)
                 );
             }
             if (browseFilters.minRating) {
@@ -880,7 +880,12 @@
                 filtered = filtered.filter(u => {
                     const skills = (u.skills || []).map(s => s.toLowerCase());
                     const services = (u.services || []).map(s => s.toLowerCase());
-                    return terms.every(t => skills.some(s => s.includes(t)) || services.some(s => s.includes(t)));
+                    const specialties = (u.specialties || []).map(s => s.toLowerCase());
+                    return terms.every(t =>
+                        skills.some(s => s.includes(t)) ||
+                        services.some(s => s.includes(t)) ||
+                        specialties.some(s => s.includes(t))
+                    );
                 });
             }
 
@@ -1344,33 +1349,36 @@
 
         function renderBrowseCard(entity) {
             const isUser = entity && (entity.firstName !== undefined || entity.lastName !== undefined || entity.role !== undefined);
+            const ownerName = entity?.owner ? `${entity.owner.firstName || ''} ${entity.owner.lastName || ''}`.trim() : '';
             const normalized = isUser ? entity : {
                 ...entity,
-                firstName: entity?.name || entity?.company || 'Company',
-                lastName: '',
-                company: entity?.name || entity?.company || '',
-                role: entity?.role || entity?.companyType || 'vendor'
+                firstName: ownerName || entity?.name || 'Company',
+                lastName: ownerName ? '' : '',
+                company: entity?.name || entity?.company || 'Company',
+                role: entity?.type || entity?.companyType || entity?.role || 'other'
             };
 
-            const personName = isUser ? `${normalized.firstName || ''} ${normalized.lastName || ''}`.trim() : (normalized.name || normalized.company || normalized.firstName || 'Company');
-            const companyName = normalized.company || personName;
-            const locationLabel = [normalized.city, normalized.state].filter(Boolean).join(', ') || normalized.location || 'Location not specified';
-            const roleKey = normalized.role || 'vendor';
+            const personName = isUser ? `${normalized.firstName || ''} ${normalized.lastName || ''}`.trim() : (ownerName || 'Company Admin');
+            const companyName = normalized.company || normalized.name || 'Company';
+            const locationLabel = normalized.location || [normalized.address?.city, normalized.address?.state].filter(Boolean).join(', ') || 'Location not specified';
+            const roleKey = normalized.type || normalized.companyType || normalized.role || 'other';
             const accountType = formatCompanyType(roleKey);
             const accountTypeColor = roleKey === 'vendor' ? 'bg-emerald-100 text-emerald-700' : roleKey === 'owner' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-700';
             const verificationHTML = isUser ? getVerificationBadge(normalized, 'small') : getCompanyVerificationBadge(normalized, 'small');
 
             const industry = normalized.industry || normalized.companyIndustry || normalized.businessType;
             const industryDisplay = industry ? formatIndustryType(industry) : null;
-            const about = normalized.bio || normalized.description || normalized.companyDescription || '';
+            const about = normalized.description || normalized.bio || normalized.companyDescription || '';
 
             const projectCount = normalized.projectCount || normalized.projectsCompleted || 0;
             const teamSize = normalized.size || normalized.companySize || null;
-            const years = normalized.yearsExperience || null;
+            const years = normalized.yearsExperience || (normalized.yearFounded ? Math.max(new Date().getFullYear() - normalized.yearFounded, 0) : null);
 
             const skills = Array.isArray(normalized.skills) ? normalized.skills : [];
             const services = Array.isArray(normalized.services) ? normalized.services : [];
-            const chips = (services.length ? services : skills).slice(0, 4);
+            const specialties = Array.isArray(normalized.specialties) ? normalized.specialties : [];
+            const chipsSource = services.length ? services : (specialties.length ? specialties : skills);
+            const chips = chipsSource.slice(0, 4);
 
             const ratingHTML = (normalized.rating || normalized.reviewCount) ? `
                 <div class="flex items-center gap-2">
@@ -1444,10 +1452,10 @@
 
                         ${chips.length ? `
                             <div class="pt-3 border-t border-gray-100">
-                                <p class="text-xs font-semibold text-gray-500 uppercase mb-2.5">${services.length ? 'Services' : 'Top Skills'}</p>
+                                <p class="text-xs font-semibold text-gray-500 uppercase mb-2.5">${services.length ? 'Services' : (specialties.length ? 'Specialties' : 'Top Skills')}</p>
                                 <div class="flex flex-wrap gap-2">
                                     ${chips.map(item => `<span class="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-semibold rounded-full border border-gray-200">${item}</span>`).join('')}
-                                    ${(services.length ? services.length : skills.length) > 4 ? `<span class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">+${(services.length ? services.length : skills.length) - 4} more</span>` : ''}
+                                    ${(services.length ? services.length : (specialties.length ? specialties.length : skills.length)) > 4 ? `<span class="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full">+${(services.length ? services.length : (specialties.length ? specialties.length : skills.length)) - 4} more</span>` : ''}
                                 </div>
                             </div>
                         ` : ''}
