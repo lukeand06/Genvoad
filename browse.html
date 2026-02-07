@@ -459,9 +459,9 @@
                 tabContents.forEach(content => content.classList.add('hidden'));
                 document.getElementById(`tab-content-${tabName}`).classList.remove('hidden');
                 
-                // Keep search section visible for browse-all tab
+                // Keep search section visible for Discover tab
                 const searchSection = document.getElementById('search-section');
-                if (tabName === 'browse-all') {
+                if (tabName === 'discover') {
                     searchSection.style.display = 'block';
                 } else {
                     searchSection.style.display = 'none';

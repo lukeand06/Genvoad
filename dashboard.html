@@ -806,10 +806,12 @@
             }
 
             content.innerHTML = messagesData.map(conversation => {
-                const otherUser = conversation.otherUser || {};
+                const otherUser = conversation?.otherUser || {};
+                const unread = Number(conversation?.unread ?? conversation?.unreadCount ?? 0);
+                const otherUserId = otherUser._id || conversation?.otherUserId || '';
                 return `
                     <div class="border-b border-gray-200 py-4 last:border-0">
-                        <a href="/messages.html?userId=${otherUser._id}" class="block hover:bg-gray-50 -mx-6 px-6">
+                        <a href="/messages.html${otherUserId ? `?userId=${otherUserId}` : ''}" class="block hover:bg-gray-50 -mx-6 px-6">
                             <div class="flex items-start gap-3">
                                 <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
                                     ${otherUser.firstName ? otherUser.firstName.charAt(0).toUpperCase() : '?'}
@@ -817,7 +819,7 @@
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between">
                                         <h4 class="font-medium text-gray-900">${otherUser.firstName || 'User'} ${otherUser.lastName || ''}</h4>
-                                        ${conversation.unread > 0 ? `<span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">${conversation.unread}</span>` : ''}
+                                        ${unread > 0 ? `<span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">${unread}</span>` : ''}
                                     </div>
                                     <p class="text-sm text-gray-600 truncate mt-1">${conversation.lastMessage || 'No messages yet'}</p>
                                     <p class="text-xs text-gray-500 mt-1">${conversation.lastMessageTime ? timeAgo(new Date(conversation.lastMessageTime)) : ''}</p>
@@ -948,11 +950,11 @@
                         throw new Error((d && d.error) || `HTTP ${messagesRes.status}`);
                     }
                     const data = await messagesRes.json();
-                    messagesData = data.conversations || [];
-                    let unreadCount = 0;
-                    messagesData.forEach(c => {
-                        unreadCount += c.unread || 0;
-                    });
+                    const conversations = Array.isArray(data.conversations) ? data.conversations : [];
+                    messagesData = conversations;
+                    const unreadCount = Number.isFinite(data.unreadCount)
+                        ? data.unreadCount
+                        : conversations.reduce((sum, c) => sum + (c?.unread ?? c?.unreadCount ?? 0), 0);
                     const unreadElement = document.getElementById('unread-messages');
                     if (unreadElement) unreadElement.textContent = unreadCount;
                 } catch (err) {
@@ -1556,6 +1558,10 @@
             if (hours < 24) return `${hours}h ago`;
             if (days < 7) return `${days}d ago`;
             return date.toLocaleDateString();
+        }
+
+        function timeAgo(date) {
+            return getTimeAgo(date);
         }
 
         function formatCurrency(amount) {
