@@ -3382,8 +3382,8 @@ app.get('/api/companies', authMiddleware, async (req, res) => {
   try {
     const { search, type, location, verified, minRating, limit = 50, skip = 0 } = req.query;
     
-    // Build filter
-    const filter = {};
+    // Build filter - exclude seed data by default
+    const filter = { isSeedData: { $ne: true } };
     
     // Type filter (general_contractor, subcontractor, architect, supplier, etc.)
     if (type && type !== 'all') {
