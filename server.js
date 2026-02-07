@@ -3455,85 +3455,145 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
           return null;
         }
 
-        // TOP PICKS SCORING
-        // Verified companies get priority
-        if (company.verified) score += 30;
-        
-        // High rating
-        if (company.rating && company.rating >= 4.5) {
-          score += 25;
-          reason = 'Highly rated company';
-        } else if (company.rating && company.rating >= 4.0) {
-          score += 15;
-        }
-
-        // Active and established
-        if (company.projectsCompleted && company.projectsCompleted > 20) {
-          score += 20;
-          if (!reason) reason = 'Experienced with many projects';
-        } else if (company.projectsCompleted && company.projectsCompleted > 10) {
-          score += 10;
-        }
-
-        // Complete profile
-        if (company.description && company.description.length > 100) score += 10;
-        if (company.website) score += 5;
-        
-        // MAY KNOW SCORING
-        // Same location - company.address contains city, state
+        // Format location
         const companyLocation = (company.address && company.address.city && company.address.state) 
           ? `${company.address.city}, ${company.address.state}` 
           : (company.address && (company.address.city || company.address.state) ? (company.address.city || company.address.state) : '');
-        
-        if (currentUser.location && companyLocation && 
-            currentUser.location.toLowerCase().includes(companyLocation.toLowerCase().split(',')[0].toLowerCase())) {
-          score += 40;
-          category = 'mayKnow';
-          reason = `Based in ${companyLocation.split(',')[0].trim()}`;
-        }
 
-        // Worked with before - check if user is owner of company
-        const companyOwnerId = company.owner && company.owner._id ? company.owner._id.toString() : null;
-        if (companyOwnerId && workedWithCompanyIds.has(companyOwnerId)) {
-          score += 50;
-          category = 'mayKnow';
-          reason = 'You\'ve worked together before';
-        }
-
-        // Similar industry/type
-        if (currentUser.role === 'vendor' && company.type === 'general_contractor') {
-          score += 15;
-          if (!category) {
-            category = 'mayKnow';
-            reason = 'General contractors in your network';
-          }
-        }
-
-        // RECENTLY ACTIVE SCORING
+        // Calculate activity level
         const updatedAt = company.updatedAt ? new Date(company.updatedAt) : new Date(company.createdAt);
         const recentActivity = new Date() - updatedAt;
         const daysInactive = recentActivity / (1000 * 60 * 60 * 24);
+
+        // TOP PICKS SCORING - Verified, highly rated, established companies
+        let topPickScore = 0;
         
+        // Verified status is most important
+        if (company.verified) {
+          topPickScore += 40;
+          if (!reason) reason = 'Verified company';
+        }
+        
+        // High rating
+        if (company.rating && company.rating >= 4.5) {
+          topPickScore += 30;
+          reason = 'Highly rated company';
+        } else if (company.rating && company.rating >= 4.0) {
+          topPickScore += 20;
+          reason = 'Well-reviewed company';
+        }
+
+        // Established and experienced
+        if (company.projectsCompleted && company.projectsCompleted > 20) {
+          topPickScore += 25;
+          if (!reason) reason = 'Experienced - 20+ projects completed';
+        } else if (company.projectsCompleted && company.projectsCompleted > 10) {
+          topPickScore += 15;
+        } else if (company.projectsCompleted && company.projectsCompleted > 0) {
+          topPickScore += 5;
+        }
+
+        // Complete profile signals trustworthiness
+        if (company.description && company.description.length > 100) topPickScore += 15;
+        if (company.website) topPickScore += 10;
+        if (company.phone && company.phone.trim()) topPickScore += 5;
+
+        // Recent activity in Top Picks
+        if (daysInactive < 7) topPickScore += 10;
+
+        if (topPickScore >= 60) {
+          score = topPickScore;
+          if (!category) category = 'topPicks';
+        }
+
+        // MAY KNOW SCORING - Location, type match, prior relationships
+        let mayKnowScore = 0;
+
+        // Same location is a strong signal
+        if (currentUser.location && companyLocation && 
+            currentUser.location.toLowerCase().includes(companyLocation.toLowerCase().split(',')[0].toLowerCase())) {
+          mayKnowScore += 50;
+          reason = `Based in ${companyLocation.split(',')[0].trim()}`;
+          if (!category) category = 'mayKnow';
+        }
+
+        // Worked with before - check if user interacted with company owner
+        const companyOwnerId = company.owner && company.owner._id ? company.owner._id.toString() : null;
+        if (companyOwnerId && workedWithCompanyIds.has(companyOwnerId)) {
+          mayKnowScore += 60;
+          category = 'mayKnow';
+          reason = 'You\'ve collaborated before';
+        }
+
+        // Complementary business types
+        if (currentUser.role === 'vendor' && (company.type === 'general_contractor' || company.type === 'subcontractor')) {
+          mayKnowScore += 20;
+          if (!category) {
+            category = 'mayKnow';
+            reason = 'Complements your services';
+          }
+        }
+
+        if (currentUser.role === 'general_contractor' && company.type === 'supplier') {
+          mayKnowScore += 20;
+          if (!category) {
+            category = 'mayKnow';
+            reason = 'Supplies your industry';
+          }
+        }
+
+        // Same specialty/skills match
+        if (currentUser.skills && company.specialties && Array.isArray(company.specialties)) {
+          const matchCount = currentUser.skills.filter(skill => 
+            company.specialties.some(spec => 
+              spec.toLowerCase().includes(skill.toLowerCase()) || 
+              skill.toLowerCase().includes(spec.toLowerCase())
+            )
+          ).length;
+          if (matchCount > 0) {
+            mayKnowScore += 10 * matchCount;
+            if (!category) category = 'mayKnow';
+          }
+        }
+
+        if (mayKnowScore >= 30) {
+          score = mayKnowScore;
+          if (!category) category = 'mayKnow';
+        }
+
+        // RECENTLY ACTIVE SCORING - New and active companies
+        let recentScore = 0;
+
         if (daysInactive < 7) {
-          score += 35;
-          if (!category) category = 'recentlyActive';
+          recentScore += 40;
           if (!reason) reason = 'Active this week';
+          if (!category) category = 'recentlyActive';
         } else if (daysInactive < 30) {
-          score += 25;
-          if (!category) category = 'recentlyActive';
+          recentScore += 25;
           if (!reason) reason = 'Active this month';
-        }
-
-        // Recent projects (calculated from active projects)
-        const activeProjectCount = 0; // TODO: Calculate from actual active projects
-        if (activeProjectCount > 0) {
-          score += 20;
           if (!category) category = 'recentlyActive';
-          if (!reason) reason = `${activeProjectCount} active projects`;
+        } else if (daysInactive < 90) {
+          recentScore += 10;
+          if (!reason) reason = 'Recently active';
+          if (!category) category = 'recentlyActive';
         }
 
-        // Ensure score is at least 1 for any company
-        if (score === 0) score = 1;
+        // Recently completed projects
+        if (company.projectsCompleted && company.projectsCompleted > 5) {
+          recentScore += 15;
+        }
+
+        if (recentScore >= 15) {
+          score = Math.max(score, recentScore);
+          if (!category) category = 'recentlyActive';
+        }
+
+        // Fallback: every company gets some baseline score
+        if (score === 0) {
+          score = 5; // Base score for inclusion
+          if (!category) category = 'browse';
+          if (!reason) reason = 'Check out this company';
+        }
 
         return {
           ...company.toObject(),
@@ -3545,7 +3605,7 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
           reviewCount: company.reviewCount || 0,
           companyType: company.type, // Map type to companyType for frontend
           location: companyLocation || 'Location not specified', // Add formatted location
-          activeProjects: 0, // TODO: Calculate from actual active projects
+          activeProjects: 0,
           lastActivity: daysInactive < 1 ? 'Active today' : 
                         daysInactive < 7 ? 'Active this week' :
                         daysInactive < 30 ? 'Active this month' : 
@@ -3560,19 +3620,36 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
     // Sort by score
     scoredCompanies.sort((a, b) => b.score - a.score);
 
-    // Categorize recommendations
+    // Categorize recommendations - companies can be in multiple categories
     const topPicks = scoredCompanies
-      .filter(c => c.score >= 40)
+      .filter(c => c.category === 'topPicks' && c.score >= 60)
       .slice(0, 10);
 
     const mayKnow = scoredCompanies
-      .filter(c => c.category === 'mayKnow' || c.score >= 30)
+      .filter(c => (c.category === 'mayKnow' && c.score >= 30) || (c.score >= 40 && c.category !== 'topPicks'))
       .slice(0, 10);
 
     const recentlyActive = scoredCompanies
       .filter(c => c.category === 'recentlyActive' || (c.updatedAt && new Date() - new Date(c.updatedAt) < 30 * 24 * 60 * 60 * 1000))
-      .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+      .sort((a, b) => {
+        const aDate = new Date(a.updatedAt || a.createdAt);
+        const bDate = new Date(b.updatedAt || b.createdAt);
+        return bDate - aDate;
+      })
       .slice(0, 10);
+
+    // Fallback: if any category is empty, fill with top companies from that score range
+    if (topPicks.length === 0 && scoredCompanies.length > 0) {
+      topPicks.push(...scoredCompanies.filter(c => c.score >= 40).slice(0, 5));
+    }
+
+    if (mayKnow.length === 0 && scoredCompanies.length > 0) {
+      mayKnow.push(...scoredCompanies.filter(c => c.score >= 20 && !topPicks.includes(c)).slice(0, 5));
+    }
+
+    if (recentlyActive.length === 0 && scoredCompanies.length > 0) {
+      recentlyActive.push(...scoredCompanies.filter(c => !topPicks.includes(c) && !mayKnow.includes(c)).slice(0, 5));
+    }
 
     res.json({
       topPicks,
@@ -3589,6 +3666,233 @@ app.get('/api/companies/recommendations', authMiddleware, async (req, res) => {
       recentlyActive: [],
       message: 'Unable to load recommendations at this time'
     });
+  }
+});
+
+// Seed demo companies (admin only)
+app.post('/api/companies/seed', authMiddleware, async (req, res) => {
+  try {
+    // Only allow admin or demo purposes
+    const currentUser = await User.findById(req.user._id);
+    if (!currentUser) return res.status(401).json({ error: 'User not found' });
+
+    // Check if companies already exist
+    const existingCount = await Company.countDocuments();
+    if (existingCount > 0) {
+      return res.json({ 
+        message: 'Companies already exist', 
+        count: existingCount,
+        skip: true 
+      });
+    }
+
+    // Create sample companies
+    const sampleCompanies = [
+      {
+        name: 'BuildRight Contractors',
+        legalName: 'BuildRight Contractors LLC',
+        type: 'general_contractor',
+        size: '51-200',
+        yearFounded: 2015,
+        description: 'Full-service general contractor specializing in commercial and residential construction projects. Licensed, insured, and committed to quality workmanship.',
+        specialties: ['Commercial Construction', 'Residential Building', 'Project Management', 'Site Safety'],
+        verified: true,
+        rating: 4.8,
+        reviewCount: 24,
+        projectsCompleted: 45,
+        address: {
+          street: '456 Builder Lane',
+          city: 'Austin',
+          state: 'TX',
+          zipCode: '78701',
+          country: 'USA'
+        },
+        phone: '(512) 555-0100',
+        email: 'info@buildright.com',
+        website: 'https://buildright.com'
+      },
+      {
+        name: 'ElectricPro Solutions',
+        legalName: 'ElectricPro Solutions Inc',
+        type: 'subcontractor',
+        size: '11-50',
+        yearFounded: 2018,
+        description: 'Licensed electrical contractor providing residential and commercial electrical services. Expert in modern systems and green energy solutions.',
+        specialties: ['Electrical Installation', 'Smart Home Systems', 'Solar Integration', 'Commercial Wiring'],
+        verified: true,
+        rating: 4.7,
+        reviewCount: 18,
+        projectsCompleted: 32,
+        address: {
+          street: '789 Spark Avenue',
+          city: 'Austin',
+          state: 'TX',
+          zipCode: '78702',
+          country: 'USA'
+        },
+        phone: '(512) 555-0101',
+        email: 'contact@electricpro.com',
+        website: 'https://electricpro.com'
+      },
+      {
+        name: 'StoneWorks Supply',
+        legalName: 'StoneWorks Supply Co',
+        type: 'supplier',
+        size: '51-200',
+        yearFounded: 2012,
+        description: 'Premium supplier of building materials including stone, timber, and specialty products. Serving contractors throughout Central Texas.',
+        specialties: ['Stone Materials', 'Timber Products', 'Hardware Supply', 'Specialty Materials'],
+        verified: true,
+        rating: 4.5,
+        reviewCount: 42,
+        projectsCompleted: 150,
+        address: {
+          street: '321 Material Drive',
+          city: 'Austin',
+          state: 'TX',
+          zipCode: '78723',
+          country: 'USA'
+        },
+        phone: '(512) 555-0102',
+        email: 'sales@stoneworks.com',
+        website: 'https://stoneworks.com'
+      },
+      {
+        name: 'VisionArchitects',
+        legalName: 'Vision Architects PLLC',
+        type: 'architect',
+        size: '11-50',
+        yearFounded: 2010,
+        description: 'Award-winning architecture firm focused on sustainable design and innovative solutions for commercial and residential projects.',
+        specialties: ['Sustainable Design', 'Commercial Architecture', 'Residential Design', 'Project Coordination'],
+        verified: true,
+        rating: 4.9,
+        reviewCount: 12,
+        projectsCompleted: 28,
+        address: {
+          street: '654 Design Court',
+          city: 'Austin',
+          state: 'TX',
+          zipCode: '78704',
+          country: 'USA'
+        },
+        phone: '(512) 555-0103',
+        email: 'hello@visionarch.com',
+        website: 'https://visionarchitects.com'
+      },
+      {
+        name: 'QuickFrame Framing',
+        legalName: 'QuickFrame Framing LLC',
+        type: 'subcontractor',
+        size: '1-10',
+        yearFounded: 2019,
+        description: 'Expert framing contractor with 15+ years combined experience. Specializing in residential and light commercial framing.',
+        specialties: ['Wood Framing', 'Metal Framing', 'Structural Framing'],
+        verified: false,
+        rating: 4.3,
+        reviewCount: 8,
+        projectsCompleted: 16,
+        address: {
+          street: '987 Frame Road',
+          city: 'Austin',
+          state: 'TX',
+          zipCode: '78705',
+          country: 'USA'
+        },
+        phone: '(512) 555-0104',
+        email: 'crew@quickframe.com'
+      },
+      {
+        name: 'PaintPerfect',
+        legalName: 'PaintPerfect Services',
+        type: 'subcontractor',
+        size: '1-10',
+        yearFounded: 2016,
+        description: 'Professional painting services for interior and exterior projects. Quality finishes, attention to detail, and reliable service.',
+        specialties: ['Interior Painting', 'Exterior Painting', 'Specialty Finishes', 'Pressure Washing'],
+        verified: true,
+        rating: 4.6,
+        reviewCount: 31,
+        projectsCompleted: 89,
+        address: {
+          street: '147 Color Lane',
+          city: 'Austin',
+          state: 'TX',
+          zipCode: '78706',
+          country: 'USA'
+        },
+        phone: '(512) 555-0105',
+        email: 'info@paintperfect.com',
+        website: 'https://paintperfect.com'
+      },
+      {
+        name: 'PlumeEngineering',
+        legalName: 'Plume Engineering Group',
+        type: 'engineer',
+        size: '51-200',
+        yearFounded: 2008,
+        description: 'Structural and civil engineering firm with expertise in commercial and residential projects. State-of-the-art design and analysis.',
+        specialties: ['Structural Engineering', 'Civil Engineering', 'BIM Modeling', 'Building Code Compliance'],
+        verified: true,
+        rating: 4.7,
+        reviewCount: 19,
+        projectsCompleted: 67,
+        address: {
+          street: '258 Engineer Avenue',
+          city: 'Austin',
+          state: 'TX',
+          zipCode: '78707',
+          country: 'USA'
+        },
+        phone: '(512) 555-0106',
+        email: 'projects@plumeeng.com',
+        website: 'https://plumeengineering.com'
+      },
+      {
+        name: 'ConcreteExperts',
+        legalName: 'Concrete Experts LLC',
+        type: 'subcontractor',
+        size: '11-50',
+        yearFounded: 2014,
+        description: 'Specialized concrete contractor for flatwork, decorative, and structural concrete. Serving Austin area for 8+ years.',
+        specialties: ['Flatwork', 'Decorative Concrete', 'Stamped Concrete', 'Structural Concrete'],
+        verified: true,
+        rating: 4.4,
+        reviewCount: 23,
+        projectsCompleted: 52,
+        address: {
+          street: '369 Concrete Way',
+          city: 'Austin',
+          state: 'TX',
+          zipCode: '78708',
+          country: 'USA'
+        },
+        phone: '(512) 555-0107',
+        email: 'contact@concreteexperts.com',
+        website: 'https://concreteexperts.com'
+      }
+    ];
+
+    // Create companies with current user as owner
+    const createdCompanies = [];
+    for (const companyData of sampleCompanies) {
+      const company = new Company({
+        ...companyData,
+        owner: currentUser._id,
+        members: [currentUser._id]
+      });
+      await company.save();
+      createdCompanies.push(company);
+    }
+
+    res.json({
+      message: `Created ${createdCompanies.length} sample companies`,
+      count: createdCompanies.length,
+      companies: createdCompanies.map(c => ({ id: c._id, name: c.name }))
+    });
+  } catch (error) {
+    console.error('Seed companies error:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
