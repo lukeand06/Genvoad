@@ -3975,7 +3975,8 @@ app.post('/api/companies/seed', authMiddleware, async (req, res) => {
       const company = new Company({
         ...companyData,
         owner: currentUser._id,
-        members: [currentUser._id]
+        members: [currentUser._id],
+        isSeedData: true // Mark as seed data
       });
       await company.save();
       createdCompanies.push(company);
@@ -3988,6 +3989,20 @@ app.post('/api/companies/seed', authMiddleware, async (req, res) => {
     });
   } catch (error) {
     console.error('Seed companies error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete all seed data companies
+app.delete('/api/companies/seed/clear', authMiddleware, async (req, res) => {
+  try {
+    const result = await Company.deleteMany({ isSeedData: true });
+    res.json({ 
+      message: `Deleted ${result.deletedCount} seed companies`,
+      deletedCount: result.deletedCount
+    });
+  } catch (error) {
+    console.error('Clear seed companies error:', error);
     res.status(500).json({ error: error.message });
   }
 });

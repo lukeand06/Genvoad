@@ -35,6 +35,9 @@ const CompanySchema = new mongoose.Schema({
   verificationExpiry: { type: Date }, // Some licenses expire
   verificationNotes: { type: String, default: '' },
   
+  // Flag for seeded/demo data
+  isSeedData: { type: Boolean, default: false },
+  
   // Documents for verification
   verificationDocuments: [{
     type: { type: String, enum: ['business_license', 'ein_letter', 'insurance', 'bond', 'registrar_license', 'other'] },
