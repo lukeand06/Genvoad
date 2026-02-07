@@ -67,6 +67,10 @@ const UserSchema = new mongoose.Schema({
   verificationCode: { type: String },
   verificationExpires: { type: Date },
   
+  // Password Reset
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
+  
   // Stats
   rating: { type: Number, default: 0, min: 0, max: 5 },
   reviewCount: { type: Number, default: 0 },

@@ -657,6 +657,139 @@ app.get('/api/auth/me', authMiddleware, (req, res) => {
   res.json({ user: req.user });
 });
 
+// Forgot Password - Request reset
+app.post('/api/auth/forgot-password', async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    
+    if (!email || !role) {
+      return res.status(400).json({ error: 'Email and role are required' });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase(), role });
+    
+    if (!user) {
+      // Don't reveal if user exists for security
+      return res.json({ success: true, message: 'If an account exists, a password reset email has been sent' });
+    }
+
+    // Generate reset token
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    
+    // Save hashed token and expiry (1 hour)
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
+    await user.save();
+
+    // Create reset URL
+    const resetUrl = `${req.protocol}://${req.get('host')}/reset-password.html?token=${resetToken}`;
+
+    // Send email
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Password Reset Request - Genovad',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1a1a1a;">Password Reset Request</h2>
+            <p>Hello ${user.firstName},</p>
+            <p>You requested to reset your password for your Genovad account.</p>
+            <p>Click the button below to reset your password:</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${resetUrl}" style="background-color: #1a1a1a; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">Reset Password</a>
+            </div>
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="color: #666; word-break: break-all;">${resetUrl}</p>
+            <p><strong>This link will expire in 1 hour.</strong></p>
+            <p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            <p style="color: #999; font-size: 12px;">This is an automated message from Genovad. Please do not reply to this email.</p>
+          </div>
+        `
+      });
+    } catch (emailError) {
+      console.error('Error sending reset email:', emailError);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save();
+      return res.status(500).json({ error: 'Error sending reset email. Please try again.' });
+    }
+
+    res.json({ success: true, message: 'If an account exists, a password reset email has been sent' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Error processing request' });
+  }
+});
+
+// Reset Password - Verify token and update password
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    
+    if (!token || !password) {
+      return res.status(400).json({ error: 'Token and password are required' });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    // Hash the token to compare with stored hash
+    const crypto = require('crypto');
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Find user with valid token
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired reset token' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Update password and clear reset fields
+    user.password = hashedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    // Send confirmation email
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Password Changed Successfully - Genovad',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #1a1a1a;">Password Changed</h2>
+            <p>Hello ${user.firstName},</p>
+            <p>Your password has been successfully changed.</p>
+            <p>If you didn't make this change, please contact our support immediately.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${req.protocol}://${req.get('host')}/login.html" style="background-color: #1a1a1a; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">Sign In</a>
+            </div>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+            <p style="color: #999; font-size: 12px;">This is an automated message from Genovad. Please do not reply to this email.</p>
+          </div>
+        `
+      });
+    } catch (emailError) {
+      console.error('Error sending confirmation email:', emailError);
+    }
+
+    res.json({ success: true, message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Error resetting password' });
+  }
+});
+
 // ============ USER ROUTES ============
 
 // Get user profile
