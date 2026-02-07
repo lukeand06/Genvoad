@@ -152,8 +152,8 @@ if (process.env.NODE_ENV === 'production') {
 // Serve public files with short cache for JS to allow quick updates
 app.use('/public', express.static('public', {
   setHeaders: (res, path) => {
-    if (path.endsWith('.js')) {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); // No cache for JS
+    if (path.endsWith('.js') || path.endsWith('.png') || path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); // No cache for JS and images
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
     }
@@ -1603,8 +1603,8 @@ app.patch('/api/projects/:projectId/bids/:bidId', authMiddleware, async (req, re
       return res.status(403).json({ error: 'Not authorized to edit this bid' });
     }
 
-    if (bid.status !== 'pending') {
-      return res.status(400).json({ error: 'Only pending bids can be edited' });
+    if (bid.status !== 'pending' && bid.status !== 'revision_requested') {
+      return res.status(400).json({ error: 'Only pending or revision-requested bids can be edited' });
     }
 
     const { amount, timeline, proposal } = req.body;
@@ -1612,8 +1612,47 @@ app.patch('/api/projects/:projectId/bids/:bidId', authMiddleware, async (req, re
     if (typeof timeline !== 'undefined') bid.timeline = timeline;
     if (typeof proposal !== 'undefined') bid.proposal = proposal;
 
+    // If this was a revision request, change status back to pending after edits
+    const wasRevisionRequested = bid.status === 'revision_requested';
+    if (wasRevisionRequested) {
+      bid.status = 'pending';
+      bid.revisionNotes = undefined; // Clear revision notes
+    }
+
     project.updatedAt = new Date();
     await project.save();
+
+    // Notify owner if this was a revision resubmission
+    if (wasRevisionRequested) {
+      try {
+        // Send message to owner
+        const message = new Message({
+          sender: req.user._id,
+          recipient: project.owner,
+          content: `I've revised my bid for "${project.title}" as requested. New amount: ${formatCurrency(amount)}`,
+          type: 'bid_revised',
+          project: project._id
+        });
+        await message.save();
+
+        // Send notification to owner
+        await createNotification(
+          project.owner,
+          'bid_revised',
+          'bids',
+          {
+            projectId: project._id,
+            projectTitle: project.title,
+            bidId: bid._id,
+            bidAmount: bid.amount,
+            message: `Vendor has revised their bid for "${project.title}"`
+          }
+        );
+      } catch (commError) {
+        console.error('Failed to send revision update:', commError);
+      }
+    }
+
     res.json({ success: true, message: 'Bid updated', bid });
   } catch (error) {
     res.status(500).json({ error: 'Failed to update bid' });
@@ -1633,8 +1672,8 @@ app.delete('/api/projects/:projectId/bids/:bidId', authMiddleware, async (req, r
       return res.status(403).json({ error: 'Not authorized to withdraw this bid' });
     }
 
-    if (bid.status !== 'pending') {
-      return res.status(400).json({ error: 'Only pending bids can be withdrawn' });
+    if (bid.status !== 'pending' && bid.status !== 'revision_requested') {
+      return res.status(400).json({ error: 'Only pending or revision-requested bids can be withdrawn' });
     }
 
     bid.remove();
@@ -1753,6 +1792,24 @@ app.post('/api/projects/:projectId/bids/:bidId/request-revision', authMiddleware
     } catch (msgError) {
       console.error('Failed to send revision message:', msgError);
       // Continue even if message fails - the bid status is updated
+    }
+
+    // Send notification to vendor
+    try {
+      await createNotification(
+        bid.user,
+        'bid_revision_requested',
+        'bids',
+        {
+          projectId: project._id,
+          projectTitle: project.title,
+          bidId: bid._id,
+          revisionNotes: bid.revisionNotes,
+          message: `Revision requested for your bid on "${project.title}"`
+        }
+      );
+    } catch (notifError) {
+      console.error('Failed to send revision notification:', notifError);
     }
 
     res.json({ success: true, message: 'Revision requested, vendor notified' });
@@ -3084,6 +3141,45 @@ async function sendEmailNotification(user, type, data) {
         <p>Your bid for <strong>${data.projectTitle}</strong> has been accepted!</p>
         <p><strong>Amount:</strong> $${data.amount?.toLocaleString() || 'N/A'}</p>
         <p><a href="${process.env.APP_URL || 'https://genovad.com'}/project-detail.html?id=${data.projectId}" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:white;text-decoration:none;border-radius:6px;margin-top:16px;">View Project</a></p>
+      `;
+      break;
+      
+    case 'bid_rejected':
+      subject = `Bid Update for ${data.projectTitle}`;
+      body = `
+        <h2>Bid Not Selected</h2>
+        <p>Hi ${user.firstName},</p>
+        <p>Thank you for submitting a bid for <strong>${data.projectTitle}</strong>. The project owner has selected another bid for this project.</p>
+        <p>We encourage you to keep bidding on other projects in our marketplace.</p>
+        <p><a href="${process.env.APP_URL || 'https://genovad.com'}/browse.html" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:white;text-decoration:none;border-radius:6px;margin-top:16px;">Browse Projects</a></p>
+      `;
+      break;
+      
+    case 'bid_revision_requested':
+      subject = `Revision Requested for ${data.projectTitle}`;
+      body = `
+        <h2>Bid Revision Requested</h2>
+        <p>Hi ${user.firstName},</p>
+        <p>The project owner would like you to revise your bid for <strong>${data.projectTitle}</strong>.</p>
+        ${data.revisionNotes ? `
+        <div style="background:#fff3cd;border-left:4px solid #ffc107;padding:16px;border-radius:6px;margin:16px 0;">
+          <p style="margin:0;font-weight:600;color:#856404;margin-bottom:8px;">Owner's Feedback:</p>
+          <p style="margin:0;color:#856404;">${data.revisionNotes}</p>
+        </div>
+        ` : ''}
+        <p>Please review the feedback and update your bid accordingly.</p>
+        <p><a href="${process.env.APP_URL || 'https://genovad.com'}/project-detail.html?id=${data.projectId}" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:white;text-decoration:none;border-radius:6px;margin-top:16px;">Revise Bid</a></p>
+      `;
+      break;
+      
+    case 'bid_revised':
+      subject = `Bid Revised for ${data.projectTitle}`;
+      body = `
+        <h2>Vendor Revised Their Bid</h2>
+        <p>Hi ${user.firstName},</p>
+        <p>A vendor has revised their bid for <strong>${data.projectTitle}</strong> based on your feedback.</p>
+        <p><strong>New Bid Amount:</strong> $${data.bidAmount?.toLocaleString() || 'N/A'}</p>
+        <p><a href="${process.env.APP_URL || 'https://genovad.com'}/project-detail.html?id=${data.projectId}" style="display:inline-block;padding:12px 24px;background:#1a1a1a;color:white;text-decoration:none;border-radius:6px;margin-top:16px;">Review Revised Bid</a></p>
       `;
       break;
       

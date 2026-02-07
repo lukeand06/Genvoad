@@ -16,6 +16,9 @@ const notificationSchema = new mongoose.Schema({
       'bid_received',
       'bid_accepted',
       'bid_declined',
+      'bid_rejected',
+      'bid_revision_requested',
+      'bid_revised',
       'new_message',
       'project_update',
       'review_received',
@@ -30,7 +33,7 @@ const notificationSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['partnerships', 'projects', 'messages', 'system'],
+    enum: ['partnerships', 'projects', 'bids', 'messages', 'system'],
     required: true
   },
   // Flexible data object for different notification types
@@ -44,10 +47,14 @@ const notificationSchema = new mongoose.Schema({
     // Project/Bid notifications
     projectId: mongoose.Schema.Types.ObjectId,
     projectTitle: String,
+    bidId: mongoose.Schema.Types.ObjectId,
     
     // Message notifications
     messageId: mongoose.Schema.Types.ObjectId,
     messagePreview: String,
+    
+    // Revision notifications
+    revisionNotes: String,
     
     // General
     title: String,

@@ -23,7 +23,7 @@
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-8">
                     <a href="/dashboard.html" class="flex items-center">
-                        <img src="/public/logo-icon.png" alt="Genovad" class="h-8 w-auto">
+                        <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-8 w-auto" onerror="console.error('Logo failed to load:', this.src)">
                     </a>
                     
                     <div class="hidden md:flex space-x-1">
@@ -212,7 +212,7 @@
         <div class="mb-8" id="stats-grid">
             <!-- For Owners -->
             <div id="owner-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                <button onclick="openModal('active-projects-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                <button onclick="scrollToSection('activity-feed-section')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">Active Projects</p>
@@ -226,7 +226,7 @@
                     </div>
                 </button>
 
-                <button onclick="openModal('new-bids-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                <button onclick="scrollToSection('activity-feed-section')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">Pending Bids</p>
@@ -240,7 +240,7 @@
                     </div>
                 </button>
 
-                <button onclick="openModal('messages-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                <button onclick="location.href='/messages.html'" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">Unread Messages</p>
@@ -254,7 +254,7 @@
                     </div>
                 </button>
 
-                <button onclick="openModal('completed-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                <button onclick="scrollToSection('activity-feed-section')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">Completed</p>
@@ -332,7 +332,7 @@
         <!-- Two Column Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Activity Feed (LinkedIn-style) -->
-            <div class="lg:col-span-2">
+            <div id="activity-feed-section" class="lg:col-span-2">
                 <!-- Create Post Card -->
                 <div class="bg-white rounded-lg border border-gray-200 mb-6 shadow-sm">
                     <div class="p-4 border-b border-gray-200">
@@ -440,7 +440,7 @@
                 </div>
 
                 <!-- Notifications Inbox -->
-                <div class="bg-white rounded-lg border border-gray-200 mb-6">
+                <div id="notifications-section" class="bg-white rounded-lg border border-gray-200 mb-6">
                     <div class="p-6 border-b border-gray-200">
                         <h2 class="text-lg font-semibold text-gray-900">Notifications</h2>
                         <p class="text-xs text-gray-500 mt-1">Recent updates</p>
@@ -705,6 +705,22 @@
         // Store project data for modals
         let userProjects = [];
         let messagesData = [];
+
+        // Smooth scroll to section function
+        function scrollToSection(sectionId) {
+            const element = document.getElementById(sectionId);
+            if (element) {
+                element.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start'
+                });
+                // Add a subtle highlight effect
+                element.classList.add('ring-2', 'ring-blue-500', 'ring-opacity-50');
+                setTimeout(() => {
+                    element.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-50');
+                }, 2000);
+            }
+        }
 
         // Modal functions
         function openModal(modalId) {
