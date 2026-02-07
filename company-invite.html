@@ -119,7 +119,10 @@
                 // Update localStorage user
                 const updatedUser = getCurrentUser();
                 updatedUser.companyId = data.company._id;
-                updatedUser.companyRole = data.invitation.role;
+                updatedUser.company = data.company.name || updatedUser.company;
+                if (data.invitation && data.invitation.role) {
+                    updatedUser.companyRole = data.invitation.role;
+                }
                 localStorage.setItem('user', JSON.stringify(updatedUser));
 
                 // Show success

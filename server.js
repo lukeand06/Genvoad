@@ -1144,7 +1144,17 @@ app.get('/api/users', authMiddleware, async (req, res) => {
 app.get('/api/partners', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate('partners', 'firstName lastName avatar company title location city state registrarId');
-    res.json({ partners: user.partners || [] });
+    const partners = user.partners || [];
+    const seen = new Set();
+    const uniquePartners = [];
+    partners.forEach(partner => {
+      const partnerId = (partner && partner._id ? partner._id : partner).toString();
+      if (!seen.has(partnerId)) {
+        seen.add(partnerId);
+        uniquePartners.push(partner);
+      }
+    });
+    res.json({ partners: uniquePartners });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch partners' });
   }
@@ -3106,7 +3116,7 @@ async function getNotificationsByCategoryHandler(req, res) {
     const { limit = 50, skip = 0 } = req.query;
     const userId = req.user.id;
 
-    const validCategories = ['partnerships', 'projects', 'messages', 'system'];
+    const validCategories = ['company', 'partnerships', 'projects', 'messages', 'system'];
     if (!validCategories.includes(category)) {
       return res.status(400).json({ error: 'Invalid category' });
     }
@@ -3260,6 +3270,8 @@ function getShouldSendEmailNotification(user, category) {
   const emailPrefs = user.preferences.emailNotifications;
   
   switch(category) {
+    case 'company':
+      return true;
     case 'messages':
       return emailPrefs.messages !== false;
     case 'projects':
@@ -4602,7 +4614,29 @@ app.post('/api/companies/invitations/:token/accept', authMiddleware, async (req,
       company: company.name
     });
 
-    res.json({ success: true, message: 'Successfully joined company', company });
+    const invitedUserName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+    if (invitation.invitedBy && invitation.invitedBy.toString() !== user._id.toString()) {
+      await createNotification(
+        invitation.invitedBy,
+        'company_invite_accepted',
+        'company',
+        {
+          companyId: company._id,
+          companyName: company.name,
+          invitedUserName,
+          invitedUserEmail: user.email,
+          inviteRole: invitation.role,
+          actionUrl: '/company.html'
+        }
+      );
+    }
+
+    res.json({
+      success: true,
+      message: 'Successfully joined company',
+      company,
+      invitation: { role: invitation.role }
+    });
   } catch (error) {
     console.error('Accept invitation error:', error);
     res.status(500).json({ error: 'Failed to accept invitation' });

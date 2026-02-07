@@ -265,6 +265,16 @@
                     content = `<p class="text-sm text-gray-900"><strong>${notif.data.userName}</strong> sent you a message</p><p class="text-sm text-gray-600 mt-1">${notif.data.preview}</p>`;
                     actions = `<a href="/messages.html?user=${notif.data.userId}" class="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block">Reply →</a>`;
                     break;
+
+                case 'company_invite_accepted':
+                    icon = `<div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>`;
+                    content = `<p class="text-sm text-gray-900"><strong>${notif.data.invitedUserName || 'A teammate'}</strong> accepted your invitation to join <strong>${notif.data.companyName || 'your company'}</strong>${notif.data.inviteRole ? ` as a ${notif.data.inviteRole}` : ''}.</p>`;
+                    actions = `<a href="/company.html" class="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block">View Company →</a>`;
+                    break;
                     
                 default:
                     icon = `<div class="w-12 h-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">

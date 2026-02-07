@@ -10,6 +10,9 @@ const notificationSchema = new mongoose.Schema({
   type: {
     type: String,
     enum: [
+      'company_invite_accepted',
+      'company_verified',
+      'company_verification_rejected',
       'partnership_request',
       'partnership_accepted',
       'partnership_declined',
@@ -33,11 +36,18 @@ const notificationSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['partnerships', 'projects', 'bids', 'messages', 'system'],
+    enum: ['company', 'partnerships', 'projects', 'bids', 'messages', 'system'],
     required: true
   },
   // Flexible data object for different notification types
   data: {
+    // Company notifications
+    companyId: mongoose.Schema.Types.ObjectId,
+    companyName: String,
+    invitedUserName: String,
+    invitedUserEmail: String,
+    inviteRole: String,
+
     // Partnership notifications
     userId: mongoose.Schema.Types.ObjectId,
     userName: String,

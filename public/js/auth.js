@@ -122,6 +122,48 @@ function requireAuth() {
   return true;
 }
 
+function updateNotificationBadges(unreadCount) {
+  const badges = document.querySelectorAll('[id="notification-badge"], [id="nav-notification-badge"]');
+  if (!badges.length) return;
+
+  badges.forEach((badge) => {
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount > 9 ? '9+' : String(unreadCount);
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+  });
+}
+
+async function refreshNotificationBadge() {
+  if (!isAuthenticated()) return;
+
+  const badges = document.querySelectorAll('[id="notification-badge"], [id="nav-notification-badge"]');
+  if (!badges.length) return;
+
+  try {
+    const res = await authFetch('/api/notifications?limit=1');
+    if (!res.ok) return;
+    const data = await res.json();
+    const unreadCount = Number.isFinite(data.unreadCount) ? data.unreadCount : 0;
+    updateNotificationBadges(unreadCount);
+  } catch (error) {
+    console.error('Failed to refresh notification badge:', error);
+  }
+}
+
+function initNotificationBadge() {
+  const run = () => refreshNotificationBadge();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
+}
+
+initNotificationBadge();
+
 // Redirect if authenticated (for login/signup pages)
 function redirectIfAuth() {
   if (isAuthenticated()) {

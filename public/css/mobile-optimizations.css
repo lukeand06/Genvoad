@@ -30,7 +30,8 @@ html {
 
     /* Header padding */
     nav .flex {
-        height: 14rem; /* Increase touch targets */
+        min-height: 4rem; /* Match nav height while keeping touch-friendly size */
+        height: auto;
     }
 
     /* Button sizing for touch */
@@ -277,18 +278,20 @@ html {
     }
 }
 
-/* Safe area insets for notched devices */
-@supports (padding: max(0px)) {
-    body {
-        padding-left: max(1rem, env(safe-area-inset-left));
-        padding-right: max(1rem, env(safe-area-inset-right));
-        padding-top: max(1rem, env(safe-area-inset-top));
-        padding-bottom: max(1rem, env(safe-area-inset-bottom));
-    }
+/* Safe area insets for notched devices (mobile only) */
+@media (max-width: 640px) {
+    @supports (padding: max(0px)) {
+        body {
+            padding-left: max(1rem, env(safe-area-inset-left));
+            padding-right: max(1rem, env(safe-area-inset-right));
+            padding-top: max(1rem, env(safe-area-inset-top));
+            padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        }
 
-    nav {
-        padding-left: max(1rem, env(safe-area-inset-left));
-        padding-right: max(1rem, env(safe-area-inset-right));
+        nav {
+            padding-left: max(1rem, env(safe-area-inset-left));
+            padding-right: max(1rem, env(safe-area-inset-right));
+        }
     }
 }
 
