@@ -662,30 +662,37 @@
                 return;
             }
 
-            container.innerHTML = conversations.map(conv => `
+            container.innerHTML = conversations.map(conv => {
+                const user = conv.otherUser || conv.user || {};
+                const userId = user._id || conv.otherUserId || '';
+                const lastMsg = typeof conv.lastMessage === 'string' ? conv.lastMessage : (conv.lastMessage?.content || '');
+                const msgTime = conv.lastMessageTime || conv.lastMessage?.createdAt || '';
+                
+                return `
                 <button 
-                    onclick="openChat('${conv.user._id}')" 
-                    data-conversation-id="${conv.user._id}"
+                    onclick="openChat('${userId}')" 
+                    data-conversation-id="${userId}"
                     data-conversation-type="${conv.type || 'direct'}"
-                    class="w-full p-4 hover:bg-gray-50 border-b border-gray-100 text-left ${currentChatUserId === conv.user._id ? 'bg-gray-50' : ''}">
+                    class="w-full p-4 hover:bg-gray-50 border-b border-gray-100 text-left ${currentChatUserId === userId ? 'bg-gray-50' : ''}">
                     <div class="flex items-center gap-3">
-                        ${getAvatarHTML(conv.user, 'w-12 h-12')}
+                        ${getAvatarHTML(user, 'w-12 h-12')}
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center gap-1.5 min-w-0 flex-1">
-                                    <p class="font-medium text-gray-900 truncate">${conv.user.company || `${conv.user.firstName} ${conv.user.lastName}`}</p>
-                                    ${getVerificationBadge(conv.user, 'small')}
+                                    <p class="font-medium text-gray-900 truncate">${user.company || `${user.firstName || 'User'} ${user.lastName || ''}`}</p>
+                                    ${getVerificationBadge(user, 'small')}
                                     ${conv.type === 'partner' ? '<span class="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">Partner</span>' : ''}
                                 </div>
-                                ${conv.unread > 0 ? `<span class="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full flex-shrink-0">${conv.unread}</span>` : ''}
+                                ${(conv.unread || conv.unreadCount || 0) > 0 ? `<span class="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full flex-shrink-0">${conv.unread || conv.unreadCount}</span>` : ''}
                             </div>
-                            ${conv.user.company ? `<p class="text-xs text-gray-500 truncate">${conv.user.firstName} ${conv.user.lastName}</p>` : ''}
-                            <p class="text-sm text-gray-600 truncate mt-1">${conv.lastMessage.content}</p>
-                            <p class="text-xs text-gray-400 mt-1">${formatDate(conv.lastMessage.createdAt)}</p>
+                            ${user.company ? `<p class="text-xs text-gray-500 truncate">${user.firstName || ''} ${user.lastName || ''}</p>` : ''}
+                            <p class="text-sm text-gray-600 truncate mt-1">${lastMsg}</p>
+                            ${msgTime ? `<p class="text-xs text-gray-400 mt-1">${formatDate(msgTime)}</p>` : ''}
                         </div>
                     </div>
                 </button>
-            `).join('');
+            `;
+            }).join('');
             
             // Apply current filter
             filterConversations();
