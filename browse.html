@@ -720,19 +720,14 @@
 
         async function loadDiscovery() {
             try {
-                // Fetch company recommendations
-                const res = await authFetch('/api/companies/recommendations');
+                // Fetch users (company data lives on user profiles)
+                const res = await authFetch('/api/users');
                 if (!res.ok) throw new Error('Failed to load recommendations');
                 
                 const data = await res.json();
+                const users = (data.users || []).filter(u => (u.company || '').trim().length > 0);
                 
-                // /api/companies/recommendations returns topPicks, mayKnow, recentlyActive sections
-                allRecommendations = {
-                    topPicks: data.topPicks || [],
-                    mayKnow: data.mayKnow || [],
-                    recentlyActive: data.recentlyActive || []
-                };
-                
+                allRecommendations = buildUserRecommendations(users);
                 displayCompanyRecommendations();
             } catch (error) {
                 console.error('Load recommendations error:', error);
@@ -740,6 +735,33 @@
                 showError('may-know-container');
                 showError('recently-active-container');
             }
+        }
+
+        function buildUserRecommendations(users) {
+            const currentUser = getCurrentUser();
+            const currentCity = (currentUser?.city || currentUser?.location || '').toLowerCase();
+            const currentState = (currentUser?.state || '').toLowerCase();
+
+            const isVerified = (u) => Boolean(u.registrarId || u.verified || u.emailVerified);
+
+            const topPicks = users
+                .filter(u => isVerified(u))
+                .slice(0, 12);
+
+            const mayKnow = users
+                .filter(u => {
+                    const city = (u.city || '').toLowerCase();
+                    const state = (u.state || '').toLowerCase();
+                    return (currentCity && city && currentCity.includes(city)) || (currentState && state && currentState === state);
+                })
+                .slice(0, 12);
+
+            const recentlyActive = users
+                .slice()
+                .sort((a, b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0))
+                .slice(0, 12);
+
+            return { topPicks, mayKnow, recentlyActive };
         }
 
         let browseFilters = { type: '', verified: '' };
@@ -759,19 +781,18 @@
                     const params = new URLSearchParams();
                     
                     // Add filters if set
-                    if (browseFilters.type && browseFilters.type !== 'all') params.set('type', browseFilters.type);
-                    if (browseFilters.verified) params.set('verified', browseFilters.verified);
-                    if (browseFilters.location) params.set('location', browseFilters.location);
-                    if (browseFilters.minRating) params.set('minRating', browseFilters.minRating);
+                    if (browseFilters.search) params.set('search', browseFilters.search);
+                    if (browseFilters.skills) params.set('skills', browseFilters.skills);
+                    if (browseFilters.location) params.set('city', browseFilters.location);
+                    if (browseFilters.services) params.set('services', browseFilters.services);
                     
-                    // Set higher limit to get all companies
-                    params.set('limit', '100');
-
-                    const res = await authFetch(`/api/companies?${params}`);
+                    const res = await authFetch(`/api/users?${params}`);
                     if (!res.ok) throw new Error('Failed to load companies');
                     
                     const data = await res.json();
-                    allBrowseUsers = data.companies || [];
+                    const users = data.users || [];
+                    // Only show users with a company name (matches partner/project data model)
+                    allBrowseUsers = users.filter(u => (u.company || '').trim().length > 0);
                 }
                 
                 displayAllCompanies();
@@ -834,10 +855,10 @@
             let filtered = users.slice();
 
             if (browseFilters.type) {
-                filtered = filtered.filter(u => (u.type || u.companyType || u.role) === browseFilters.type);
+                filtered = filtered.filter(u => (u.role || u.companyType || u.type) === browseFilters.type);
             }
             if (browseFilters.verified) {
-                filtered = filtered.filter(u => Boolean(u.verified));
+                filtered = filtered.filter(u => Boolean(u.registrarId || u.verified || u.emailVerified));
             }
             if (browseFilters.industry) {
                 const value = browseFilters.industry.toLowerCase();
@@ -846,7 +867,7 @@
             if (browseFilters.search) {
                 const term = browseFilters.search.toLowerCase();
                 filtered = filtered.filter(u =>
-                    (u.name || u.company || '').toLowerCase().includes(term) ||
+                    (u.company || u.name || '').toLowerCase().includes(term) ||
                     (u.firstName || '').toLowerCase().includes(term) ||
                     (u.lastName || '').toLowerCase().includes(term) ||
                     (u.bio || u.description || '').toLowerCase().includes(term)
@@ -856,8 +877,8 @@
                 const loc = browseFilters.location.toLowerCase();
                 filtered = filtered.filter(u =>
                     (u.location || '').toLowerCase().includes(loc) ||
-                    (u.city || u.address?.city || '').toLowerCase().includes(loc) ||
-                    (u.state || u.address?.state || '').toLowerCase().includes(loc)
+                    (u.city || '').toLowerCase().includes(loc) ||
+                    (u.state || '').toLowerCase().includes(loc)
                 );
             }
             if (browseFilters.minRating) {
@@ -1350,7 +1371,11 @@
         function renderBrowseCard(entity) {
             const isUser = entity && (entity.firstName !== undefined || entity.lastName !== undefined || entity.role !== undefined);
             const ownerName = entity?.owner ? `${entity.owner.firstName || ''} ${entity.owner.lastName || ''}`.trim() : '';
-            const normalized = isUser ? entity : {
+            const normalized = isUser ? {
+                ...entity,
+                company: entity?.company || entity?.name || 'Company',
+                role: entity?.role || 'vendor'
+            } : {
                 ...entity,
                 firstName: ownerName || entity?.name || 'Company',
                 lastName: ownerName ? '' : '',

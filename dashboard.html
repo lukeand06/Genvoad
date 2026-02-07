@@ -212,7 +212,7 @@
         <div class="mb-8" id="stats-grid">
             <!-- For Owners -->
             <div id="owner-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                <button onclick="scrollToSection('activity-feed-section')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                <button onclick="handleStatClick('active-projects-modal', 'activity-feed-section')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">Active Projects</p>
@@ -226,7 +226,7 @@
                     </div>
                 </button>
 
-                <button onclick="scrollToSection('activity-feed-section')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                <button onclick="handleStatClick('new-bids-modal', 'activity-feed-section')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">Pending Bids</p>
@@ -240,7 +240,7 @@
                     </div>
                 </button>
 
-                <button onclick="location.href='/messages.html'" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                <button onclick="handleStatClick('messages-modal', 'activity-feed-section')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">Unread Messages</p>
@@ -254,7 +254,7 @@
                     </div>
                 </button>
 
-                <button onclick="scrollToSection('activity-feed-section')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
+                <button onclick="handleStatClick('completed-modal', 'activity-feed-section')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-sm text-gray-600">Completed</p>
@@ -719,6 +719,15 @@
                 setTimeout(() => {
                     element.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-50');
                 }, 2000);
+            }
+        }
+
+        function handleStatClick(modalId, sectionId) {
+            if (sectionId) {
+                scrollToSection(sectionId);
+            }
+            if (modalId) {
+                openModal(modalId);
             }
         }
 
