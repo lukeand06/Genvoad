@@ -729,6 +729,157 @@
             });
         });
 
+        // Modal content loader functions
+        function loadActiveProjectsModal() {
+            const content = document.getElementById('active-projects-content');
+            const activeProjects = userProjects.filter(p => p.status === 'open' || p.status === 'in_progress');
+            
+            if (activeProjects.length === 0) {
+                content.innerHTML = '<p class="text-gray-500">No active projects</p>';
+                return;
+            }
+
+            content.innerHTML = activeProjects.map(project => `
+                <div class="border-b border-gray-200 py-4 last:border-0">
+                    <a href="/project-detail.html?id=${project._id}" class="block hover:bg-gray-50 -mx-6 px-6">
+                        <h3 class="font-semibold text-gray-900">${project.title}</h3>
+                        <p class="text-sm text-gray-600 mt-1">${project.description.substring(0, 100)}...</p>
+                        <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                            <span class="capitalize">${project.status.replace('_', ' ')}</span>
+                            <span>Budget: ${formatCurrency(project.budget)}</span>
+                            <span>${(project.bids || []).length} bids</span>
+                        </div>
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function loadNewBidsModal() {
+            const content = document.getElementById('new-bids-content');
+            const projectsWithBids = userProjects.filter(p => p.bids && p.bids.length > 0);
+            
+            if (projectsWithBids.length === 0) {
+                content.innerHTML = '<p class="text-gray-500">No new bids</p>';
+                return;
+            }
+
+            let allBids = [];
+            projectsWithBids.forEach(project => {
+                project.bids.forEach(bid => {
+                    allBids.push({ ...bid, project });
+                });
+            });
+
+            // Sort by most recent
+            allBids.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+            content.innerHTML = allBids.map(bid => `
+                <div class="border-b border-gray-200 py-4 last:border-0">
+                    <a href="/project-detail.html?id=${bid.project._id}" class="block hover:bg-gray-50 -mx-6 px-6">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h4 class="font-medium text-gray-900">${bid.user.firstName} ${bid.user.lastName}</h4>
+                                <p class="text-sm text-gray-600 mt-1">Project: ${bid.project.title}</p>
+                                <p class="text-sm text-gray-500 mt-1">${bid.proposal}</p>
+                                <div class="flex items-center gap-4 mt-2 text-sm">
+                                    <span class="font-semibold text-gray-900">Bid: ${formatCurrency(bid.amount)}</span>
+                                    <span class="text-gray-500">${timeAgo(new Date(bid.createdAt))}</span>
+                                    <span class="capitalize px-2 py-1 rounded-full text-xs ${
+                                        bid.status === 'accepted' ? 'bg-green-100 text-green-700' :
+                                        bid.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                        'bg-yellow-100 text-yellow-700'
+                                    }">${bid.status}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function loadMessagesModal() {
+            const content = document.getElementById('messages-content');
+            
+            if (messagesData.length === 0) {
+                content.innerHTML = '<p class="text-gray-500">No messages</p>';
+                return;
+            }
+
+            content.innerHTML = messagesData.map(conversation => {
+                const otherUser = conversation.otherUser || {};
+                return `
+                    <div class="border-b border-gray-200 py-4 last:border-0">
+                        <a href="/messages.html?userId=${otherUser._id}" class="block hover:bg-gray-50 -mx-6 px-6">
+                            <div class="flex items-start gap-3">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-600 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                                    ${otherUser.firstName ? otherUser.firstName.charAt(0).toUpperCase() : '?'}
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-medium text-gray-900">${otherUser.firstName || 'User'} ${otherUser.lastName || ''}</h4>
+                                        ${conversation.unread > 0 ? `<span class="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">${conversation.unread}</span>` : ''}
+                                    </div>
+                                    <p class="text-sm text-gray-600 truncate mt-1">${conversation.lastMessage || 'No messages yet'}</p>
+                                    <p class="text-xs text-gray-500 mt-1">${conversation.lastMessageTime ? timeAgo(new Date(conversation.lastMessageTime)) : ''}</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadCompletedModal() {
+            const content = document.getElementById('completed-content');
+            const completedProjects = userProjects.filter(p => p.status === 'completed');
+            
+            if (completedProjects.length === 0) {
+                content.innerHTML = '<p class="text-gray-500">No completed projects</p>';
+                return;
+            }
+
+            content.innerHTML = completedProjects.map(project => `
+                <div class="border-b border-gray-200 py-4 last:border-0">
+                    <a href="/project-detail.html?id=${project._id}" class="block hover:bg-gray-50 -mx-6 px-6">
+                        <h3 class="font-semibold text-gray-900">${project.title}</h3>
+                        <p class="text-sm text-gray-600 mt-1">${project.description.substring(0, 100)}...</p>
+                        <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                            <span>Budget: ${formatCurrency(project.budget)}</span>
+                            ${project.acceptedContractor ? `<span>Contractor: ${project.acceptedContractor.firstName} ${project.acceptedContractor.lastName}</span>` : ''}
+                        </div>
+                    </a>
+                </div>
+            `).join('');
+        }
+
+        function loadVendorCompletedModal() {
+            const content = document.getElementById('vendor-completed-content');
+            const user = getCurrentUser();
+            const completedProjects = userProjects.filter(p => 
+                p.status === 'completed' && 
+                p.acceptedContractor && 
+                p.acceptedContractor._id === user.id
+            );
+            
+            if (completedProjects.length === 0) {
+                content.innerHTML = '<p class="text-gray-500">No completed projects</p>';
+                return;
+            }
+
+            content.innerHTML = completedProjects.map(project => `
+                <div class="border-b border-gray-200 py-4 last:border-0">
+                    <a href="/project-detail.html?id=${project._id}" class="block hover:bg-gray-50 -mx-6 px-6">
+                        <h3 class="font-semibold text-gray-900">${project.title}</h3>
+                        <p class="text-sm text-gray-600 mt-1">${project.description.substring(0, 100)}...</p>
+                        <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                            <span>Budget: ${formatCurrency(project.budget)}</span>
+                            ${project.owner ? `<span>Client: ${project.owner.firstName} ${project.owner.lastName}</span>` : ''}
+                        </div>
+                    </a>
+                </div>
+            `).join('');
+        }
+
         // Load dashboard data
         async function loadDashboard() {
             try {
