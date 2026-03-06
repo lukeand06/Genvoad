@@ -3,6 +3,7 @@
   body {
     background: #f8fafc;
     line-height: 1.4;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
   }
 
   .max-w-7xl,
@@ -98,5 +99,30 @@
 
   .mobile-bottom-nav .bottom-nav-link {
     font-size: 0.72rem;
+    min-height: 44px !important;
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mobile-bottom-nav {
+    bottom: max(0.5rem, env(safe-area-inset-bottom)) !important;
+  }
+
+  .mobile-thumb-zone {
+    padding-bottom: calc(96px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .mobile-primary-action,
+  #mark-all-read,
+  #toggle-filters-btn,
+  #new-thread-btn,
+  .notification-tab,
+  .filter-tab,
+  #people-clear-filters {
+    min-height: 42px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
