@@ -73,7 +73,7 @@
         if (!response.ok) throw new Error(data.error || `Login failed (HTTP ${response.status})`);
         setToken(data.token);
         setCurrentUser(data.user);
-        window.location.href = '/dashboard.html';
+        window.location.href = getPostAuthRoute(data.user);
       } catch (err) {
         console.error('Login error:', err);
         showError(err.message);

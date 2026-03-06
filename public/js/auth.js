@@ -165,9 +165,17 @@ function initNotificationBadge() {
 initNotificationBadge();
 
 // Redirect if authenticated (for login/signup pages)
+function getPostAuthRoute(user = null) {
+  const profile = user || getCurrentUser();
+  if (profile && !profile.onboardingCompleted) {
+    return '/onboarding-profile.html';
+  }
+  return '/community-hub.html';
+}
+
 function redirectIfAuth() {
   if (isAuthenticated()) {
-    window.location.href = '/dashboard.html';
+    window.location.href = getPostAuthRoute();
     return true;
   }
   return false;

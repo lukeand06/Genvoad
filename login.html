@@ -7,7 +7,7 @@
     <meta name="keywords" content="construction, contractors, vendors, projects, bidding, network, login">
     <meta name="author" content="Genovad">
     <meta name="robots" content="index, follow">
-    <meta name="canonical" href="https://www.genovad.com/login.html">
+    <link rel="canonical" href="https://www.genovad.com/login.html">
     
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
@@ -170,7 +170,7 @@
                     setToken(data.token);
                     setCurrentUser(data.user);
                     setActiveRole(data.user.activeRole || data.user.role || selectedRole);
-                    window.location.href = '/dashboard.html';
+                    window.location.href = getPostAuthRoute(data.user);
                 } catch (err) {
                     showError(err.message || 'Social login failed');
                 } finally {
@@ -319,7 +319,7 @@
                     setToken(data.token);
                     setCurrentUser(data.user);
                     setActiveRole(data.user.activeRole || data.user.role || selectedRole);
-                    window.location.href = '/dashboard.html';
+                    window.location.href = getPostAuthRoute(data.user);
                 } catch (error) {
                     console.error('Login error:', error);
                     showError(error.message);

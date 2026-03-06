@@ -7,13 +7,10 @@
   RewriteCond %{REQUEST_FILENAME} !-d
   RewriteRule ^([^\.]+)$ $1.html [NC,L]
   
-  # Redirect www to non-www
-  RewriteCond %{HTTP_HOST} ^www\. [NC]
-  RewriteRule ^(.*)$ http://%{HTTP_HOST:www.}%{REQUEST_URI} [R=301,L]
-  
-  # Force HTTPS
-  RewriteCond %{HTTPS} off
-  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+  # Force HTTPS + www canonical host
+  RewriteCond %{HTTPS} off [OR]
+  RewriteCond %{HTTP_HOST} !^www\.genovad\.com$ [NC]
+  RewriteRule ^(.*)$ https://www.genovad.com/$1 [R=301,L]
 </IfModule>
 
 # Serve robots.txt and sitemap.xml with proper content type

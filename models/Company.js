@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const CompanySchema = new mongoose.Schema({
   // Basic Info
   name: { type: String, required: true, trim: true },
+  accessCode: { type: String, unique: true, sparse: true, uppercase: true, trim: true },
   legalName: { type: String, default: '' },
   registrationNumber: { type: String, default: '' }, // EIN, company registration #
   registrarId: { type: String, default: '' }, // Professional license/registrar ID

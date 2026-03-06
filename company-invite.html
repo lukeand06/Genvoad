@@ -3,6 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Accept your company invitation and join your team on Genovad.">
+    <meta name="keywords" content="company invitation, team access, Genovad">
+    <meta name="author" content="Genovad">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.genovad.com/company-invite.html">
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.genovad.com/company-invite.html">
+    <meta property="og:title" content="Accept Company Invitation - Genovad">
+    <meta property="og:description" content="Accept your company invitation and join your team on Genovad.">
+    <meta property="og:image" content="https://www.genovad.com/public/logo-icon.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://www.genovad.com/company-invite.html">
+    <meta property="twitter:title" content="Accept Company Invitation - Genovad">
+    <meta property="twitter:description" content="Accept your company invitation and join your team on Genovad.">
+    <meta property="twitter:image" content="https://www.genovad.com/public/logo-icon.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/public/logo-icon.png">
+    <link rel="apple-touch-icon" href="/public/logo-icon.png">
+    <link rel="shortcut icon" href="/public/logo-icon.png">
     <title>Accept Company Invitation - Genovad</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -61,7 +85,7 @@
                 </svg>
                 <h2 class="text-xl font-bold text-gray-900 mb-2">Welcome to the Team!</h2>
                 <p class="text-gray-600 mb-4">You've successfully joined <span id="success-company-name" class="font-semibold"></span></p>
-                <a href="/company.html" class="inline-block px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Go to Company Dashboard</a>
+                <a href="/community-hub.html" class="inline-block px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Go to Community Hub</a>
             </div>
         </div>
     </div>
@@ -136,7 +160,7 @@
 
         document.getElementById('decline-btn')?.addEventListener('click', () => {
             if (confirm('Are you sure you want to decline this invitation?')) {
-                window.location.href = '/dashboard.html';
+                window.location.href = '/community-hub.html';
             }
         });
 

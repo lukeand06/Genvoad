@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Hub - Genovad</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <nav class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center gap-6">
+          <a href="/community-hub.html" class="flex items-center">
+            <img src="/public/logo-icon.png" alt="Genovad" class="h-10 w-auto" />
+          </a>
+          <div class="hidden md:flex gap-1">
+            <a href="/community-hub.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Community</a>
+            <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Projects</a>
+            <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Messenger</a>
+            <!-- Browse features intentionally disabled for the new community-first flow -->
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <a href="/notifications.html" class="px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Inbox</a>
+          <a href="/settings.html" class="px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-lg">Settings</a>
+          <button id="logout-btn" class="px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div id="error-message" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded"></div>
+
+    <section class="bg-white border border-gray-200 rounded-xl p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Community Hub</h1>
+          <p class="text-gray-600 mt-1">Join a community, review invitations, and see your people + projects in one place.</p>
+        </div>
+        <div class="md:w-96">
+          <label class="block text-sm font-medium text-gray-700 mb-1">Active community</label>
+          <select id="active-community-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></select>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="bg-white border border-gray-200 rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">Join by access code</h2>
+        <p class="text-sm text-gray-600 mb-4">Have a code from an owner? Enter it here.</p>
+        <div class="space-y-3">
+          <input id="access-code-input" type="text" placeholder="GV-XXXXXX" class="w-full uppercase px-3 py-2 border border-gray-300 rounded-lg" />
+          <button id="join-code-btn" class="w-full bg-gray-900 text-white py-2 rounded-lg font-medium hover:bg-gray-800">Join community</button>
+        </div>
+      </div>
+
+      <div class="bg-white border border-gray-200 rounded-xl p-6 lg:col-span-2">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold text-gray-900">Invitation inbox</h2>
+          <span id="invite-count" class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">0</span>
+        </div>
+        <div id="invite-inbox" class="space-y-3 text-sm text-gray-600">
+          <p>No pending invitations.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-white border border-gray-200 rounded-xl p-6">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <h2 class="text-lg font-semibold text-gray-900">People in community</h2>
+        <div class="flex gap-2">
+          <input id="people-search" type="text" placeholder="Filter by name/company" class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+          <select id="people-role-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
+            <option value="all">All roles</option>
+            <option value="owner">Owners</option>
+            <option value="vendor">Vendors</option>
+          </select>
+        </div>
+      </div>
+      <div id="people-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <p class="text-gray-500">Select a community to load members.</p>
+      </div>
+    </section>
+
+    <section class="bg-white border border-gray-200 rounded-xl p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-3">Your communities</h2>
+      <div id="community-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <p class="text-gray-500">No communities joined yet.</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="/public/js/auth.js"></script>
+  <script>
+    if (!requireAuth()) {
+      throw new Error('Not authenticated');
+    }
+
+    const state = {
+      communities: [],
+      activeCommunityId: null,
+      members: []
+    };
+
+    document.getElementById('logout-btn').addEventListener('click', logout);
+
+    document.getElementById('join-code-btn').addEventListener('click', joinByCode);
+    document.getElementById('active-community-select').addEventListener('change', switchActiveCommunity);
+    document.getElementById('people-search').addEventListener('input', renderMembers);
+    document.getElementById('people-role-filter').addEventListener('change', renderMembers);
+
+    async function loadHub() {
+      const user = getCurrentUser();
+      if (!user?.onboardingCompleted) {
+        window.location.href = '/onboarding-profile.html';
+        return;
+      }
+
+      await Promise.all([
+        loadCommunities(),
+        loadInviteInbox()
+      ]);
+    }
+
+    async function loadCommunities() {
+      try {
+        const res = await authFetch('/api/communities/my');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load communities');
+
+        state.communities = data.communities || [];
+        state.activeCommunityId = data.activeCommunityId || state.communities[0]?._id || null;
+
+        renderCommunitySelect();
+        renderCommunityCards();
+
+        if (state.activeCommunityId) {
+          await loadMembers(state.activeCommunityId);
+        } else {
+          document.getElementById('people-list').innerHTML = '<p class="text-gray-500">Join or create a community to see members.</p>';
+        }
+      } catch (error) {
+        showError(error.message || 'Failed to load communities');
+      }
+    }
+
+    function renderCommunitySelect() {
+      const select = document.getElementById('active-community-select');
+
+      if (!state.communities.length) {
+        select.innerHTML = '<option value="">No communities yet</option>';
+        return;
+      }
+
+      select.innerHTML = state.communities.map(c => `
+        <option value="${c._id}" ${c._id === state.activeCommunityId ? 'selected' : ''}>${c.name}</option>
+      `).join('');
+    }
+
+    function renderCommunityCards() {
+      const host = document.getElementById('community-cards');
+      if (!state.communities.length) {
+        host.innerHTML = '<p class="text-gray-500">No communities joined yet.</p>';
+        return;
+      }
+
+      host.innerHTML = state.communities.map(c => `
+        <article class="border border-gray-200 rounded-lg p-4">
+          <h3 class="font-semibold text-gray-900">${c.name}</h3>
+          <p class="text-sm text-gray-600 mt-1">Type: ${(c.type || 'community').replace('_', ' ')}</p>
+          <p class="text-xs text-gray-500 mt-2">Access code: <span class="font-medium text-gray-700">${c.accessCode || 'pending'}</span></p>
+          <div class="mt-3 flex gap-2">
+            <button data-community="${c._id}" class="switch-community-btn px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Make active</button>
+            <a href="/company.html" class="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Open community</a>
+          </div>
+        </article>
+      `).join('');
+
+      document.querySelectorAll('.switch-community-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          document.getElementById('active-community-select').value = btn.dataset.community;
+          await switchActiveCommunity();
+        });
+      });
+    }
+
+    async function switchActiveCommunity() {
+      const companyId = document.getElementById('active-community-select').value;
+      if (!companyId) return;
+
+      try {
+        const res = await authFetch(`/api/communities/switch/${companyId}`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to switch community');
+
+        state.activeCommunityId = companyId;
+
+        const user = getCurrentUser();
+        setCurrentUser({ ...user, activeCommunityId: companyId, companyId });
+
+        await loadMembers(companyId);
+      } catch (error) {
+        showError(error.message || 'Failed to switch community');
+      }
+    }
+
+    async function loadMembers(companyId) {
+      try {
+        const res = await authFetch(`/api/companies/${companyId}/members`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load members');
+
+        state.members = data.members || [];
+        renderMembers();
+      } catch (error) {
+        showError(error.message || 'Failed to load members');
+      }
+    }
+
+    function renderMembers() {
+      const search = document.getElementById('people-search').value.trim().toLowerCase();
+      const role = document.getElementById('people-role-filter').value;
+      const host = document.getElementById('people-list');
+
+      let list = [...state.members];
+
+      if (role !== 'all') {
+        list = list.filter(member => (member.role || '').toLowerCase() === role);
+      }
+
+      if (search) {
+        list = list.filter(member => {
+          const fullName = `${member.firstName || ''} ${member.lastName || ''}`.toLowerCase();
+          const company = (member.company || '').toLowerCase();
+          return fullName.includes(search) || company.includes(search);
+        });
+      }
+
+      if (!list.length) {
+        host.innerHTML = '<p class="text-gray-500">No members match your filters.</p>';
+        return;
+      }
+
+      host.innerHTML = list.map(member => `
+        <article class="border border-gray-200 rounded-lg p-4">
+          <div class="flex items-center gap-3">
+            <div>${getAvatarHTML(member, 'w-10 h-10')}</div>
+            <div>
+              <h3 class="font-semibold text-gray-900">${member.firstName || ''} ${member.lastName || ''}</h3>
+              <p class="text-sm text-gray-600">${member.company || 'No company set'}</p>
+            </div>
+          </div>
+          <div class="mt-3 text-xs text-gray-500 flex gap-2">
+            <span class="px-2 py-1 bg-gray-100 rounded-full">${(member.role || 'member').toUpperCase()}</span>
+            <span class="px-2 py-1 bg-gray-100 rounded-full">${member.companyRole || 'member'}</span>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    async function loadInviteInbox() {
+      try {
+        const res = await authFetch('/api/communities/invitations/inbox');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load invitation inbox');
+
+        const invites = data.invitations || [];
+        document.getElementById('invite-count').textContent = String(invites.length);
+
+        const host = document.getElementById('invite-inbox');
+        if (!invites.length) {
+          host.innerHTML = '<p>No pending invitations.</p>';
+          return;
+        }
+
+        host.innerHTML = invites.map(inv => `
+          <div class="border border-gray-200 rounded-lg p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div>
+              <p class="font-medium text-gray-900">${inv.company.name}</p>
+              <p class="text-xs text-gray-500">Role: ${inv.role} • Expires ${new Date(inv.expiresAt).toLocaleDateString()}</p>
+            </div>
+            <button data-token="${inv.token}" class="accept-invite-btn px-3 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800">Accept</button>
+          </div>
+        `).join('');
+
+        document.querySelectorAll('.accept-invite-btn').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            await acceptInvitation(btn.dataset.token);
+          });
+        });
+      } catch (error) {
+        showError(error.message || 'Failed to load invitation inbox');
+      }
+    }
+
+    async function acceptInvitation(token) {
+      try {
+        const res = await authFetch(`/api/companies/invitations/${token}/accept`, { method: 'POST' });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to accept invitation');
+
+        await loadHub();
+      } catch (error) {
+        showError(error.message || 'Failed to accept invitation');
+      }
+    }
+
+    async function joinByCode() {
+      const accessCode = document.getElementById('access-code-input').value.trim().toUpperCase();
+      if (!accessCode) {
+        showError('Please enter an access code');
+        return;
+      }
+
+      try {
+        const res = await authFetch('/api/communities/join-by-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessCode })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to join community');
+
+        document.getElementById('access-code-input').value = '';
+        await loadHub();
+      } catch (error) {
+        showError(error.message || 'Failed to join community');
+      }
+    }
+
+    loadHub();
+  </script>
+</body>
+</html>

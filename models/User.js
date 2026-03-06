@@ -22,6 +22,8 @@ const UserSchema = new mongoose.Schema({
   company: { type: String, default: '' },
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' }, // If part of verified company
   companyRole: { type: String, enum: ['owner', 'admin', 'member'], default: 'member' },
+  communityIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Company' }],
+  activeCommunityId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
   title: { type: String, default: '' },
   registrarId: { type: String, default: '' },
   city: { type: String, default: '' },
@@ -29,7 +31,8 @@ const UserSchema = new mongoose.Schema({
   links: {
     website: { type: String, default: '' },
     linkedin: { type: String, default: '' },
-    github: { type: String, default: '' }
+    github: { type: String, default: '' },
+    instagram: { type: String, default: '' }
   },
   skills: [{ type: String }],
   services: [{ type: String }],
@@ -66,6 +69,9 @@ const UserSchema = new mongoose.Schema({
   emailVerified: { type: Boolean, default: false },
   verificationCode: { type: String },
   verificationExpires: { type: Date },
+
+  // Onboarding
+  onboardingCompleted: { type: Boolean, default: false },
   
   // Password Reset
   resetPasswordToken: { type: String },
@@ -88,5 +94,6 @@ const UserSchema = new mongoose.Schema({
 UserSchema.index({ email: 1, role: 1 }, { unique: true, sparse: true });
 UserSchema.index({ skills: 1 });
 UserSchema.index({ services: 1 });
+UserSchema.index({ activeCommunityId: 1 });
 
 module.exports = mongoose.model('User', UserSchema);

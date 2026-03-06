@@ -1,28 +1,9 @@
 # Genovad - Allow all crawlers
 User-agent: *
-Allow: /
-Allow: /public/
-Allow: /dashboard.html
-Allow: /projects.html
-Allow: /browse.html
-Allow: /profile.html
-Allow: /messages.html
-Allow: /notifications.html
-Allow: /settings.html
-Allow: /create-project.html
-Allow: /project-detail.html
-Allow: /signup.html
-Allow: /login.html
-Allow: /owner-signup.html
-Allow: /owner-login.html
-Allow: /vendor-signup.html
-Allow: /vendor-login.html
-Allow: /company.html
-Allow: /company-invite.html
-
 Disallow: /admin-companies.html
 Disallow: /uploads/
 Disallow: /api/
+Allow: /
 
 # Google
 User-agent: Googlebot

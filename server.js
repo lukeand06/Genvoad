@@ -306,6 +306,15 @@ const generatePlaceholderPassword = async () => {
   return bcrypt.hash(randomString, 10);
 };
 
+const generateCommunityAccessCode = () => {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let code = 'GV-';
+  for (let i = 0; i < 6; i += 1) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+};
+
 // ============ AUTH ROUTES ============
 
 // Public config for client-side social buttons
@@ -492,7 +501,10 @@ app.post('/api/auth/verify', async (req, res) => {
         avatar: user.avatar,
         company: user.company,
         role: user.role,
-        authProvider: user.authProvider
+        authProvider: user.authProvider,
+        onboardingCompleted: !!user.onboardingCompleted,
+        communityIds: user.communityIds || [],
+        activeCommunityId: user.activeCommunityId || user.companyId || null
       }
     });
   } catch (error) {
@@ -550,7 +562,10 @@ app.post('/api/auth/login', async (req, res) => {
         role: user.role,
         authProvider: user.authProvider,
         companyId: user.companyId,
-        companyRole: user.companyRole
+        companyRole: user.companyRole,
+        onboardingCompleted: !!user.onboardingCompleted,
+        communityIds: user.communityIds || [],
+        activeCommunityId: user.activeCommunityId || user.companyId || null
       }
     });
   } catch (error) {
@@ -643,7 +658,10 @@ app.post('/api/auth/social', async (req, res) => {
         company: user.company,
         title: user.title,
         role: user.role,
-        authProvider: user.authProvider
+        authProvider: user.authProvider,
+        onboardingCompleted: !!user.onboardingCompleted,
+        communityIds: user.communityIds || [],
+        activeCommunityId: user.activeCommunityId || user.companyId || null
       }
     });
   } catch (error) {
@@ -1034,7 +1052,7 @@ app.put('/api/users/profile', authMiddleware, async (req, res) => {
   try {
     const allowed = [
       'firstName','lastName','bio','title','company','location','phone','yearsExperience',
-      'skills','services','city','state','registrarId','links','preferences','role','profileBackground'
+      'skills','services','city','state','registrarId','links','preferences','role','profileBackground','onboardingCompleted'
     ];
     const updates = {};
     if (req.body.role && !['owner', 'vendor'].includes(req.body.role)) {
@@ -1381,13 +1399,33 @@ app.post('/api/projects', authMiddleware, upload.array('attachments', 10), async
 // Get projects
 app.get('/api/projects', authMiddleware, async (req, res) => {
   try {
-    const { status, category, owner, contractor } = req.query;
+    const { status, category, owner, contractor, communityOnly } = req.query;
     const query = {};
     
     if (status) query.status = status;
     if (category) query.category = category;
     if (owner) query.owner = owner;
     if (contractor) query.acceptedContractor = contractor;
+
+    if (communityOnly === 'true') {
+      const currentUser = await User.findById(req.user._id).select('activeCommunityId companyId communityIds');
+      const activeCommunityId = currentUser?.activeCommunityId || currentUser?.companyId || (currentUser?.communityIds || [])[0];
+
+      if (activeCommunityId) {
+        const communityMembers = await User.find({
+          $or: [
+            { activeCommunityId },
+            { companyId: activeCommunityId },
+            { communityIds: activeCommunityId }
+          ],
+          deletedAt: { $exists: false }
+        }).select('_id');
+
+        query.owner = { $in: communityMembers.map(member => member._id) };
+      } else {
+        query.owner = { $in: [] };
+      }
+    }
     
     console.log('Fetching projects with query:', query);
     
@@ -3506,8 +3544,14 @@ app.post('/api/companies', authMiddleware, upload.array('documents', 5), async (
       uploadedAt: Date.now()
     })) : [];
 
+    let accessCode = generateCommunityAccessCode();
+    while (await Company.findOne({ accessCode })) {
+      accessCode = generateCommunityAccessCode();
+    }
+
     const company = new Company({
       name,
+      accessCode,
       legalName: legalName || name,
       registrationNumber,
       registrarId,
@@ -3531,9 +3575,15 @@ app.post('/api/companies', authMiddleware, upload.array('documents', 5), async (
 
     // Update user
     await User.findByIdAndUpdate(req.user._id, {
-      companyId: company._id,
-      companyRole: 'owner',
-      company: name
+      $set: {
+        companyId: company._id,
+        activeCommunityId: company._id,
+        companyRole: 'owner',
+        company: name
+      },
+      $addToSet: {
+        communityIds: company._id
+      }
     });
 
     res.json({ success: true, company });
@@ -4195,11 +4245,12 @@ app.get('/api/companies/:id', authMiddleware, async (req, res) => {
 app.get('/api/companies/my/company', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
-    if (!user.companyId) {
+    const targetCompanyId = user.activeCommunityId || user.companyId;
+    if (!targetCompanyId) {
       return res.json({ company: null });
     }
 
-    const company = await Company.findById(user.companyId)
+    const company = await Company.findById(targetCompanyId)
       .populate('owner', 'firstName lastName email avatar')
       .populate('admins', 'firstName lastName email avatar title')
       .populate('members', 'firstName lastName email avatar title');
@@ -4207,6 +4258,145 @@ app.get('/api/companies/my/company', authMiddleware, async (req, res) => {
     res.json({ company });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch company' });
+  }
+});
+
+// Get all communities for current user
+app.get('/api/communities/my', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('communityIds activeCommunityId companyId');
+    const communityIds = new Set((user?.communityIds || []).map(id => id.toString()));
+    if (user?.companyId) communityIds.add(user.companyId.toString());
+    if (user?.activeCommunityId) communityIds.add(user.activeCommunityId.toString());
+
+    if (communityIds.size === 0) {
+      return res.json({ communities: [], activeCommunityId: null });
+    }
+
+    const communities = await Company.find({ _id: { $in: Array.from(communityIds) } })
+      .select('name type verified accessCode members owner admins createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.json({ communities, activeCommunityId: user.activeCommunityId || user.companyId || null });
+  } catch (error) {
+    console.error('Get communities error:', error);
+    res.status(500).json({ error: 'Failed to fetch communities' });
+  }
+});
+
+// Switch active community
+app.post('/api/communities/switch/:companyId', authMiddleware, async (req, res) => {
+  try {
+    const { companyId } = req.params;
+    const user = await User.findById(req.user._id).select('communityIds companyId');
+    const allowedIds = new Set((user?.communityIds || []).map(id => id.toString()));
+    if (user?.companyId) allowedIds.add(user.companyId.toString());
+
+    if (!allowedIds.has(companyId)) {
+      return res.status(403).json({ error: 'You are not a member of this community' });
+    }
+
+    await User.findByIdAndUpdate(req.user._id, {
+      $set: {
+        activeCommunityId: companyId,
+        companyId
+      },
+      $addToSet: {
+        communityIds: companyId
+      }
+    });
+
+    res.json({ success: true, activeCommunityId: companyId });
+  } catch (error) {
+    console.error('Switch community error:', error);
+    res.status(500).json({ error: 'Failed to switch community' });
+  }
+});
+
+// Inbox view of pending invitations for current user's email
+app.get('/api/communities/invitations/inbox', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('email');
+    const companies = await Company.find({
+      pendingInvitations: {
+        $elemMatch: {
+          email: user.email,
+          status: 'pending',
+          expiresAt: { $gt: new Date() }
+        }
+      }
+    }).select('name verified accessCode pendingInvitations');
+
+    const invitations = [];
+    companies.forEach((company) => {
+      company.pendingInvitations.forEach((invitation) => {
+        if (
+          invitation.email === user.email &&
+          invitation.status === 'pending' &&
+          invitation.expiresAt > new Date()
+        ) {
+          invitations.push({
+            token: invitation.token,
+            role: invitation.role,
+            invitedAt: invitation.invitedAt,
+            expiresAt: invitation.expiresAt,
+            company: {
+              _id: company._id,
+              name: company.name,
+              verified: company.verified,
+              accessCode: company.accessCode
+            }
+          });
+        }
+      });
+    });
+
+    invitations.sort((a, b) => new Date(b.invitedAt) - new Date(a.invitedAt));
+    res.json({ invitations });
+  } catch (error) {
+    console.error('Invitation inbox error:', error);
+    res.status(500).json({ error: 'Failed to fetch invitation inbox' });
+  }
+});
+
+// Join community by access code
+app.post('/api/communities/join-by-code', authMiddleware, async (req, res) => {
+  try {
+    const rawCode = (req.body?.accessCode || '').toString().trim().toUpperCase();
+    if (!rawCode) {
+      return res.status(400).json({ error: 'Access code is required' });
+    }
+
+    const company = await Company.findOne({ accessCode: rawCode });
+    if (!company) {
+      return res.status(404).json({ error: 'Invalid access code' });
+    }
+
+    const user = await User.findById(req.user._id);
+    const isMember = company.members.some(memberId => memberId.toString() === user._id.toString());
+
+    if (!isMember) {
+      company.members.push(user._id);
+      await company.save();
+    }
+
+    await User.findByIdAndUpdate(user._id, {
+      $set: {
+        activeCommunityId: company._id,
+        companyId: company._id,
+        company: company.name,
+        companyRole: user.companyRole && user.companyRole !== 'member' ? user.companyRole : 'member'
+      },
+      $addToSet: {
+        communityIds: company._id
+      }
+    });
+
+    res.json({ success: true, message: 'Joined community successfully', company });
+  } catch (error) {
+    console.error('Join by code error:', error);
+    res.status(500).json({ error: 'Failed to join community' });
   }
 });
 
@@ -4609,9 +4799,15 @@ app.post('/api/companies/invitations/:token/accept', authMiddleware, async (req,
 
     // Update user
     await User.findByIdAndUpdate(user._id, {
-      companyId: company._id,
-      companyRole: invitation.role,
-      company: company.name
+      $set: {
+        companyId: company._id,
+        activeCommunityId: company._id,
+        companyRole: invitation.role,
+        company: company.name
+      },
+      $addToSet: {
+        communityIds: company._id
+      }
     });
 
     const invitedUserName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
@@ -5797,7 +5993,8 @@ const htmlPages = [
   'messages.html', 'notifications.html', 'settings.html', 'create-project.html',
   'project-detail.html', 'signup.html', 'login.html', 'owner-signup.html',
   'owner-login.html', 'vendor-signup.html', 'vendor-login.html', 'company.html',
-  'company-invite.html', 'all-projects.html', 'admin-companies.html', 'browse.html',
+  'company-invite.html', 'community-hub.html', 'onboarding-profile.html',
+  'all-projects.html', 'admin-companies.html', 'browse.html',
   'network.html', 'feed.html'
 ];
 
@@ -5812,6 +6009,25 @@ htmlPages.forEach(page => {
       return next();
     }
     
+    const filePath = path.join(__dirname, page);
+    if (fs.existsSync(filePath)) {
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      return res.sendFile(filePath);
+    }
+    next();
+  });
+
+  // Route /page-name.html explicitly (in case static hosting misses it)
+  app.get(`/${page}`, (req, res, next) => {
+    // Skip if it looks like an API route
+    if (req.path.startsWith('/api/') || req.path.startsWith('/public/') || req.path.startsWith('/uploads/')) {
+      return next();
+    }
+
     const filePath = path.join(__dirname, page);
     if (fs.existsSync(filePath)) {
       res.set({
