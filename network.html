@@ -438,14 +438,16 @@
             <p class="text-gray-500 mb-1">Location</p>
             <p class="text-gray-900">${esc(location)}</p>
           </div>
+          ${!isOwner ? `
           <div class="border border-gray-200 rounded-lg p-4">
             <p class="text-gray-500 mb-1">Experience</p>
             <p class="text-gray-900">${member.yearsExperience ? `${esc(member.yearsExperience)} years` : 'Not provided'}</p>
           </div>
           <div class="border border-gray-200 rounded-lg p-4">
             <p class="text-gray-500 mb-1">Community stats</p>
-            <p class="text-gray-900">${esc(member.projectsCompleted || 0)} projects • ${esc(member.reviewCount || 0)} reviews${!isOwner ? ` • ⭐ ${esc((member.rating || 0).toFixed ? member.rating.toFixed(1) : member.rating || 0)}` : ''}</p>
+            <p class="text-gray-900">${esc(member.projectsCompleted || 0)} projects • ${esc(member.reviewCount || 0)} reviews • ⭐ ${esc((member.rating || 0).toFixed ? member.rating.toFixed(1) : member.rating || 0)}</p>
           </div>
+          ` : ''}
         </div>
 
         <div class="mb-6">
