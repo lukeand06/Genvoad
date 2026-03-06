@@ -48,6 +48,9 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-8">
+                    <a href="/community-hub.html" class="inline-flex items-center text-gray-600 hover:text-gray-900" title="Back to Community Home">
+                        <span class="text-xl leading-none">←</span>
+                    </a>
                     <a href="/dashboard.html" class="flex items-center">
                         <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-10 w-auto" onerror="console.error('Logo failed to load:', this.src)">
                     </a>
@@ -1138,13 +1141,12 @@
                 const data = await res.json();
                 const feedContainer = document.getElementById('activity-feed');
                 const communityActivities = await loadCommunityActivityNotifications();
-                const welcomeCard = renderWelcomeFeedCard();
-                const activityCards = communityActivities.map(notif => renderCommunityActivityCard(notif)).join('');
+                const activityItems = [createWelcomeFeedNotification(), ...communityActivities];
+                const activityCards = activityItems.map(notif => renderCommunityActivityCard(notif)).join('');
                 const postCards = (data.posts || []).map(post => renderPostCard(post)).join('');
                 
                 if (!data.posts || data.posts.length === 0) {
                     feedContainer.innerHTML = `
-                        ${welcomeCard}
                         ${activityCards}
                         <div class="p-12 text-center text-gray-500">
                             <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1157,7 +1159,7 @@
                     return;
                 }
 
-                feedContainer.innerHTML = `${welcomeCard}${activityCards}${postCards}`;
+                feedContainer.innerHTML = `${activityCards}${postCards}`;
                 feedPage = 1;
 
                 // Track views for each post
@@ -1204,20 +1206,26 @@
             }
         }
 
-        function renderWelcomeFeedCard() {
-            return `
-                <div class="p-6 bg-blue-50 border-l-4 border-blue-400">
-                    <h3 class="text-sm font-semibold text-blue-900">Welcome to your Community Feed 👋</h3>
-                    <p class="text-sm text-blue-800 mt-1">This space keeps everyone aligned with shared updates, new posts, and community activity like referrals, joins, and leaves.</p>
-                </div>
-            `;
+        function createWelcomeFeedNotification() {
+            return {
+                type: 'community_feed_welcome',
+                createdAt: new Date().toISOString(),
+                data: {
+                    message: 'Welcome to your Community Feed 👋 This space keeps everyone aligned with shared updates, new posts, and community activity like referrals, joins, and leaves.'
+                }
+            };
         }
 
         function renderCommunityActivityCard(notif) {
             let message = 'Community activity update';
             let badgeClass = 'bg-gray-100 text-gray-700';
+            let badgeText = 'Community activity';
 
-            if (notif.type === 'community_member_referred') {
+            if (notif.type === 'community_feed_welcome') {
+                message = notif.data?.message || 'Welcome to your community feed.';
+                badgeClass = 'bg-blue-100 text-blue-700';
+                badgeText = 'Feed update';
+            } else if (notif.type === 'community_member_referred') {
                 message = `${notif.data?.userName || 'Someone'} referred ${notif.data?.invitedUserName || 'a new member'}`;
                 badgeClass = 'bg-indigo-100 text-indigo-700';
             } else if (notif.type === 'community_member_joined') {
@@ -1231,7 +1239,7 @@
             return `
                 <div class="p-6 bg-white">
                     <div class="flex items-center justify-between gap-3 mb-2">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}">Community activity</span>
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}">${badgeText}</span>
                         <span class="text-xs text-gray-500">${getTimeAgo(new Date(notif.createdAt))}</span>
                     </div>
                     <p class="text-sm text-gray-800">${message}</p>
