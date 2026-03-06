@@ -7,6 +7,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
+
+        /* Keep mobile bottom nav size identical to community standard */
+        .mobile-bottom-nav .bottom-nav-link {
+            min-height: 0 !important;
+            display: block !important;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -285,13 +291,13 @@
 
 
     <!-- Mobile Floating Community Nav -->
-    <div class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
+    <div class="mobile-bottom-nav md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
         <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
             <div class="grid grid-cols-4 gap-1 text-center text-xs font-medium">
-                <a href="/company.html" class="px-2 py-2 rounded-xl bg-gray-900 text-white">Community</a>
-                <a href="/dashboard.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Feed</a>
-                <a href="/network.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">People</a>
-                <a href="/messages.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
+                <a href="/company.html" class="bottom-nav-link px-2 py-2 rounded-xl bg-gray-900 text-white">Community</a>
+                <a href="/dashboard.html" class="bottom-nav-link px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Feed</a>
+                <a href="/network.html" class="bottom-nav-link px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">People</a>
+                <a href="/messages.html" class="bottom-nav-link px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
             </div>
         </div>
     </div>
