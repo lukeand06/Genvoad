@@ -374,6 +374,7 @@
         const skills = (member.skills || []).slice(0, 3);
         const location = member.location || [member.city, member.state].filter(Boolean).join(', ') || 'Location not set';
         const badges = getRoleBadges(member);
+        const isOwner = (member.role || '').toLowerCase() === 'owner';
         return `
           <article class="border border-gray-200 rounded-xl p-4 bg-white hover:shadow-md transition cursor-pointer" data-member-idx="${idx}">
             <div class="flex items-start gap-3">
@@ -389,9 +390,11 @@
               ${badges.map(b => `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(b)}</span>`).join('')}
               ${member.yearsExperience ? `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(member.yearsExperience)} yrs exp</span>` : ''}
             </div>
+            ${!isOwner ? `
             <div class="mt-3 flex flex-wrap gap-2">
               ${skills.map(s => `<span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">${esc(s)}</span>`).join('')}
             </div>
+            ` : ''}
           </article>
         `;
       }).join('');
@@ -455,6 +458,7 @@
           <p class="text-gray-700">${esc(member.bio || 'No bio provided.')}</p>
         </div>
 
+        ${!isOwner ? `
         <div class="mb-6">
           <h4 class="font-semibold text-gray-900 mb-2">Skills</h4>
           <div class="flex flex-wrap gap-2">
@@ -468,6 +472,7 @@
             ${(member.services || []).length ? (member.services || []).map(s => `<span class="text-xs px-2 py-1 bg-green-50 text-green-700 rounded-full">${esc(s)}</span>`).join('') : '<p class="text-gray-500 text-sm">No services listed.</p>'}
           </div>
         </div>
+        ` : ''}
 
         <div>
           <h4 class="font-semibold text-gray-900 mb-2">Links</h4>
