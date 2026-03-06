@@ -125,4 +125,54 @@
     align-items: center;
     justify-content: center;
   }
+
+  /* Premium-feel micro interactions on touch */
+  a,
+  button,
+  [role="button"],
+  .bottom-nav-link,
+  .notification-tab,
+  .filter-tab,
+  .mobile-primary-action {
+    transition: background-color 140ms ease, color 140ms ease, transform 120ms ease, box-shadow 160ms ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  a:active,
+  button:active,
+  [role="button"]:active,
+  .bottom-nav-link:active,
+  .notification-tab:active,
+  .filter-tab:active,
+  .mobile-primary-action:active {
+    transform: scale(0.985);
+  }
+
+  .bottom-nav-link {
+    letter-spacing: 0.01em;
+  }
+
+  .bottom-nav-link:active,
+  .notification-tab:active,
+  .filter-tab:active {
+    background-color: #f3f4f6 !important;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid #111827;
+    outline-offset: 2px;
+    border-radius: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }
