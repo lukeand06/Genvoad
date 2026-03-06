@@ -20,8 +20,8 @@
           </a>
           <div class="hidden md:flex gap-1">
             <a href="/community-hub.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Community</a>
-            <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Projects</a>
-            <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Messenger</a>
+            <a id="nav-projects-link" href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Projects</a>
+            <a id="nav-messages-link" href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Messenger</a>
             <!-- Browse features intentionally disabled for the new community-first flow -->
           </div>
         </div>
@@ -37,6 +37,9 @@
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <div id="error-message" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded"></div>
+    <div id="locked-pages-note" class="hidden bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded">
+      Join a community to unlock Messenger and Projects.
+    </div>
 
     <section class="bg-white border border-gray-200 rounded-xl p-6">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -137,6 +140,7 @@
 
         state.communities = data.communities || [];
         state.activeCommunityId = data.activeCommunityId || state.communities[0]?._id || null;
+        setCommunityLockedState(!state.activeCommunityId);
 
         renderCommunitySelect();
         renderCommunityCards();
@@ -162,6 +166,29 @@
       select.innerHTML = state.communities.map(c => `
         <option value="${c._id}" ${c._id === state.activeCommunityId ? 'selected' : ''}>${c.name}</option>
       `).join('');
+    }
+
+    function setCommunityLockedState(isLocked) {
+      const projectsLink = document.getElementById('nav-projects-link');
+      const messagesLink = document.getElementById('nav-messages-link');
+      const note = document.getElementById('locked-pages-note');
+
+      [projectsLink, messagesLink].forEach(link => {
+        if (!link) return;
+        if (isLocked) {
+          link.setAttribute('aria-disabled', 'true');
+          link.classList.add('pointer-events-none', 'opacity-50', 'cursor-not-allowed');
+          link.title = 'Join a community first';
+        } else {
+          link.removeAttribute('aria-disabled');
+          link.classList.remove('pointer-events-none', 'opacity-50', 'cursor-not-allowed');
+          link.title = '';
+        }
+      });
+
+      if (note) {
+        note.classList.toggle('hidden', !isLocked);
+      }
     }
 
     function renderCommunityCards() {
@@ -201,6 +228,7 @@
         if (!res.ok) throw new Error(data.error || 'Failed to switch community');
 
         state.activeCommunityId = companyId;
+        setCommunityLockedState(!state.activeCommunityId);
 
         const user = getCurrentUser();
         setCurrentUser({ ...user, activeCommunityId: companyId, companyId });
@@ -330,6 +358,7 @@
         if (!res.ok) throw new Error(data.error || 'Failed to join community');
 
         document.getElementById('access-code-input').value = '';
+        setCommunityLockedState(false);
         await loadHub();
       } catch (error) {
         showError(error.message || 'Failed to join community');

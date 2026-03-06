@@ -4842,8 +4842,17 @@ app.post('/api/companies/invitations/:token/accept', authMiddleware, async (req,
 // Get company members
 app.get('/api/companies/:id/members', authMiddleware, async (req, res) => {
   try {
+    const requester = await User.findById(req.user._id).select('companyId activeCommunityId communityIds');
+    const allowedCommunityIds = new Set((requester?.communityIds || []).map(id => id.toString()));
+    if (requester?.companyId) allowedCommunityIds.add(requester.companyId.toString());
+    if (requester?.activeCommunityId) allowedCommunityIds.add(requester.activeCommunityId.toString());
+
+    if (!allowedCommunityIds.has(req.params.id)) {
+      return res.status(403).json({ error: 'You are not a member of this community' });
+    }
+
     const company = await Company.findById(req.params.id)
-      .populate('members', 'firstName lastName email avatar title companyRole');
+      .populate('members', 'firstName lastName email avatar title companyRole role company');
     
     if (!company) return res.status(404).json({ error: 'Company not found' });
     

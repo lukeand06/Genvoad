@@ -321,6 +321,10 @@
             throw new Error('Not authenticated');
         }
 
+        if (!requireCommunityMembership('/community-hub.html')) {
+            throw new Error('Community membership required');
+        }
+
         const user = getCurrentUser();
         document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
         

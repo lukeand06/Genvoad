@@ -330,6 +330,10 @@
             throw new Error('Not authenticated');
         }
 
+        if (!requireCommunityMembership('/community-hub.html')) {
+            throw new Error('Community membership required');
+        }
+
         const currentUser = getCurrentUser();
         const userAvatarEl = document.getElementById('user-avatar');
         if (userAvatarEl) {

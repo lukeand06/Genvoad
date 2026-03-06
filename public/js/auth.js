@@ -173,6 +173,42 @@ function getPostAuthRoute(user = null) {
   return '/community-hub.html';
 }
 
+function getPrimaryCommunityId(user = null) {
+  const profile = user || getCurrentUser();
+  if (!profile) return null;
+
+  if (profile.activeCommunityId) return profile.activeCommunityId;
+  if (profile.companyId) return profile.companyId;
+  if (Array.isArray(profile.communityIds) && profile.communityIds.length > 0) {
+    return profile.communityIds[0];
+  }
+  return null;
+}
+
+function hasJoinedCommunity(user = null) {
+  return !!getPrimaryCommunityId(user);
+}
+
+function requireCommunityMembership(redirectTo = '/community-hub.html') {
+  const profile = getCurrentUser();
+  if (!profile) {
+    window.location.href = '/login.html';
+    return false;
+  }
+
+  if (!profile.onboardingCompleted) {
+    window.location.href = '/onboarding-profile.html';
+    return false;
+  }
+
+  if (!hasJoinedCommunity(profile)) {
+    window.location.href = `${redirectTo}${redirectTo.includes('?') ? '&' : '?'}join-required=true`;
+    return false;
+  }
+
+  return true;
+}
+
 function redirectIfAuth() {
   if (isAuthenticated()) {
     window.location.href = getPostAuthRoute();
