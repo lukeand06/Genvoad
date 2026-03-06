@@ -4636,8 +4636,10 @@ app.post('/api/admin/companies/:id/reject', authMiddleware, async (req, res) => 
 app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
   try {
     const { email, role, message } = req.body;
+    const normalizedEmail = (email || '').toString().trim().toLowerCase();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     
-    if (!email || !['admin', 'member'].includes(role)) {
+    if (!normalizedEmail || !emailPattern.test(normalizedEmail) || !['admin', 'member'].includes(role)) {
       return res.status(400).json({ error: 'Invalid email or role' });
     }
 
@@ -4650,14 +4652,18 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
     }
 
     // Check if already a member
-    const existingUser = await User.findOne({ email, companyId: company._id });
-    if (existingUser) {
+    const registeredUser = await User.findOne({ email: normalizedEmail, deletedAt: { $exists: false } }).select('_id firstName lastName');
+    const isExistingMember = registeredUser
+      ? company.members.some(memberId => memberId.toString() === registeredUser._id.toString())
+      : false;
+
+    if (isExistingMember) {
       return res.status(400).json({ error: 'User is already a company member' });
     }
 
     // Check if already invited
     const existingInvite = company.pendingInvitations.find(
-      inv => inv.email === email && inv.status === 'pending'
+      inv => inv.email === normalizedEmail && inv.status === 'pending'
     );
     if (existingInvite) {
       return res.status(400).json({ error: 'Invitation already sent to this email' });
@@ -4669,7 +4675,7 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
 
     // Add invitation
     company.pendingInvitations.push({
-      email,
+      email: normalizedEmail,
       role,
       token,
       message: message || null,
@@ -4682,39 +4688,79 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
     await company.save();
 
     // Send invitation email
-    const inviteUrl = `${process.env.APP_URL || 'https://www.genovad.com'}/company-invite?token=${token}`;
+    const appUrl = process.env.APP_URL || 'https://www.genovad.com';
+    const inviteUrl = `${appUrl}/company-invite.html?token=${token}`;
+    const registerUrl = `${appUrl}/signup.html`;
     const inviter = await User.findById(req.user._id);
-    
-    await sendEmail(
-      email,
-      `You're invited to join ${company.name} on Genovad`,
-      `
-      <!DOCTYPE html>
-      <html>
-      <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2>Join ${company.name} on Genovad</h2>
-          <p><strong>${inviter.firstName} ${inviter.lastName}</strong> has invited you to join <strong>${company.name}</strong> as a ${role}.</p>
-          
-          ${company.verified ? '<p style="color: #059669;">✓ This is a verified company</p>' : ''}
-          
-          ${message ? `<div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1a1a1a;"><p style="margin: 0;"><strong>Message from ${inviter.firstName}:</strong></p><p style="margin: 10px 0 0 0;">${message}</p></div>` : ''}
-          
-          <div style="margin: 30px 0;">
-            <a href="${inviteUrl}" style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-              Accept Invitation
-            </a>
-          </div>
-          
-          <p style="color: #666; font-size: 14px;">This invitation expires in 7 days.</p>
-          <p style="color: #666; font-size: 14px;">If you don't have a Genovad account, you'll be able to create one.</p>
-        </div>
-      </body>
-      </html>
-      `
-    );
 
-    res.json({ success: true, message: 'Invitation sent', invitation: { email, role, token } });
+    if (registeredUser) {
+      await sendEmail(
+        normalizedEmail,
+        `You're invited to join ${company.name} on Genovad`,
+        `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2>Join ${company.name} on Genovad</h2>
+            <p><strong>${inviter.firstName} ${inviter.lastName}</strong> invited you to join <strong>${company.name}</strong> as a ${role}.</p>
+            
+            ${company.verified ? '<p style="color: #059669;">✓ This is a verified community</p>' : ''}
+            
+            ${message ? `<div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1a1a1a;"><p style="margin: 0;"><strong>Message from ${inviter.firstName}:</strong></p><p style="margin: 10px 0 0 0;">${message}</p></div>` : ''}
+            
+            <div style="margin: 30px 0;">
+              <a href="${inviteUrl}" style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                Accept Invitation
+              </a>
+            </div>
+
+            <p style="color: #666; font-size: 14px;">This invitation expires in 7 days.</p>
+          </div>
+        </body>
+        </html>
+        `
+      );
+    } else {
+      await sendEmail(
+        normalizedEmail,
+        `You're invited to join ${company.name} on Genovad - create your account`,
+        `
+        <!DOCTYPE html>
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+          <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+            <h2>You're invited to join ${company.name}</h2>
+            <p><strong>${inviter.firstName} ${inviter.lastName}</strong> invited you to join <strong>${company.name}</strong> as a ${role}.</p>
+
+            ${message ? `<div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1a1a1a;"><p style="margin: 0;"><strong>Message from ${inviter.firstName}:</strong></p><p style="margin: 10px 0 0 0;">${message}</p></div>` : ''}
+
+            <p style="margin-top: 20px;">You don't have a Genovad account yet. First, create an account, then use your invitation link to join this community.</p>
+
+            <div style="margin: 30px 0; display: flex; gap: 12px; flex-wrap: wrap;">
+              <a href="${registerUrl}" style="display: inline-block; background: #1a1a1a; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">
+                Create Account
+              </a>
+              <a href="${inviteUrl}" style="display: inline-block; background: #f3f4f6; color: #111827; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; border: 1px solid #d1d5db;">
+                Invitation Link
+              </a>
+            </div>
+
+            <p style="color: #666; font-size: 14px;">This invitation expires in 7 days.</p>
+            <p style="color: #666; font-size: 14px;">All email providers are supported (Gmail, Outlook, Yahoo, custom domains, and more).</p>
+          </div>
+        </body>
+        </html>
+        `
+      );
+    }
+
+    res.json({
+      success: true,
+      message: 'Invitation sent',
+      invitation: { email: normalizedEmail, role, token },
+      recipientStatus: registeredUser ? 'registered' : 'unregistered'
+    });
   } catch (error) {
     console.error('Invite member error:', error);
     res.status(500).json({ error: 'Failed to send invitation' });

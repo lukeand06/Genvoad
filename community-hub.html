@@ -55,7 +55,29 @@
         <div class="md:w-96">
           <label id="active-community-label" class="block text-sm font-medium text-gray-700 mb-1">Active community</label>
           <select id="active-community-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></select>
-          <button id="create-community-btn" class="hidden w-full px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Create a community</button>
+
+          <div id="create-community-card" class="hidden mt-2 border border-gray-200 rounded-xl p-4 bg-gray-50 space-y-3">
+            <h3 class="text-sm font-semibold text-gray-900">Create a community</h3>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Community name</label>
+              <input id="community-name-input" type="text" maxlength="100" placeholder="e.g. Atlanta Builders Circle" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Description</label>
+              <textarea id="community-description-input" rows="3" maxlength="500" placeholder="What is this community about?" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg resize-none"></textarea>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-700 mb-1">Invite emails</label>
+              <textarea id="community-invites-input" rows="4" placeholder="one@email.com, two@email.com" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg resize-none"></textarea>
+              <p class="text-xs text-gray-500 mt-1">Use commas or new lines. Registered users get direct invites. Unregistered users get a register + join email.</p>
+            </div>
+
+            <button id="create-community-submit" class="w-full px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Create community & send invites</button>
+            <div id="create-community-feedback" class="hidden text-xs rounded-lg px-3 py-2"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -122,7 +144,7 @@
 
     document.getElementById('join-code-btn').addEventListener('click', joinByCode);
     document.getElementById('active-community-select').addEventListener('change', switchActiveCommunity);
-    document.getElementById('create-community-btn').addEventListener('click', createCommunity);
+    document.getElementById('create-community-submit').addEventListener('click', createCommunity);
     document.getElementById('people-search').addEventListener('input', renderMembers);
     document.getElementById('people-role-filter').addEventListener('change', renderMembers);
 
@@ -165,7 +187,7 @@
     function renderCommunitySelect() {
       const label = document.getElementById('active-community-label');
       const select = document.getElementById('active-community-select');
-      const createBtn = document.getElementById('create-community-btn');
+      const createCard = document.getElementById('create-community-card');
 
       if (!state.communities.length) {
         if (label) label.textContent = 'Create your first community';
@@ -173,13 +195,13 @@
           select.innerHTML = '';
           select.classList.add('hidden');
         }
-        if (createBtn) createBtn.classList.remove('hidden');
+        if (createCard) createCard.classList.remove('hidden');
         return;
       }
 
       if (label) label.textContent = 'Active community';
       if (select) select.classList.remove('hidden');
-      if (createBtn) createBtn.classList.add('hidden');
+      if (createCard) createCard.classList.add('hidden');
 
       select.innerHTML = state.communities.map(c => `
         <option value="${c._id}" ${c._id === state.activeCommunityId ? 'selected' : ''}>${c.name}</option>
@@ -373,17 +395,53 @@
       }
     }
 
-    async function createCommunity() {
-      const name = (window.prompt('Community name') || '').trim();
-      if (!name) return;
+    function parseInviteEmails(rawText) {
+      if (!rawText) return [];
 
-      const createBtn = document.getElementById('create-community-btn');
-      const originalBtnText = createBtn ? createBtn.textContent : '';
+      const candidates = rawText
+        .split(/[\n,;]+/)
+        .map(item => item.trim().toLowerCase())
+        .filter(Boolean);
+
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      const unique = new Set();
+
+      candidates.forEach(email => {
+        if (emailPattern.test(email)) {
+          unique.add(email);
+        }
+      });
+
+      return Array.from(unique);
+    }
+
+    async function createCommunity() {
+      const nameInput = document.getElementById('community-name-input');
+      const descriptionInput = document.getElementById('community-description-input');
+      const invitesInput = document.getElementById('community-invites-input');
+      const submitBtn = document.getElementById('create-community-submit');
+      const feedback = document.getElementById('create-community-feedback');
+
+      const name = (nameInput?.value || '').trim();
+      const description = (descriptionInput?.value || '').trim();
+      const inviteEmails = parseInviteEmails(invitesInput?.value || '');
+
+      if (!name) {
+        showError('Community name is required');
+        return;
+      }
+
+      const originalBtnText = submitBtn ? submitBtn.textContent : '';
 
       try {
-        if (createBtn) {
-          createBtn.disabled = true;
-          createBtn.textContent = 'Creating...';
+        if (submitBtn) {
+          submitBtn.disabled = true;
+          submitBtn.textContent = 'Creating...';
+        }
+
+        if (feedback) {
+          feedback.classList.add('hidden');
+          feedback.textContent = '';
         }
 
         const res = await authFetch('/api/companies', {
@@ -394,20 +452,76 @@
             legalName: name,
             type: 'other',
             size: '1-10',
-            description: 'Community created from Community Hub'
+            description: description || 'Community created from Community Hub'
           })
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to create community');
 
+        let inviteSuccessCount = 0;
+        let inviteFailed = [];
+
+        if (inviteEmails.length > 0 && data?.company?._id) {
+          const inviteResults = await Promise.allSettled(
+            inviteEmails.map(email => authFetch(`/api/companies/${data.company._id}/invite`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, role: 'member' })
+            }))
+          );
+
+          for (let i = 0; i < inviteResults.length; i += 1) {
+            const result = inviteResults[i];
+            const email = inviteEmails[i];
+
+            if (result.status === 'fulfilled') {
+              const resp = result.value;
+              if (resp.ok) {
+                inviteSuccessCount += 1;
+              } else {
+                let errMsg = 'Failed to invite';
+                try {
+                  const errData = await resp.json();
+                  errMsg = errData.error || errMsg;
+                } catch (_) {}
+                inviteFailed.push(`${email} (${errMsg})`);
+              }
+            } else {
+              inviteFailed.push(`${email} (Request failed)`);
+            }
+          }
+        }
+
+        if (feedback) {
+          const summary = inviteEmails.length > 0
+            ? `Community created. ${inviteSuccessCount}/${inviteEmails.length} invites sent${inviteFailed.length ? `. Failed: ${inviteFailed.join(', ')}` : ''}`
+            : 'Community created successfully.';
+
+          feedback.textContent = summary;
+          feedback.classList.remove('hidden');
+          feedback.classList.remove('bg-red-50', 'text-red-700', 'border-red-200');
+          feedback.classList.add('bg-green-50', 'text-green-700', 'border', 'border-green-200');
+        }
+
+        if (nameInput) nameInput.value = '';
+        if (descriptionInput) descriptionInput.value = '';
+        if (invitesInput) invitesInput.value = '';
+
         await loadHub();
       } catch (error) {
         showError(error.message || 'Failed to create community');
+
+        if (feedback) {
+          feedback.textContent = error.message || 'Failed to create community';
+          feedback.classList.remove('hidden');
+          feedback.classList.remove('bg-green-50', 'text-green-700', 'border-green-200');
+          feedback.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
+        }
       } finally {
-        if (createBtn) {
-          createBtn.disabled = false;
-          createBtn.textContent = originalBtnText || 'Create a community';
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalBtnText || 'Create community & send invites';
         }
       }
     }
