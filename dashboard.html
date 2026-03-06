@@ -42,6 +42,15 @@
         .mobile-bottom-nav .bottom-nav-link {
             min-height: 0 !important;
             display: block !important;
+            white-space: nowrap;
+        }
+
+        /* Keep bottom nav horizontal on mobile (override global mobile grid stack rules) */
+        .mobile-bottom-nav .bottom-nav-row {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center;
+            justify-content: space-between;
         }
     </style>
 </head>
@@ -415,10 +424,10 @@
     <!-- Mobile Floating Community Nav -->
     <div class="mobile-bottom-nav md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
         <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
-            <div class="grid grid-cols-3 gap-1 text-center text-xs font-medium">
-                <a href="/dashboard.html" class="bottom-nav-link px-2 py-2 rounded-xl bg-gray-900 text-white">Community Feed</a>
-                <a href="/network.html" class="bottom-nav-link px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">People</a>
-                <a href="/messages.html" class="bottom-nav-link px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
+            <div class="bottom-nav-row gap-1 text-center text-xs font-medium">
+                <a href="/dashboard.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">Community Feed</a>
+                <a href="/network.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">People</a>
+                <a href="/messages.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
             </div>
         </div>
     </div>
