@@ -20,8 +20,9 @@
           </a>
           <div class="hidden md:flex gap-1">
             <a href="/community-hub.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Community</a>
-            <!-- Community tools (Projects/Messenger) intentionally removed from main nav -->
-            <!-- Browse features intentionally disabled for the new community-first flow -->
+            <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Feed</a>
+            <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">People</a>
+            <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Messages</a>
           </div>
         </div>
 
@@ -36,17 +37,6 @@
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <div id="error-message" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded"></div>
-
-    <section id="community-tools" class="hidden bg-white border border-gray-200 rounded-xl p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-3">Community tools</h2>
-      <p class="text-sm text-gray-600 mb-4">Use these tools after joining a community.</p>
-      <div class="flex flex-wrap gap-3">
-        <a href="/company.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Community</a>
-        <a href="/dashboard.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Feed</a>
-        <a href="/network.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">People</a>
-        <a href="/messages.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Messages</a>
-      </div>
-    </section>
 
     <section class="bg-white border border-gray-200 rounded-xl p-6">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -88,23 +78,6 @@
       </div>
     </section>
 
-    <section id="people-section" class="hidden bg-white border border-gray-200 rounded-xl p-6">
-      <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-        <h2 class="text-lg font-semibold text-gray-900">People in community</h2>
-        <div class="flex gap-2">
-          <input id="people-search" type="text" placeholder="Filter by name/company" class="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-          <select id="people-role-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-            <option value="all">All roles</option>
-            <option value="owner">Owners</option>
-            <option value="vendor">Vendors</option>
-          </select>
-        </div>
-      </div>
-      <div id="people-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <p class="text-gray-500">Select a community to load members.</p>
-      </div>
-    </section>
-
     <section class="bg-white border border-gray-200 rounded-xl p-6">
       <h2 class="text-lg font-semibold text-gray-900 mb-3">Your communities</h2>
       <div id="community-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -121,16 +94,13 @@
 
     const state = {
       communities: [],
-      activeCommunityId: null,
-      members: []
+      activeCommunityId: null
     };
 
     document.getElementById('logout-btn').addEventListener('click', logout);
 
     document.getElementById('join-code-btn').addEventListener('click', joinByCode);
     document.getElementById('active-community-select').addEventListener('change', switchActiveCommunity);
-    document.getElementById('people-search').addEventListener('input', renderMembers);
-    document.getElementById('people-role-filter').addEventListener('change', renderMembers);
 
     async function loadHub() {
       const user = getCurrentUser();
@@ -153,7 +123,6 @@
 
         state.communities = data.communities || [];
         state.activeCommunityId = data.activeCommunityId || state.communities[0]?._id || null;
-        setCommunityLockedState(!state.activeCommunityId);
 
         if (state.activeCommunityId) {
           const user = getCurrentUser();
@@ -164,12 +133,6 @@
 
         renderCommunitySelect();
         renderCommunityCards();
-
-        if (state.activeCommunityId) {
-          await loadMembers(state.activeCommunityId);
-        } else {
-          document.getElementById('people-list').innerHTML = '<p class="text-gray-500">Join or create a community to see members.</p>';
-        }
       } catch (error) {
         showError(error.message || 'Failed to load communities');
       }
@@ -197,19 +160,6 @@
       select.innerHTML = state.communities.map(c => `
         <option value="${c._id}" ${c._id === state.activeCommunityId ? 'selected' : ''}>${c.name}</option>
       `).join('');
-    }
-
-    function setCommunityLockedState(isLocked) {
-      const communityTools = document.getElementById('community-tools');
-      const peopleSection = document.getElementById('people-section');
-
-      if (communityTools) {
-        communityTools.classList.toggle('hidden', isLocked);
-      }
-
-      if (peopleSection) {
-        peopleSection.classList.toggle('hidden', isLocked);
-      }
     }
 
     function renderCommunityCards() {
@@ -250,69 +200,12 @@
         if (!res.ok) throw new Error(data.error || 'Failed to switch community');
 
         state.activeCommunityId = companyId;
-        setCommunityLockedState(!state.activeCommunityId);
 
         const user = getCurrentUser();
         setCurrentUser({ ...user, activeCommunityId: companyId, companyId });
-
-        await loadMembers(companyId);
       } catch (error) {
         showError(error.message || 'Failed to switch community');
       }
-    }
-
-    async function loadMembers(companyId) {
-      try {
-        const res = await authFetch(`/api/companies/${companyId}/members`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to load members');
-
-        state.members = data.members || [];
-        renderMembers();
-      } catch (error) {
-        showError(error.message || 'Failed to load members');
-      }
-    }
-
-    function renderMembers() {
-      const search = document.getElementById('people-search').value.trim().toLowerCase();
-      const role = document.getElementById('people-role-filter').value;
-      const host = document.getElementById('people-list');
-
-      let list = [...state.members];
-
-      if (role !== 'all') {
-        list = list.filter(member => (member.role || '').toLowerCase() === role);
-      }
-
-      if (search) {
-        list = list.filter(member => {
-          const fullName = `${member.firstName || ''} ${member.lastName || ''}`.toLowerCase();
-          const company = (member.company || '').toLowerCase();
-          return fullName.includes(search) || company.includes(search);
-        });
-      }
-
-      if (!list.length) {
-        host.innerHTML = '<p class="text-gray-500">No members match your filters.</p>';
-        return;
-      }
-
-      host.innerHTML = list.map(member => `
-        <article class="border border-gray-200 rounded-lg p-4">
-          <div class="flex items-center gap-3">
-            <div>${getAvatarHTML(member, 'w-10 h-10')}</div>
-            <div>
-              <h3 class="font-semibold text-gray-900">${member.firstName || ''} ${member.lastName || ''}</h3>
-              <p class="text-sm text-gray-600">${member.company || 'No company set'}</p>
-            </div>
-          </div>
-          <div class="mt-3 text-xs text-gray-500 flex gap-2">
-            <span class="px-2 py-1 bg-gray-100 rounded-full">${(member.role || 'member').toUpperCase()}</span>
-            <span class="px-2 py-1 bg-gray-100 rounded-full">${member.companyRole || 'member'}</span>
-          </div>
-        </article>
-      `).join('');
     }
 
     async function loadInviteInbox() {
@@ -380,7 +273,6 @@
         if (!res.ok) throw new Error(data.error || 'Failed to join community');
 
         document.getElementById('access-code-input').value = '';
-        setCommunityLockedState(false);
         window.location.href = '/dashboard.html';
       } catch (error) {
         showError(error.message || 'Failed to join community');
