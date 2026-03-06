@@ -20,8 +20,7 @@
           </a>
           <div class="hidden md:flex gap-1">
             <a href="/community-hub.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Community</a>
-            <a id="nav-projects-link" href="/projects.html" class="hidden px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Projects</a>
-            <a id="nav-messages-link" href="/messages.html" class="hidden px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-lg">Messenger</a>
+            <!-- Community tools (Projects/Messenger) intentionally removed from main nav -->
             <!-- Browse features intentionally disabled for the new community-first flow -->
           </div>
         </div>
@@ -37,9 +36,15 @@
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
     <div id="error-message" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded"></div>
-    <div id="locked-pages-note" class="hidden bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded">
-      Join a community to unlock Messenger and Projects.
-    </div>
+
+    <section id="community-tools" class="hidden bg-white border border-gray-200 rounded-xl p-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-3">Community tools</h2>
+      <p class="text-sm text-gray-600 mb-4">Use these tools after joining a community.</p>
+      <div class="flex flex-wrap gap-3">
+        <a href="/projects.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Projects</a>
+        <a href="/messages.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Messenger</a>
+      </div>
+    </section>
 
     <section class="bg-white border border-gray-200 rounded-xl p-6">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -48,8 +53,9 @@
           <p class="text-gray-600 mt-1">Join a community, review invitations, and see your people + projects in one place.</p>
         </div>
         <div class="md:w-96">
-          <label class="block text-sm font-medium text-gray-700 mb-1">Active community</label>
+          <label id="active-community-label" class="block text-sm font-medium text-gray-700 mb-1">Active community</label>
           <select id="active-community-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></select>
+          <button id="create-community-btn" class="hidden w-full px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Create a community</button>
         </div>
       </div>
     </section>
@@ -116,6 +122,7 @@
 
     document.getElementById('join-code-btn').addEventListener('click', joinByCode);
     document.getElementById('active-community-select').addEventListener('change', switchActiveCommunity);
+    document.getElementById('create-community-btn').addEventListener('click', createCommunity);
     document.getElementById('people-search').addEventListener('input', renderMembers);
     document.getElementById('people-role-filter').addEventListener('change', renderMembers);
 
@@ -156,12 +163,23 @@
     }
 
     function renderCommunitySelect() {
+      const label = document.getElementById('active-community-label');
       const select = document.getElementById('active-community-select');
+      const createBtn = document.getElementById('create-community-btn');
 
       if (!state.communities.length) {
-        select.innerHTML = '<option value="">No communities yet</option>';
+        if (label) label.textContent = 'Create your first community';
+        if (select) {
+          select.innerHTML = '';
+          select.classList.add('hidden');
+        }
+        if (createBtn) createBtn.classList.remove('hidden');
         return;
       }
+
+      if (label) label.textContent = 'Active community';
+      if (select) select.classList.remove('hidden');
+      if (createBtn) createBtn.classList.add('hidden');
 
       select.innerHTML = state.communities.map(c => `
         <option value="${c._id}" ${c._id === state.activeCommunityId ? 'selected' : ''}>${c.name}</option>
@@ -169,22 +187,11 @@
     }
 
     function setCommunityLockedState(isLocked) {
-      const projectsLink = document.getElementById('nav-projects-link');
-      const messagesLink = document.getElementById('nav-messages-link');
-      const note = document.getElementById('locked-pages-note');
+      const communityTools = document.getElementById('community-tools');
       const peopleSection = document.getElementById('people-section');
 
-      [projectsLink, messagesLink].forEach(link => {
-        if (!link) return;
-        if (isLocked) {
-          link.classList.add('hidden');
-        } else {
-          link.classList.remove('hidden');
-        }
-      });
-
-      if (note) {
-        note.classList.toggle('hidden', !isLocked);
+      if (communityTools) {
+        communityTools.classList.toggle('hidden', isLocked);
       }
 
       if (peopleSection) {
@@ -363,6 +370,45 @@
         await loadHub();
       } catch (error) {
         showError(error.message || 'Failed to join community');
+      }
+    }
+
+    async function createCommunity() {
+      const name = (window.prompt('Community name') || '').trim();
+      if (!name) return;
+
+      const createBtn = document.getElementById('create-community-btn');
+      const originalBtnText = createBtn ? createBtn.textContent : '';
+
+      try {
+        if (createBtn) {
+          createBtn.disabled = true;
+          createBtn.textContent = 'Creating...';
+        }
+
+        const res = await authFetch('/api/companies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name,
+            legalName: name,
+            type: 'other',
+            size: '1-10',
+            description: 'Community created from Community Hub'
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create community');
+
+        await loadHub();
+      } catch (error) {
+        showError(error.message || 'Failed to create community');
+      } finally {
+        if (createBtn) {
+          createBtn.disabled = false;
+          createBtn.textContent = originalBtnText || 'Create a community';
+        }
       }
     }
 
