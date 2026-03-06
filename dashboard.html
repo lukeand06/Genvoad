@@ -229,12 +229,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Welcome Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Welcome back, <span id="user-name"></span>!</h1>
-            <p class="text-gray-600 mt-1" id="dashboard-subtitle">Here's what's happening with your projects</p>
-        </div>
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
         <!-- Stats Grid intentionally disabled on feed page -->
         <!-- <div class="mb-8" id="stats-grid">
@@ -358,7 +353,7 @@
         </div> -->
 
         <!-- Centered Feed Layout -->
-        <div class="grid grid-cols-1 gap-8 max-w-4xl mx-auto">
+        <div class="grid grid-cols-1 gap-6 max-w-4xl mx-auto">
             <!-- Activity Feed (LinkedIn-style) -->
             <div id="activity-feed-section" class="w-full">
                 <!-- Create Post Card -->
@@ -513,7 +508,7 @@
                 -->
             </div>
         </div>
-    </div>
+    </main>
 
     <!-- Modals -->
     <!-- Active Projects Modal intentionally disabled on feed page -->
@@ -627,7 +622,8 @@
 
         function renderUserHeader() {
             if (!user) return;
-            document.getElementById('user-name').textContent = user.firstName || '';
+            const userNameEl = document.getElementById('user-name');
+            if (userNameEl) userNameEl.textContent = user.firstName || '';
             document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
             document.getElementById('current-role').textContent = getUserRole();
         }
@@ -713,7 +709,7 @@
         // Role-based UI customization
         const isVendor = getUserRole() === 'vendor';
         const subtitle = document.getElementById('dashboard-subtitle');
-        subtitle.textContent = 'Here is what is happening in your community feed';
+        if (subtitle) subtitle.textContent = 'Here is what is happening in your community feed';
 
         // User menu toggle
         document.getElementById('user-menu-btn').addEventListener('click', () => {
