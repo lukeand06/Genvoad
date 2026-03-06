@@ -392,11 +392,6 @@
                     <div class="p-6 border-b border-gray-200">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold text-gray-900">Your Feed</h2>
-                            <button onclick="loadFeed()" class="text-sm text-gray-600 hover:text-gray-900" title="Refresh feed">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                                </svg>
-                            </button>
                         </div>
                         <!-- Feed Filters -->
                         <div class="flex gap-2 flex-wrap">
@@ -1142,21 +1137,27 @@
 
                 const data = await res.json();
                 const feedContainer = document.getElementById('activity-feed');
+                const communityActivities = await loadCommunityActivityNotifications();
+                const welcomeCard = renderWelcomeFeedCard();
+                const activityCards = communityActivities.map(notif => renderCommunityActivityCard(notif)).join('');
+                const postCards = (data.posts || []).map(post => renderPostCard(post)).join('');
                 
                 if (!data.posts || data.posts.length === 0) {
                     feedContainer.innerHTML = `
+                        ${welcomeCard}
+                        ${activityCards}
                         <div class="p-12 text-center text-gray-500">
                             <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v11l4-4"/>
                             </svg>
-                            <p class="text-sm">No posts yet. Follow partners or create your first post!</p>
+                            <p class="text-sm">No posts yet. Be the first to share something with your community.</p>
                         </div>
                     `;
                     document.getElementById('load-more-container').classList.add('hidden');
                     return;
                 }
 
-                feedContainer.innerHTML = data.posts.map(post => renderPostCard(post)).join('');
+                feedContainer.innerHTML = `${welcomeCard}${activityCards}${postCards}`;
                 feedPage = 1;
 
                 // Track views for each post
@@ -1184,6 +1185,58 @@
             } finally {
                 isLoadingFeed = false;
             }
+        }
+
+        async function loadCommunityActivityNotifications() {
+            try {
+                const res = await authFetch('/api/notifications?limit=10');
+                if (!res.ok) return [];
+                const data = await res.json();
+                const notifications = Array.isArray(data.notifications) ? data.notifications : [];
+                return notifications.filter(n => [
+                    'community_member_referred',
+                    'community_member_joined',
+                    'community_member_left'
+                ].includes(n.type)).slice(0, 5);
+            } catch (error) {
+                console.error('Community activity notifications error:', error);
+                return [];
+            }
+        }
+
+        function renderWelcomeFeedCard() {
+            return `
+                <div class="p-6 bg-blue-50 border-l-4 border-blue-400">
+                    <h3 class="text-sm font-semibold text-blue-900">Welcome to your Community Feed 👋</h3>
+                    <p class="text-sm text-blue-800 mt-1">This space keeps everyone aligned with shared updates, new posts, and community activity like referrals, joins, and leaves.</p>
+                </div>
+            `;
+        }
+
+        function renderCommunityActivityCard(notif) {
+            let message = 'Community activity update';
+            let badgeClass = 'bg-gray-100 text-gray-700';
+
+            if (notif.type === 'community_member_referred') {
+                message = `${notif.data?.userName || 'Someone'} referred ${notif.data?.invitedUserName || 'a new member'}`;
+                badgeClass = 'bg-indigo-100 text-indigo-700';
+            } else if (notif.type === 'community_member_joined') {
+                message = `${notif.data?.userName || 'A member'} joined the community`;
+                badgeClass = 'bg-green-100 text-green-700';
+            } else if (notif.type === 'community_member_left') {
+                message = `${notif.data?.userName || 'A member'} left the community`;
+                badgeClass = 'bg-rose-100 text-rose-700';
+            }
+
+            return `
+                <div class="p-6 bg-white">
+                    <div class="flex items-center justify-between gap-3 mb-2">
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}">Community activity</span>
+                        <span class="text-xs text-gray-500">${getTimeAgo(new Date(notif.createdAt))}</span>
+                    </div>
+                    <p class="text-sm text-gray-800">${message}</p>
+                </div>
+            `;
         }
 
         async function loadMorePosts() {
