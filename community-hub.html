@@ -249,13 +249,13 @@
               <p class="font-medium text-gray-900">${inv.company.name}</p>
               <p class="text-xs text-gray-500">Role: ${inv.role} • Expires ${new Date(inv.expiresAt).toLocaleDateString()}</p>
             </div>
-            <button data-token="${inv.token}" class="accept-invite-btn px-3 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800">Accept</button>
+            <button data-token="${inv.token}" data-company-name="${inv.company.name || ''}" class="accept-invite-btn px-3 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800">Accept</button>
           </div>
         `).join('');
 
         document.querySelectorAll('.accept-invite-btn').forEach(btn => {
           btn.addEventListener('click', async () => {
-            await acceptInvitation(btn.dataset.token);
+            await acceptInvitation(btn.dataset.token, btn.dataset.companyName || '');
           });
         });
       } catch (error) {
@@ -263,13 +263,14 @@
       }
     }
 
-    async function acceptInvitation(token) {
+    async function acceptInvitation(token, companyName = '') {
       try {
         const res = await authFetch(`/api/companies/invitations/${token}/accept`, { method: 'POST' });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to accept invitation');
 
-        window.location.href = '/dashboard.html';
+        const encodedName = encodeURIComponent(companyName || data?.company?.name || '');
+        window.location.href = `/dashboard.html?joined=1${encodedName ? `&community=${encodedName}` : ''}`;
       } catch (error) {
         showError(error.message || 'Failed to accept invitation');
       }
@@ -293,7 +294,9 @@
         if (!res.ok) throw new Error(data.error || 'Failed to join community');
 
         document.getElementById('access-code-input').value = '';
-        window.location.href = '/dashboard.html';
+        const joinedName = data?.community?.name || data?.company?.name || '';
+        const encodedName = encodeURIComponent(joinedName);
+        window.location.href = `/dashboard.html?joined=1${encodedName ? `&community=${encodedName}` : ''}`;
       } catch (error) {
         showError(error.message || 'Failed to join community');
       }

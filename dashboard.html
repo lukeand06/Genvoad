@@ -216,6 +216,18 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8 space-y-6">
 
+        <!-- Community Summary (compact) -->
+        <section id="community-summary-card" class="hidden bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-5">
+            <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0">
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Community</p>
+                    <h1 id="community-name" class="text-lg sm:text-xl font-semibold text-gray-900 truncate">Your community</h1>
+                    <p id="community-meta" class="text-sm text-gray-600 mt-1"></p>
+                    <p id="community-summary" class="text-sm text-gray-700 mt-2"></p>
+                </div>
+            </div>
+        </section>
+
         <!-- Stats Grid intentionally disabled on feed page -->
         <!-- <div class="mb-8" id="stats-grid">
             <!-- For Owners -->
@@ -504,6 +516,10 @@
         }
 
         let user = getCurrentUser();
+        let currentCommunity = null;
+        const joinParams = new URLSearchParams(window.location.search);
+        const joinedFromCommunity = joinParams.get('joined') === '1';
+        const joinedCommunityName = joinParams.get('community') ? decodeURIComponent(joinParams.get('community')) : '';
 
         async function ensureUser() {
             if (user) return user;
@@ -527,6 +543,71 @@
             if (userNameEl) userNameEl.textContent = user.firstName || '';
             document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
             document.getElementById('current-role').textContent = getUserRole();
+        }
+
+        function getActiveCommunityId() {
+            const current = getCurrentUser() || {};
+            if (current.activeCommunityId) return String(current.activeCommunityId);
+            if (current.companyId) return String(current.companyId);
+            if (typeof getPrimaryCommunityId === 'function') {
+                const primary = getPrimaryCommunityId();
+                if (primary) return String(primary);
+            }
+            return '';
+        }
+
+        function getFeedWelcomeDismissKey() {
+            const communityId = currentCommunity?._id || getActiveCommunityId() || 'global';
+            return `community_feed_welcome_hidden_${communityId}`;
+        }
+
+        function isFeedWelcomeDismissed() {
+            try {
+                return localStorage.getItem(getFeedWelcomeDismissKey()) === '1';
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function dismissFeedWelcome(event) {
+            if (event) event.stopPropagation();
+            try {
+                localStorage.setItem(getFeedWelcomeDismissKey(), '1');
+            } catch (_) {
+                // ignore storage errors
+            }
+            loadFeed();
+        }
+
+        async function loadCommunitySummary() {
+            try {
+                const res = await authFetch('/api/companies/my/company');
+                if (!res.ok) return;
+                const data = await res.json();
+                const company = data?.company;
+                if (!company) return;
+
+                currentCommunity = company;
+
+                const card = document.getElementById('community-summary-card');
+                const nameEl = document.getElementById('community-name');
+                const metaEl = document.getElementById('community-meta');
+                const summaryEl = document.getElementById('community-summary');
+
+                if (nameEl) nameEl.textContent = company.name || 'Your community';
+
+                const typeLabel = (company.type || 'community').replace(/_/g, ' ');
+                const peopleCount = Array.isArray(company.members) ? company.members.length : 0;
+                if (metaEl) metaEl.textContent = `${typeLabel} • ${peopleCount} people`;
+
+                const shortDescription = (company.description || 'A shared space for updates and collaboration.').trim();
+                const compact = shortDescription.length > 140 ? `${shortDescription.slice(0, 137)}...` : shortDescription;
+                if (summaryEl) summaryEl.textContent = compact;
+
+                if (card) card.classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading community summary:', error);
+            }
         }
         
         // Feedback Modal Handlers
@@ -895,8 +976,27 @@
             renderUserHeader();
             initializeRoleSwitcher();
             initializePostUserAvatar();
+            await loadCommunitySummary();
+
+            if (joinedFromCommunity) {
+                try {
+                    localStorage.removeItem(getFeedWelcomeDismissKey());
+                } catch (_) {
+                    // ignore storage errors
+                }
+            }
+
             await loadDashboard();
             await loadFeed();
+
+            if (joinedFromCommunity) {
+                const name = (joinedCommunityName || currentCommunity?.name || 'your community').trim();
+                showNotificationToast(`Welcome to ${name} 👋 You are all set in the Community Feed.`, 'success', 8000);
+
+                const cleanUrl = `${window.location.pathname}${window.location.hash || ''}`;
+                window.history.replaceState({}, document.title, cleanUrl);
+            }
+
             // await loadRecentNotifications();
             // startNotificationPolling();
             
@@ -1013,7 +1113,11 @@
                 const data = await res.json();
                 const feedContainer = document.getElementById('activity-feed');
                 const communityActivities = await loadCommunityActivityNotifications();
-                const activityItems = [createWelcomeFeedNotification(), ...communityActivities];
+                const welcomeUpdate = createWelcomeFeedNotification();
+                const activityItems = [
+                    ...(welcomeUpdate ? [welcomeUpdate] : []),
+                    ...communityActivities
+                ];
                 const activityCards = activityItems.map(notif => renderCommunityActivityCard(notif)).join('');
                 const postCards = (data.posts || []).map(post => renderPostCard(post)).join('');
                 
@@ -1079,11 +1183,20 @@
         }
 
         function createWelcomeFeedNotification() {
+            if (isFeedWelcomeDismissed()) {
+                return null;
+            }
+
+            const communityName = currentCommunity?.name || joinedCommunityName || 'your community';
+            const welcomeMessage = joinedFromCommunity
+                ? `Welcome to ${communityName} 👋 You just joined. Use this feed for quick updates, referrals, joins/leaves, and new posts.`
+                : `Welcome to your Community Feed 👋 This space keeps everyone aligned with shared updates, new posts, and community activity like referrals, joins, and leaves.`;
+
             return {
                 type: 'community_feed_welcome',
                 createdAt: new Date().toISOString(),
                 data: {
-                    message: 'Welcome to your Community Feed 👋 This space keeps everyone aligned with shared updates, new posts, and community activity like referrals, joins, and leaves.'
+                    message: welcomeMessage
                 }
             };
         }
@@ -1112,7 +1225,14 @@
                 <div class="p-6 bg-white">
                     <div class="flex items-center justify-between gap-3 mb-2">
                         <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${badgeClass}">${badgeText}</span>
-                        <span class="text-xs text-gray-500">${getTimeAgo(new Date(notif.createdAt))}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-500">${getTimeAgo(new Date(notif.createdAt))}</span>
+                            ${notif.type === 'community_feed_welcome' ? `
+                                <button onclick="dismissFeedWelcome(event)" class="inline-flex items-center justify-center w-6 h-6 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100" title="Hide this update">
+                                    <span class="text-sm leading-none">✕</span>
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
                     <p class="text-sm text-gray-800">${message}</p>
                 </div>
