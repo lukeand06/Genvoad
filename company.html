@@ -7,12 +7,58 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Community Feed - Genovad</title>
+    <script src="/public/js/auth.js"></script>
     <script>
-        // Community and Feed are now unified.
-        window.location.replace('/dashboard.html');
+        (async () => {
+            const params = new URLSearchParams(window.location.search);
+            const companyId = params.get('companyId');
+            const userId = params.get('userId');
+
+            if (userId) {
+                window.location.replace(`/profile.html?id=${encodeURIComponent(userId)}`);
+                return;
+            }
+
+            if (!companyId) {
+                window.location.replace('/dashboard.html');
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.replace('/login.html');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/companies/${encodeURIComponent(companyId)}`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                if (!res.ok) {
+                    window.location.replace('/dashboard.html');
+                    return;
+                }
+
+                const data = await res.json();
+                const ownerId = data?.company?.owner?._id || data?.company?.owner;
+
+                if (ownerId) {
+                    window.location.replace(`/profile.html?id=${encodeURIComponent(ownerId)}`);
+                    return;
+                }
+
+                window.location.replace('/profile.html');
+            } catch (error) {
+                console.error('Failed to resolve company profile route:', error);
+                window.location.replace('/dashboard.html');
+            }
+        })();
     </script>
 </head>
 <body>
-    <p>Redirecting to Community Feed...</p>
+    <p>Opening company profile...</p>
 </body>
 </html>

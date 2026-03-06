@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>Dashboard - Genovad</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/public/css/mobile-calm-mode.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
@@ -50,6 +51,15 @@
             flex-direction: row !important;
             align-items: center;
             justify-content: space-between;
+        }
+
+        /* Progressive disclosure on phone: keep one primary composer action */
+        @media (max-width: 640px) {
+            button[onclick="setPostType('project')"],
+            button[onclick="setPostType('update')"],
+            button[onclick="setPostType('news')"] {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -230,8 +240,8 @@
                 <div class="min-w-0">
                     <p class="text-xs uppercase tracking-wide text-gray-500">Community</p>
                     <h1 id="community-name" class="text-lg sm:text-xl font-semibold text-gray-900 truncate">Your community</h1>
-                    <p id="community-meta" class="text-sm text-gray-600 mt-1"></p>
-                    <p id="community-summary" class="text-sm text-gray-700 mt-2"></p>
+                    <p id="community-meta" class="text-sm text-gray-600 mt-1 mobile-secondary"></p>
+                    <p id="community-summary" class="text-sm text-gray-700 mt-2 mobile-secondary"></p>
                 </div>
             </div>
         </section>

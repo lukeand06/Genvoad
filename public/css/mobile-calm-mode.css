@@ -1,0 +1,46 @@
+/* Mobile Calm Mode: simplify visual density while keeping key actions obvious */
+@media (max-width: 640px) {
+  body {
+    background: #f8fafc;
+  }
+
+  .max-w-7xl,
+  .max-w-6xl,
+  .max-w-4xl {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  .bg-white.border,
+  .bg-white.rounded-lg.border,
+  .bg-white.rounded-xl.border,
+  .bg-white.rounded-2xl.border {
+    box-shadow: none !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .rounded-lg,
+  .rounded-xl,
+  .rounded-2xl {
+    border-radius: 12px !important;
+  }
+
+  h1 {
+    font-size: 1.35rem !important;
+    line-height: 1.25 !important;
+  }
+
+  .mobile-secondary,
+  .mobile-detail {
+    display: none !important;
+  }
+
+  .notification-tab {
+    padding-top: 0.6rem !important;
+    padding-bottom: 0.6rem !important;
+  }
+
+  .mobile-bottom-nav .bottom-nav-link {
+    font-size: 0.72rem;
+  }
+}

@@ -5,13 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Notifications - Genovad</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/public/css/mobile-optimizations.css">
+    <link rel="stylesheet" href="/public/css/mobile-calm-mode.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Inter', sans-serif; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         .touch-manipulation { touch-action: manipulation; }
+
+        /* Keep mobile bottom nav size identical to community standard */
+        .mobile-bottom-nav .bottom-nav-link {
+            min-height: 0 !important;
+            display: block !important;
+            white-space: nowrap;
+        }
+
+        /* Keep bottom nav horizontal on mobile */
+        .mobile-bottom-nav .bottom-nav-row {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -20,15 +35,17 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-8">
+                    <a href="/community-hub.html" class="inline-flex items-center text-gray-600 hover:text-gray-900" title="Back to Community Home">
+                        <span class="text-xl leading-none">←</span>
+                    </a>
                     <a href="/dashboard.html" class="flex items-center">
                         <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-10 w-auto" onerror="console.error('Logo failed to load:', this.src)">
                     </a>
                     
                     <div class="hidden md:flex space-x-1">
-                        <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
-                        <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Projects</a>
+                        <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Community Feed</a>
+                        <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">People</a>
                         <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
-                        <a href="/community-hub.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Community</a>
                     </div>
                 </div>
                 
@@ -44,9 +61,9 @@
                         <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
                         </svg>
-                        <span id="nav-notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
+                        <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
                     </a>
-                    <a href="/create-project.html" id="cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <a href="/company.html?refer=true" id="cta-button" class="hidden bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Refer User</a>
                     <div class="relative" id="user-menu">
                         <button id="user-menu-btn" class="flex items-center space-x-2">
                             <div id="user-avatar"></div>
@@ -71,32 +88,12 @@
         </div>
     </nav>
 
-    <!-- Mobile Navigation Drawer -->
-    <div id="mobile-menu" class="hidden fixed inset-0 z-40 md:hidden">
-        <div class="fixed inset-0 bg-black bg-opacity-50" id="mobile-menu-backdrop"></div>
-        <div class="fixed top-0 left-0 w-64 h-full bg-white shadow-lg overflow-y-auto">
-            <div class="p-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-900">Menu</h3>
-            </div>
-            <nav class="p-4 space-y-2">
-                <a href="/dashboard.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
-                <a href="/projects.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Projects</a>
-                <a href="/messages.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
-                <a href="/community-hub.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Community</a>
-                <a href="/notifications.html" class="block px-4 py-3 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg hover:bg-gray-100">Notifications</a>
-            </nav>
-            <div class="p-4 border-t border-gray-200">
-                <a href="/create-project.html" class="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Post Project</a>
-            </div>
-        </div>
-    </div>
-
     <!-- Main Content -->
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
         <div class="mb-8 flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Notifications</h1>
-                <p class="text-gray-600 mt-1">Stay updated with your activity</p>
+                <p class="text-gray-600 mt-1 mobile-secondary">Stay updated with your activity</p>
             </div>
             <button id="mark-all-read" class="text-sm text-gray-600 hover:text-gray-900 font-medium">Mark all as read</button>
         </div>
@@ -141,31 +138,22 @@
 
         const user = getCurrentUser();
         document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
+
+        const currentRole = getUserRole();
+        const currentRoleEl = document.getElementById('current-role');
+        if (currentRoleEl) currentRoleEl.textContent = currentRole;
+        const roleSwitcher = document.getElementById('role-switcher');
+        if (roleSwitcher) {
+            roleSwitcher.innerHTML = `
+                <div class="px-3 py-2 text-sm text-gray-700">Account Type: <span class="font-semibold capitalize">${currentRole}</span></div>
+                <a href="/settings.html#role-ui" class="block w-full mt-1 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50">Manage Account Type</a>
+            `;
+        }
         
         document.getElementById('user-menu-btn').addEventListener('click', () => {
             document.getElementById('user-dropdown').classList.toggle('hidden');
         });
         document.getElementById('logout-btn').addEventListener('click', logout);
-
-        // Mobile Menu Handler
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        const mobileMenuBackdrop = document.getElementById('mobile-menu-backdrop');
-        const mobileMenuLinks = mobileMenu.querySelectorAll('a');
-        
-        mobileMenuBtn.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-        });
-        
-        mobileMenuBackdrop.addEventListener('click', () => {
-            mobileMenu.classList.add('hidden');
-        });
-        
-        mobileMenuLinks.forEach(link => {
-            link.addEventListener('click', () => {
-                mobileMenu.classList.add('hidden');
-            });
-        });
 
         let allNotifications = [];
         let currentFilter = 'all';
@@ -256,7 +244,17 @@
                         </svg>
                     </div>`;
                     content = `<p class="text-sm text-gray-900"><strong>${notif.data.invitedUserName || 'A teammate'}</strong> accepted your invitation to join <strong>${notif.data.companyName || 'your company'}</strong>${notif.data.inviteRole ? ` as a ${notif.data.inviteRole}` : ''}.</p>`;
-                    actions = `<a href="/company.html" class="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block">View Company →</a>`;
+                    actions = `<a href="${notif.data.companyId ? `/company.html?companyId=${notif.data.companyId}` : '/company.html'}" class="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block">View Company →</a>`;
+                    break;
+
+                case 'community_member_joined':
+                    icon = `<div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3M5 20h6a2 2 0 002-2v-1a3 3 0 00-3-3H8a3 3 0 00-3 3v1a2 2 0 002 2zm3-10a4 4 0 100-8 4 4 0 000 8z"/>
+                        </svg>
+                    </div>`;
+                    content = `<p class="text-sm text-gray-900"><strong>${notif.data.userName || 'A member'}</strong> joined <strong>${notif.data.companyName || 'your community'}</strong>.</p>`;
+                    actions = `<a href="${notif.data.companyId ? `/company.html?companyId=${notif.data.companyId}` : '/company.html'}" class="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block">View Company →</a>`;
                     break;
                     
                 default:
@@ -341,7 +339,7 @@
 
         function updateBadge() {
             const unreadCount = allNotifications.filter(n => !n.read).length;
-            const badge = document.getElementById('nav-notification-badge');
+            const badge = document.getElementById('notification-badge');
             if (unreadCount > 0) {
                 badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
                 badge.classList.remove('hidden');
@@ -354,13 +352,12 @@
     </script>
 
     <!-- Mobile Floating Community Nav -->
-    <div class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
+    <div class="mobile-bottom-nav md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
         <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
-            <div class="grid grid-cols-4 gap-1 text-center text-xs font-medium">
-                <a href="/company.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Community</a>
-                <a href="/dashboard.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Feed</a>
-                <a href="/network.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">People</a>
-                <a href="/messages.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
+            <div class="bottom-nav-row gap-1 text-center text-xs font-medium">
+                <a href="/dashboard.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Community Feed</a>
+                <a href="/network.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">People</a>
+                <a href="/messages.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
             </div>
         </div>
     </div>

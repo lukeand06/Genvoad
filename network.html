@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>People - Genovad</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/public/css/mobile-calm-mode.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     * { font-family: 'Inter', sans-serif; }
@@ -88,7 +89,7 @@
       <div class="max-w-6xl mx-auto mb-6">
         <div class="text-center">
           <h1 class="text-3xl font-bold text-gray-900">People</h1>
-          <p class="text-sm text-gray-600 mt-1">Explore members in your active community.</p>
+          <p class="text-sm text-gray-600 mt-1 mobile-secondary">Explore members in your active community.</p>
         </div>
 
         <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
@@ -106,7 +107,7 @@
                 <button type="button" class="role-pill px-3 py-1.5 text-xs font-medium rounded-md text-gray-700 hover:bg-gray-100" data-role="owner">Owners</button>
                 <button type="button" class="role-pill px-3 py-1.5 text-xs font-medium rounded-md text-gray-700 hover:bg-gray-100" data-role="vendor">Vendors</button>
               </div>
-              <span class="text-xs text-gray-500">Owner / Vendor is always available above</span>
+              <span class="text-xs text-gray-500 mobile-secondary">Owner / Vendor is always available above</span>
             </div>
 
             <select id="people-role-filter" class="hidden" aria-hidden="true" tabindex="-1">
@@ -419,6 +420,9 @@
       const location = member.location || [member.city, member.state].filter(Boolean).join(', ') || 'Not provided';
       const badges = getRoleBadges(member);
       const isOwner = (member.role || '').toLowerCase() === 'owner';
+      const companyProfileUrl = state.activeCommunityId
+        ? `/company.html?companyId=${state.activeCommunityId}`
+        : `/profile.html?id=${member._id}`;
 
       content.innerHTML = `
         <div class="flex items-start gap-4 mb-6">
@@ -429,6 +433,7 @@
             <div class="mt-2 flex gap-2 text-xs">
               ${badges.map(b => `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(b)}</span>`).join('')}
             </div>
+            <a href="${companyProfileUrl}" class="inline-flex mt-3 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Go to Profile</a>
           </div>
         </div>
 
