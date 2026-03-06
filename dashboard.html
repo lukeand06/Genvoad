@@ -48,11 +48,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-8">
-                    <a href="/community-hub.html" class="inline-flex items-center text-gray-600 hover:text-gray-900" title="Back to Community Home">
-                        <span class="text-xl leading-none">←</span>
-                    </a>
-                    <a href="/dashboard.html" class="flex items-center">
-                        <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-10 w-auto" onerror="console.error('Logo failed to load:', this.src)">
+                    <a href="/index.html" class="flex items-center" title="Go to Home">
+                        <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-12 w-auto" onerror="console.error('Logo failed to load:', this.src)">
                     </a>
                     
                     <div class="hidden md:flex space-x-1">
@@ -396,30 +393,6 @@
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-lg font-semibold text-gray-900">Your Feed</h2>
                         </div>
-                        <!-- Feed Filters -->
-                        <div class="flex gap-2 flex-wrap">
-                            <select id="feed-type-filter" onchange="applyFeedFilters()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 bg-white cursor-pointer">
-                                <option value="">All Posts</option>
-                                <option value="post">Posts</option>
-                                <option value="article">Articles</option>
-                                <option value="news">News</option>
-                                <option value="achievement">Achievements</option>
-                            </select>
-                            <select id="feed-timeframe-filter" onchange="applyFeedFilters()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 bg-white cursor-pointer">
-                                <option value="">All Time</option>
-                                <option value="24h">Last 24 Hours</option>
-                                <option value="7d">Last 7 Days</option>
-                                <option value="30d">Last 30 Days</option>
-                            </select>
-                            <select id="feed-sort-filter" onchange="applyFeedFilters()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 bg-white cursor-pointer">
-                                <option value="recent">Most Recent</option>
-                                <option value="trending">Trending</option>
-                                <option value="engagement">Most Engaged</option>
-                            </select>
-                            <button onclick="loadFeed()" class="px-3 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-sm font-medium transition">
-                                Clear Filters
-                            </button>
-                        </div>
                     </div>
                     <div id="activity-feed" class="divide-y divide-gray-200">
                         <!-- Feed will be loaded here -->
@@ -436,72 +409,6 @@
                 </div>
             </div>
 
-            <!-- Secondary Panels -->
-            <div class="w-full">
-                <!-- Trending Now intentionally disabled on feed page -->
-                <!--
-                <div class="bg-white rounded-lg border border-gray-200 mb-6">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
-                            </svg>
-                            Trending Now
-                        </h2>
-                        <p class="text-xs text-gray-500 mt-1">Most engaged posts</p>
-                    </div>
-                    <div id="trending-posts" class="divide-y divide-gray-200 max-h-96 overflow-y-auto">
-                        <div class="p-6 text-center text-gray-500">
-                            <p class="text-sm">Loading trending posts...</p>
-                        </div>
-                    </div>
-                </div>
-                -->
-
-                <!-- Notifications Inbox -->
-                <div id="notifications-section" class="bg-white rounded-lg border border-gray-200 mb-6">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-900">Notifications</h2>
-                        <p class="text-xs text-gray-500 mt-1">Recent updates</p>
-                    </div>
-                    <div id="recent-notifications" class="divide-y divide-gray-200">
-                        <!-- Recent notifications will be loaded here -->
-                        <div class="p-6 text-center text-gray-500">
-                            <p class="text-sm">No new notifications</p>
-                        </div>
-                    </div>
-                    <div class="p-4 border-t border-gray-200">
-                        <a href="/notifications.html" class="block px-4 py-2 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700 text-center">View All Notifications</a>
-                    </div>
-                </div>
-
-                <!-- Recommendations intentionally disabled on feed page -->
-                <!--
-                <div class="bg-white rounded-lg border border-gray-200 mb-6">
-                    <div class="p-6 border-b border-gray-200">
-                        <h2 class="text-lg font-semibold text-gray-900">Projects You May Like</h2>
-                        <p class="text-xs text-gray-500 mt-1">Opportunities matching your profile</p>
-                    </div>
-                    <div id="recommendations" class="divide-y divide-gray-200">
-                        <div class="p-6 text-center text-gray-500">
-                            <p class="text-sm">Loading opportunities...</p>
-                        </div>
-                    </div>
-                </div>
-                -->
-
-                <!-- Quick Actions intentionally disabled on feed page -->
-                <!--
-                <div class="bg-white rounded-lg border border-gray-200">
-                    <div class="p-6">
-                        <h3 class="font-semibold text-gray-900 mb-4">Quick Actions</h3>
-                        <div class="space-y-2">
-                            <a href="/settings.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">⚙️ Update Profile</a>
-                        </div>
-                    </div>
-                </div>
-                -->
-            </div>
         </div>
     </main>
 
@@ -1023,10 +930,8 @@
             initializePostUserAvatar();
             await loadDashboard();
             await loadFeed();
-            await loadRecentNotifications();
-            
-            // Start notification polling for real-time updates
-            startNotificationPolling();
+            // await loadRecentNotifications();
+            // startNotificationPolling();
             
             // Company nav intentionally kept disabled for now.
         })();
