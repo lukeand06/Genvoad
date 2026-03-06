@@ -60,8 +60,8 @@
                     </div>
                 </div>
 
-                <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2">
+                <!-- Mobile Menu Button intentionally disabled in favor of floating nav -->
+                <button id="mobile-menu-btn" class="hidden md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2" aria-hidden="true" tabindex="-1">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
@@ -226,7 +226,7 @@
     </div>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8 space-y-6">
 
         <!-- Stats Grid intentionally disabled on feed page -->
         <!-- <div class="mb-8" id="stats-grid">
@@ -506,6 +506,18 @@
             </div>
         </div>
     </main>
+
+    <!-- Mobile Floating Community Nav -->
+    <div class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
+        <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
+            <div class="grid grid-cols-4 gap-1 text-center text-xs font-medium">
+                <a href="/company.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Community</a>
+                <a href="/dashboard.html" class="px-2 py-2 rounded-xl bg-gray-900 text-white">Feed</a>
+                <a href="/network.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">People</a>
+                <a href="/messages.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
+            </div>
+        </div>
+    </div>
 
     <!-- Modals -->
     <!-- Active Projects Modal intentionally disabled on feed page -->
@@ -970,6 +982,15 @@
                                 case 'partnership_accepted':
                                     toastMessage = `${latestNotif.data.userName} accepted your partnership request`;
                                     break;
+                                case 'community_member_referred':
+                                    toastMessage = `${latestNotif.data.userName || 'Someone'} referred ${latestNotif.data.invitedUserName || 'a new member'}`;
+                                    break;
+                                case 'community_member_joined':
+                                    toastMessage = `${latestNotif.data.userName || 'A member'} joined your community`;
+                                    break;
+                                case 'community_member_left':
+                                    toastMessage = `${latestNotif.data.userName || 'A member'} left your community`;
+                                    break;
                                 case 'project_update':
                                     toastMessage = `Community update: ${latestNotif.data.projectTitle || 'New activity'}`;
                                     break;
@@ -1432,6 +1453,15 @@
                         case 'partnership_accepted':
                             toastMessage = `${latestUnread.data.userName} accepted your partnership request`;
                             break;
+                        case 'community_member_referred':
+                            toastMessage = `${latestUnread.data.userName || 'Someone'} referred ${latestUnread.data.invitedUserName || 'a new member'}`;
+                            break;
+                        case 'community_member_joined':
+                            toastMessage = `${latestUnread.data.userName || 'A member'} joined your community`;
+                            break;
+                        case 'community_member_left':
+                            toastMessage = `${latestUnread.data.userName || 'A member'} left your community`;
+                            break;
                         case 'project_update':
                             toastMessage = `Project "${latestUnread.data.projectTitle || 'Update'}" has been updated`;
                             break;
@@ -1474,6 +1504,30 @@
                                 </svg>
                             </div>`;
                             message = `<strong>${notif.data.userName}</strong> accepted your partnership request`;
+                            break;
+                        case 'community_member_referred':
+                            icon = `<div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5V9H2v11h5m10 0v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4m10 0H7"/>
+                                </svg>
+                            </div>`;
+                            message = `<strong>${notif.data.userName || 'Someone'}</strong> referred <strong>${notif.data.invitedUserName || 'a new member'}</strong>`;
+                            break;
+                        case 'community_member_joined':
+                            icon = `<div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3M5 20h6a2 2 0 002-2v-1a3 3 0 00-3-3H8a3 3 0 00-3 3v1a2 2 0 002 2zm3-10a4 4 0 100-8 4 4 0 000 8z"/>
+                                </svg>
+                            </div>`;
+                            message = `<strong>${notif.data.userName || 'A member'}</strong> joined the community`;
+                            break;
+                        case 'community_member_left':
+                            icon = `<div class="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405M15 17l1.405 1.405M9 7a4 4 0 100-8 4 4 0 000 8zm-2 13h4a2 2 0 002-2v-1a3 3 0 00-3-3H8a3 3 0 00-3 3v1a2 2 0 002 2z"/>
+                                </svg>
+                            </div>`;
+                            message = `<strong>${notif.data.userName || 'A member'}</strong> left the community`;
                             break;
                         case 'project_update':
                             icon = `<div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center">

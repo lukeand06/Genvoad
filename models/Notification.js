@@ -24,6 +24,9 @@ const notificationSchema = new mongoose.Schema({
       'bid_revised',
       'new_message',
       'project_update',
+      'community_member_referred',
+      'community_member_joined',
+      'community_member_left',
       'review_received',
       'system'
     ],

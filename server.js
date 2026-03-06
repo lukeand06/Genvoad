@@ -4523,6 +4523,28 @@ app.post('/api/communities/join-by-code', authMiddleware, async (req, res) => {
       }
     });
 
+    if (!isMember) {
+      const actorName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email;
+      const audienceIds = (company.members || [])
+        .map(id => id.toString())
+        .filter(id => id !== user._id.toString());
+
+      await Promise.all(audienceIds.map((audienceId) => createNotification(
+        audienceId,
+        'community_member_joined',
+        'company',
+        {
+          companyId: company._id,
+          companyName: company.name,
+          userName: actorName,
+          userEmail: user.email,
+          title: `${actorName} joined the community`,
+          message: `${actorName} joined ${company.name}.`,
+          actionUrl: '/company.html'
+        }
+      )));
+    }
+
     res.json({ success: true, message: 'Joined community successfully', company });
   } catch (error) {
     console.error('Join by code error:', error);
@@ -4889,6 +4911,32 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
       );
     }
 
+    const inviterName = `${inviter.firstName || ''} ${inviter.lastName || ''}`.trim() || inviter.email;
+    const referredLabel = registeredUser
+      ? `${registeredUser.firstName || ''} ${registeredUser.lastName || ''}`.trim() || normalizedEmail
+      : normalizedEmail;
+    const audienceIds = (company.members || [])
+      .map(id => id.toString())
+      .filter(id => id !== req.user._id.toString());
+
+    await Promise.all(audienceIds.map((audienceId) => createNotification(
+      audienceId,
+      'community_member_referred',
+      'company',
+      {
+        companyId: company._id,
+        companyName: company.name,
+        userName: inviterName,
+        userEmail: inviter.email,
+        invitedUserName: referredLabel,
+        invitedUserEmail: normalizedEmail,
+        inviteRole: role,
+        title: `${inviterName} referred ${referredLabel}`,
+        message: `${inviterName} referred ${referredLabel} to ${company.name}.`,
+        actionUrl: '/company.html'
+      }
+    )));
+
     res.json({
       success: true,
       message: 'Invitation sent',
@@ -5012,6 +5060,26 @@ app.post('/api/companies/invitations/:token/accept', authMiddleware, async (req,
       );
     }
 
+    const audienceIds = (company.members || [])
+      .map(id => id.toString())
+      .filter(id => id !== user._id.toString());
+
+    await Promise.all(audienceIds.map((audienceId) => createNotification(
+      audienceId,
+      'community_member_joined',
+      'company',
+      {
+        companyId: company._id,
+        companyName: company.name,
+        userName: invitedUserName,
+        userEmail: user.email,
+        inviteRole: invitation.role,
+        title: `${invitedUserName} joined the community`,
+        message: `${invitedUserName} joined ${company.name}.`,
+        actionUrl: '/company.html'
+      }
+    )));
+
     res.json({
       success: true,
       message: 'Successfully joined company',
@@ -5063,6 +5131,9 @@ app.delete('/api/companies/:id/members/:userId', authMiddleware, async (req, res
       return res.status(400).json({ error: 'Cannot remove company owner' });
     }
 
+    const removedUser = await User.findById(req.params.userId).select('firstName lastName email');
+    const actorUser = await User.findById(req.user._id).select('firstName lastName email');
+
     // Remove from company
     company.members = company.members.filter(m => m.toString() !== req.params.userId);
     company.admins = company.admins.filter(a => a.toString() !== req.params.userId);
@@ -5072,6 +5143,28 @@ app.delete('/api/companies/:id/members/:userId', authMiddleware, async (req, res
     await User.findByIdAndUpdate(req.params.userId, {
       $unset: { companyId: 1, companyRole: 1 }
     });
+
+    const removedName = removedUser
+      ? (`${removedUser.firstName || ''} ${removedUser.lastName || ''}`.trim() || removedUser.email)
+      : 'A member';
+    const actorName = actorUser
+      ? (`${actorUser.firstName || ''} ${actorUser.lastName || ''}`.trim() || actorUser.email)
+      : 'An admin';
+    const audienceIds = (company.members || []).map(id => id.toString());
+
+    await Promise.all(audienceIds.map((audienceId) => createNotification(
+      audienceId,
+      'community_member_left',
+      'company',
+      {
+        companyId: company._id,
+        companyName: company.name,
+        userName: removedName,
+        title: `${removedName} left the community`,
+        message: `${removedName} left ${company.name} (updated by ${actorName}).`,
+        actionUrl: '/company.html'
+      }
+    )));
 
     res.json({ success: true, message: 'Member removed' });
   } catch (error) {
