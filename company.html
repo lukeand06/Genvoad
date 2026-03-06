@@ -44,6 +44,7 @@
                         </svg>
                         <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
                     </a>
+                    <a href="/company.html?refer=true" id="cta-button" class="hidden bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Refer User</a>
                     <div class="relative" id="user-menu">
                         <button id="user-menu-btn" class="flex items-center space-x-2">
                             <div id="user-avatar"></div>
@@ -172,9 +173,6 @@
                             <span id="company-size-display"></span>
                             <span id="company-members-count"></span>
                         </div>
-                    </div>
-                    <div id="admin-actions" class="hidden space-x-2">
-                        <button id="invite-member-btn" class="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Refer User</button>
                     </div>
                 </div>
             </div>
@@ -347,7 +345,8 @@
             }
 
             if (isAdmin(company)) {
-                document.getElementById('admin-actions').classList.remove('hidden');
+                const ctaButton = document.getElementById('cta-button');
+                if (ctaButton) ctaButton.classList.remove('hidden');
 
                 if (shouldOpenReferModal) {
                     document.getElementById('invite-modal').classList.remove('hidden');
@@ -433,15 +432,6 @@
             } catch (error) {
                 alert('Failed to register company: ' + error.message);
             }
-        });
-
-        // Invite member
-        document.getElementById('invite-member-btn').addEventListener('click', () => {
-            document.getElementById('invite-modal').classList.remove('hidden');
-            document.getElementById('invite-form').reset();
-            document.getElementById('invite-error').classList.add('hidden');
-            document.getElementById('invite-success').classList.add('hidden');
-            clearInviteSelection();
         });
 
         document.getElementById('cancel-invite').addEventListener('click', () => {
