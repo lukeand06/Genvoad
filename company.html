@@ -30,8 +30,8 @@
                     </div>
                 </div>
                 
-                <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2">
+                <!-- Mobile Menu Button intentionally disabled in favor of floating nav -->
+                <button id="mobile-menu-btn" class="hidden md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2" aria-hidden="true" tabindex="-1">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
@@ -70,7 +70,7 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8 space-y-6">
         <div id="no-company-section" class="hidden">
             <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 text-center">
                 <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -283,6 +283,18 @@
         </div>
     </div>
 
+
+    <!-- Mobile Floating Community Nav -->
+    <div class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
+        <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
+            <div class="grid grid-cols-4 gap-1 text-center text-xs font-medium">
+                <a href="/company.html" class="px-2 py-2 rounded-xl bg-gray-900 text-white">Community</a>
+                <a href="/dashboard.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Feed</a>
+                <a href="/network.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">People</a>
+                <a href="/messages.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
+            </div>
+        </div>
+    </div>
 
     <script src="/public/js/auth.js"></script>
     <script>

@@ -32,8 +32,8 @@
                     </div>
                 </div>
                 
-                <!-- Mobile Menu Button -->
-                <button id="mobile-menu-btn" class="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2">
+                <!-- Mobile Menu Button intentionally disabled in favor of floating nav -->
+                <button id="mobile-menu-btn" class="hidden md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2" aria-hidden="true" tabindex="-1">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
                     </svg>
@@ -92,7 +92,7 @@
     </div>
 
     <!-- Main Content -->
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
         <div class="mb-8 flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Notifications</h1>
@@ -110,9 +110,11 @@
                 <button onclick="filterNotifications('unread')" id="tab-unread" class="notification-tab flex-shrink-0 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900 whitespace-nowrap">
                     Unread
                 </button>
+                <!--
                 <button onclick="filterNotifications('partnerships')" id="tab-partnerships" class="notification-tab flex-shrink-0 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900 whitespace-nowrap">
                     Partnerships
                 </button>
+                -->
                 <button onclick="filterNotifications('projects')" id="tab-projects" class="notification-tab flex-shrink-0 px-4 sm:px-6 py-3 text-sm font-medium border-b-2 border-transparent text-gray-600 hover:text-gray-900 whitespace-nowrap">
                     Projects
                 </button>
@@ -211,30 +213,11 @@
             let icon, content, actions = '';
             
             switch(notif.type) {
+                /*
                 case 'partnership_request':
-                    icon = `<div class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-                        </svg>
-                    </div>`;
-                    content = `<p class="text-sm text-gray-900"><strong>${notif.data.userName}</strong> ${notif.data.userCompany ? `from <strong>${notif.data.userCompany}</strong>` : ''} wants to add you as a partner</p>`;
-                    actions = `
-                        <div class="flex flex-col sm:flex-row gap-2 mt-3">
-                            <button onclick="event.stopPropagation(); acceptPartnership('${notif.data.userId}', '${notif.id}')" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 active:bg-gray-700 touch-manipulation">Accept</button>
-                            <button onclick="event.stopPropagation(); declinePartnership('${notif.data.userId}', '${notif.id}')" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 active:bg-gray-100 touch-manipulation">Decline</button>
-                        </div>
-                    `;
-                    break;
-                    
                 case 'partnership_accepted':
-                    icon = `<div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>`;
-                    content = `<p class="text-sm text-gray-900"><strong>${notif.data.userName}</strong> ${notif.data.userCompany ? `from <strong>${notif.data.userCompany}</strong>` : ''} accepted your partnership request</p>`;
-                    actions = `<a href="/profile.html?id=${notif.data.userId}" class="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block">View Profile →</a>`;
                     break;
+                */
                     
                 case 'bid_accepted':
                     icon = `<div class="w-12 h-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
@@ -318,8 +301,6 @@
             
             if (filter === 'unread') {
                 filtered = allNotifications.filter(n => !n.read);
-            } else if (filter === 'partnerships') {
-                filtered = allNotifications.filter(n => n.type.includes('partnership'));
             } else if (filter === 'projects') {
                 filtered = allNotifications.filter(n => n.type.includes('bid') || n.type.includes('project'));
             } else if (filter === 'messages') {
@@ -356,23 +337,7 @@
             }
         });
 
-        async function acceptPartnership(userId, notificationId) {
-            try {
-                await authFetch(`/partners/${userId}`, { method: 'POST' });
-                markAsRead(String(notificationId));
-                alert('Partnership accepted!');
-                await loadNotifications(); // Refresh notifications
-            } catch (err) {
-                console.error('Partnership error:', err);
-                alert('Failed to accept partnership');
-            }
-        }
-
-        async function declinePartnership(userId, notificationId) {
-            markAsRead(String(notificationId));
-            alert('Partnership declined');
-            await loadNotifications(); // Refresh notifications
-        }
+        // Partnership-specific actions are intentionally disabled in community-only mode.
 
         function updateBadge() {
             const unreadCount = allNotifications.filter(n => !n.read).length;
@@ -387,5 +352,17 @@
 
         loadNotifications();
     </script>
+
+    <!-- Mobile Floating Community Nav -->
+    <div class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
+        <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
+            <div class="grid grid-cols-4 gap-1 text-center text-xs font-medium">
+                <a href="/company.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Community</a>
+                <a href="/dashboard.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Feed</a>
+                <a href="/network.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">People</a>
+                <a href="/messages.html" class="px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
