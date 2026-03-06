@@ -550,7 +550,7 @@
 
         // Check for user parameter in URL
         const urlParams = new URLSearchParams(window.location.search);
-        const initialUserId = urlParams.get('user');
+        const initialUserId = urlParams.get('userId') || urlParams.get('user');
         const initialProjectId = urlParams.get('projectId');
         const initialProjectTitle = urlParams.get('projectTitle') ? decodeURIComponent(urlParams.get('projectTitle')) : null;
         let draftedFromContext = false;
