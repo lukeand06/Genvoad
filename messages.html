@@ -412,16 +412,16 @@
                         );
                     } else {
                         // Search via API
-                        const res = await authFetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+                        const res = await authFetch(`/api/users/search?q=${encodeURIComponent(query)}&scope=community`);
                         const data = await res.json();
-                        results = data || [];
+                        results = Array.isArray(data?.users) ? data.users : [];
                     }
                     
                     if (results.length === 0) {
                         resultsContainer.innerHTML = `
                             <div class="p-4 text-center text-gray-500">
-                                <p class="text-sm mb-2">No users found</p>
-                                ${query.includes('@') ? `<p class="text-xs text-gray-400">We'll send an email invite to ${query}</p>` : ''}
+                                <p class="text-sm mb-2">No community members found</p>
+                                <p class="text-xs text-gray-400">You can only message people in your community.</p>
                             </div>
                         `;
                     } else {
@@ -437,7 +437,6 @@
                                             <div class="flex items-center gap-2">
                                                 <div class="font-medium text-gray-900">${displayName}</div>
                                                 ${isPartner ? '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">Partner</span>' : ''}
-                                                ${!u.isRegistered ? '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-medium rounded">Not on Genovad</span>' : ''}
                                             </div>
                                             <div class="text-xs text-gray-600 mt-0.5">${u.email}</div>
                                             ${u.company ? `<div class="text-xs text-gray-500">${u.company}</div>` : ''}
@@ -487,8 +486,8 @@
             document.getElementById('selected-recipient-id').value = id || '';
             document.getElementById('selected-recipient-id').dataset.email = email;
             document.getElementById('selected-recipient-id').dataset.isRegistered = isRegistered;
-            const displayName = isRegistered ? name : `${name} (email invite)`;
-            const statusText = isRegistered ? '✓ On Genovad' : '📧 Will receive email';
+            const displayName = name;
+            const statusText = '✓ In your community';
             const displayHtml = `
                 <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
                     <div class="flex-1">
@@ -557,54 +556,34 @@
             
             const recipientIdInput = document.getElementById('selected-recipient-id');
             const recipientId = recipientIdInput.value;
-            const recipientEmail = recipientIdInput.dataset.email;
-            const isRegistered = recipientIdInput.dataset.isRegistered === 'true';
             const subject = document.getElementById('thread-subject').value;
             const message = document.getElementById('thread-message').value;
             const projectId = document.getElementById('thread-project').value;
 
-            if (!recipientId && !recipientEmail) {
-                alert('Please select a recipient');
+            if (!recipientId) {
+                alert('Please select a community member');
                 return;
             }
 
             try {
-                if (!isRegistered && recipientEmail) {
-                    // Send email invitation
-                    const res = await authFetch('/api/messages/email-invite', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            email: recipientEmail,
-                            subject: subject || 'Message from Genovad',
-                            message: message || 'You have received a message. Join Genovad to reply!',
-                            projectId: projectId || null
-                        })
-                    });
+                // Send in-app message
+                const res = await authFetch('/api/messages/create-thread', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        recipientId,
+                        subject,
+                        message,
+                        projectId: projectId || null
+                    })
+                });
 
-                    if (!res.ok) throw new Error('Failed to send email invite');
-                    
-                    alert(`Email invitation sent to ${recipientEmail}. They will receive your message and an invite to join Genovad.`);
-                } else {
-                    // Send in-app message
-                    const res = await authFetch('/api/messages/create-thread', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            recipientId,
-                            subject,
-                            message,
-                            projectId: projectId || null
-                        })
-                    });
+                if (!res.ok) throw new Error('Failed to create thread');
+                const thread = await res.json();
 
-                    if (!res.ok) throw new Error('Failed to create thread');
-                    const thread = await res.json();
-
-                    // Load conversations and navigate to new thread
-                    await loadConversations();
-                    selectConversation(thread.participantId);
-                }
+                // Load conversations and navigate to new thread
+                await loadConversations();
+                selectConversation(thread.participantId);
 
                 // Close modal and reset form
                 document.getElementById('new-thread-modal').classList.add('hidden');

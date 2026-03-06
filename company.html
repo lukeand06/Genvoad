@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">    <title>Company Management - Genovad</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">    <title>Community Info - Genovad</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -70,20 +70,20 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         <div id="no-company-section" class="hidden">
-            <div class="bg-white rounded-lg border border-gray-200 p-8 text-center">
+            <div class="bg-white rounded-xl border border-gray-200 p-6 text-center">
                 <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                 </svg>
                 <h2 class="text-2xl font-bold text-gray-900 mb-2">Register Your Company</h2>
-                <p class="text-gray-600 mb-6">Get verified and unlock team collaboration features</p>
+                <p class="text-gray-600 mb-6">Set up your community profile and manage your members.</p>
                 <button id="show-create-form-btn" class="px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Register Company</button>
             </div>
         </div>
 
         <div id="create-company-section" class="hidden">
-            <div class="bg-white rounded-lg border border-gray-200 p-8">
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
                 <h2 class="text-2xl font-bold text-gray-900 mb-6">Register Your Company</h2>
                 <form id="create-company-form" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -97,15 +97,9 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">EIN / Registration Number</label>
-                            <input type="text" id="registration-number" placeholder="XX-XXXXXXX" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Contractor License # (if applicable)</label>
-                            <input type="text" id="registrar-id" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                        </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">EIN / Registration Number</label>
+                        <input type="text" id="registration-number" placeholder="XX-XXXXXXX" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -157,12 +151,6 @@
                         <textarea id="description" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></textarea>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Verification Documents (Business License, EIN Letter, etc.)</label>
-                        <input type="file" id="documents" multiple accept=".pdf,.jpg,.jpeg,.png" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
-                        <p class="text-xs text-gray-500 mt-1">Upload documents to speed up verification</p>
-                    </div>
-
                     <div class="flex gap-3 pt-4">
                         <button type="button" id="cancel-create-btn" class="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">Cancel</button>
                         <button type="submit" class="px-6 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Register Company</button>
@@ -173,13 +161,11 @@
 
         <div id="company-dashboard" class="hidden space-y-6">
             <!-- Company Header -->
-            <div class="bg-white rounded-lg border border-gray-200 p-8">
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
                         <div class="flex items-center gap-3 mb-2">
                             <h1 id="company-name-display" class="text-3xl font-bold text-gray-900"></h1>
-                            <span id="verification-badge" class="hidden px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">✓ Verified</span>
-                            <span id="pending-badge" class="hidden px-3 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">⏳ Pending Verification</span>
                         </div>
                         <p id="company-description" class="text-gray-600 mb-4"></p>
                         <div class="flex flex-wrap gap-4 text-sm text-gray-600">
@@ -190,20 +176,12 @@
                     </div>
                     <div id="admin-actions" class="hidden space-x-2">
                         <button id="invite-member-btn" class="px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Invite Team Member</button>
-                        <button id="verify-company-btn" class="px-4 py-2 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">Request Verification</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Verification Status -->
-            <div id="verification-section" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-blue-900 mb-2">Company Verification</h3>
-                <p class="text-blue-800 mb-4">Get your company verified to unlock trust badges and premium features</p>
-                <button id="auto-verify-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700">Run Automatic Verification</button>
-            </div>
-
             <!-- Team Members -->
-            <div class="bg-white rounded-lg border border-gray-200 p-8">
+            <div class="bg-white rounded-xl border border-gray-200 p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-bold text-gray-900">Team Members</h2>
                 </div>
@@ -212,9 +190,9 @@
                 </div>
             </div>
 
-            <!-- Pending Invitations -->
-            <div id="invitations-section" class="hidden bg-white rounded-lg border border-gray-200 p-8">
-                <h2 class="text-xl font-bold text-gray-900 mb-6">Pending Invitations</h2>
+            <!-- Invitations -->
+            <div id="invitations-section" class="hidden bg-white rounded-xl border border-gray-200 p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Invitations</h2>
                 <div id="invitations-list"></div>
             </div>
         </div>
@@ -315,15 +293,6 @@
             document.getElementById('company-size-display').textContent = `${company.size} employees`;
             document.getElementById('company-members-count').textContent = `${company.members.length} team members`;
 
-            if (company.verified) {
-                document.getElementById('verification-badge').classList.remove('hidden');
-            } else {
-                document.getElementById('pending-badge').classList.remove('hidden');
-                if (isAdmin(company)) {
-                    document.getElementById('verification-section').classList.remove('hidden');
-                }
-            }
-
             if (isAdmin(company)) {
                 document.getElementById('admin-actions').classList.remove('hidden');
             }
@@ -397,7 +366,6 @@
             formData.append('name', document.getElementById('company-name').value);
             formData.append('legalName', document.getElementById('legal-name').value);
             formData.append('registrationNumber', document.getElementById('registration-number').value);
-            formData.append('registrarId', document.getElementById('registrar-id').value);
             formData.append('phone', document.getElementById('company-phone').value);
             formData.append('email', document.getElementById('company-email').value);
             formData.append('website', document.getElementById('website').value);
@@ -405,11 +373,6 @@
             formData.append('size', document.getElementById('company-size').value);
             formData.append('yearFounded', document.getElementById('year-founded').value);
             formData.append('description', document.getElementById('description').value);
-
-            const files = document.getElementById('documents').files;
-            for (let i = 0; i < files.length; i++) {
-                formData.append('documents', files[i]);
-            }
 
             try {
                 const res = await authFetch('/api/companies', {
@@ -589,27 +552,6 @@
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Send Invitation';
-            }
-        });
-
-        // Auto-verify
-        document.getElementById('auto-verify-btn')?.addEventListener('click', async () => {
-            try {
-                const res = await authFetch(`/api/companies/${currentCompany._id}/auto-verify`, {
-                    method: 'POST'
-                });
-
-                const data = await res.json();
-                
-                if (data.verified) {
-                    alert('Company automatically verified!');
-                    location.reload();
-                } else {
-                    alert('Automatic verification incomplete. Manual review required.\n\nChecks performed:\n' + 
-                          data.checks.map(c => `${c.type}: ${c.passed ? '✓' : '✗'} ${c.message}`).join('\n'));
-                }
-            } catch (error) {
-                alert('Verification failed: ' + error.message);
             }
         });
 

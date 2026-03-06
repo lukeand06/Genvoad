@@ -826,6 +826,29 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
   try {
     const query = req.query.q || '';
     const roleFilter = req.query.role; // Optional role filter: 'vendor' or 'owner'
+    const scope = req.query.scope;
+
+    let communityConstraint = null;
+    if (scope === 'community') {
+      const requester = await User.findById(req.user._id).select('activeCommunityId companyId communityIds');
+      const requesterCommunityIds = [
+        requester?.activeCommunityId,
+        requester?.companyId,
+        ...(Array.isArray(requester?.communityIds) ? requester.communityIds : [])
+      ].filter(Boolean).map(id => id.toString());
+
+      if (!requesterCommunityIds.length) {
+        return res.json({ users: [] });
+      }
+
+      communityConstraint = {
+        $or: [
+          { activeCommunityId: { $in: requesterCommunityIds } },
+          { companyId: { $in: requesterCommunityIds } },
+          { communityIds: { $in: requesterCommunityIds } }
+        ]
+      };
+    }
     
     if (query.length < 2) {
       return res.json({ users: [] });
@@ -836,11 +859,14 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     
     if (isEmail) {
       // Search for registered user with this email
-      const searchQuery = { email: query, verified: true, deletedAt: null };
+      const searchQuery = { email: query, verified: true, deletedAt: null, _id: { $ne: req.user._id } };
       if (roleFilter) {
         searchQuery.role = roleFilter;
       }
-      const user = await User.findOne(searchQuery).select('-password -verificationCode');
+      const userQuery = communityConstraint
+        ? { $and: [searchQuery, communityConstraint] }
+        : searchQuery;
+      const user = await User.findOne(userQuery).select('-password -verificationCode');
       if (user) {
         return res.json({ users: [{
           _id: user._id,
@@ -853,6 +879,11 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
           isRegistered: true
         }] });
       } else {
+        // For community messaging scope, only registered community users are eligible.
+        if (scope === 'community') {
+          return res.json({ users: [] });
+        }
+
         // Allow inviting by email even if not registered
         return res.json({ users: [{
           _id: null,
@@ -869,6 +900,7 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     const searchQuery = {
       verified: true,
       deletedAt: null,
+      _id: { $ne: req.user._id },
       $or: [
         { firstName: searchRegex },
         { lastName: searchRegex },
@@ -881,7 +913,11 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
       searchQuery.role = roleFilter;
     }
     
-    const users = await User.find(searchQuery)
+    const finalSearchQuery = communityConstraint
+      ? { $and: [searchQuery, communityConstraint] }
+      : searchQuery;
+
+    const users = await User.find(finalSearchQuery)
     .select('-password -verificationCode')
     .limit(10);
     
@@ -2106,6 +2142,43 @@ app.post('/api/projects/:projectId/bids/:bidId/accept-counter', authMiddleware, 
 // Send message (with optional attachments)
 app.post('/api/messages', authMiddleware, upload.array('attachments', 5), async (req, res) => {
   try {
+    const recipientId = req.body.recipient;
+    if (!recipientId) {
+      return res.status(400).json({ error: 'Recipient is required' });
+    }
+
+    const [sender, recipient] = await Promise.all([
+      User.findById(req.user._id).select('activeCommunityId companyId communityIds blockedUsers'),
+      User.findById(recipientId).select('activeCommunityId companyId communityIds blockedUsers deletedAt')
+    ]);
+
+    if (!recipient || recipient.deletedAt) {
+      return res.status(404).json({ error: 'Recipient not found' });
+    }
+
+    const senderCommunityIds = [
+      sender?.activeCommunityId,
+      sender?.companyId,
+      ...(Array.isArray(sender?.communityIds) ? sender.communityIds : [])
+    ].filter(Boolean).map(id => id.toString());
+
+    const recipientCommunityIds = [
+      recipient?.activeCommunityId,
+      recipient?.companyId,
+      ...(Array.isArray(recipient?.communityIds) ? recipient.communityIds : [])
+    ].filter(Boolean).map(id => id.toString());
+
+    const sharedCommunity = senderCommunityIds.some(id => recipientCommunityIds.includes(id));
+    if (!sharedCommunity) {
+      return res.status(403).json({ error: 'Messaging is limited to people in your community' });
+    }
+
+    const senderBlocked = Array.isArray(sender?.blockedUsers) && sender.blockedUsers.some(id => id.toString() === recipientId.toString());
+    const recipientBlocked = Array.isArray(recipient?.blockedUsers) && recipient.blockedUsers.some(id => id.toString() === req.user._id.toString());
+    if (senderBlocked || recipientBlocked) {
+      return res.status(403).json({ error: 'Cannot message this user' });
+    }
+
     const attachments = req.files ? req.files.map(file => ({
       filename: file.originalname,
       url: `/uploads/${file.filename}`,
@@ -2356,6 +2429,8 @@ app.post('/api/projects/:projectId/invite-vendor', authMiddleware, async (req, r
 // Send email invite to non-Genovad user
 app.post('/api/messages/email-invite', authMiddleware, async (req, res) => {
   try {
+    return res.status(403).json({ error: 'Email invites are disabled. Messaging is limited to people in your community.' });
+
     const { email, subject, message, projectId } = req.body;
     
     if (!email || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
@@ -2443,9 +2518,18 @@ app.post('/api/messages/email-invite', authMiddleware, async (req, res) => {
 // Get conversations (blocker-safe alias available at /api/inbox/convos)
 async function getConversationsHandler(req, res) {
   try {
-    const currentUser = await User.findById(req.user._id).select('partners blockedUsers');
+    const currentUser = await User.findById(req.user._id).select('partners blockedUsers activeCommunityId companyId communityIds');
     const partnerIds = (currentUser.partners || []).map(p => p.toString());
     const blockedIds = (currentUser.blockedUsers || []).map(b => b.toString());
+    const currentCommunityIds = [
+      currentUser?.activeCommunityId,
+      currentUser?.companyId,
+      ...(Array.isArray(currentUser?.communityIds) ? currentUser.communityIds : [])
+    ].filter(Boolean).map(id => id.toString());
+
+    if (!currentCommunityIds.length) {
+      return res.json({ conversations: [], unreadCount: 0 });
+    }
     
     const messages = await Message.find({
       $or: [{ sender: req.user._id }, { recipient: req.user._id }],
@@ -2456,12 +2540,36 @@ async function getConversationsHandler(req, res) {
     .populate('recipient', 'firstName lastName avatar company')
     .sort('-createdAt');
     
+    const participantIds = new Set();
+    messages.forEach(msg => {
+      participantIds.add(msg.sender._id.toString());
+      participantIds.add(msg.recipient._id.toString());
+    });
+
+    const participants = await User.find({ _id: { $in: Array.from(participantIds) } })
+      .select('_id activeCommunityId companyId communityIds');
+    const participantCommunityMap = new Map();
+    participants.forEach(user => {
+      participantCommunityMap.set(
+        user._id.toString(),
+        [
+          user?.activeCommunityId,
+          user?.companyId,
+          ...(Array.isArray(user?.communityIds) ? user.communityIds : [])
+        ].filter(Boolean).map(id => id.toString())
+      );
+    });
+
     // Group by conversation
     const conversations = {};
     messages.forEach(msg => {
       const otherUserId = msg.sender._id.toString() === req.user._id.toString() 
         ? msg.recipient._id.toString() 
         : msg.sender._id.toString();
+
+      const otherCommunityIds = participantCommunityMap.get(otherUserId) || [];
+      const sharedCommunity = currentCommunityIds.some(id => otherCommunityIds.includes(id));
+      if (!sharedCommunity) return;
       
       // Skip blocked users
       if (blockedIds.includes(otherUserId)) return;
@@ -2504,6 +2612,28 @@ app.get('/api/inbox/convos', authMiddleware, getConversationsHandler);
 // Get messages with user
 app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
   try {
+    const otherUser = await User.findById(req.params.userId).select('activeCommunityId companyId communityIds deletedAt');
+    if (!otherUser || otherUser.deletedAt) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const currentCommunityIds = [
+      req.user?.activeCommunityId,
+      req.user?.companyId,
+      ...(Array.isArray(req.user?.communityIds) ? req.user.communityIds : [])
+    ].filter(Boolean).map(id => id.toString());
+
+    const otherCommunityIds = [
+      otherUser?.activeCommunityId,
+      otherUser?.companyId,
+      ...(Array.isArray(otherUser?.communityIds) ? otherUser.communityIds : [])
+    ].filter(Boolean).map(id => id.toString());
+
+    const sharedCommunity = currentCommunityIds.some(id => otherCommunityIds.includes(id));
+    if (!sharedCommunity) {
+      return res.status(403).json({ error: 'Messaging is limited to people in your community' });
+    }
+
     const messages = await Message.find({
       $or: [
         { sender: req.user._id, recipient: req.params.userId },
