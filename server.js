@@ -133,7 +133,9 @@ if (process.env.NODE_ENV === 'production') {
     index: false, // Don't auto-serve index.html for API routes
     setHeaders: (res, path) => {
       if (path.endsWith('.html')) {
-        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
       }
     }
   }));
