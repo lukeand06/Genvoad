@@ -71,6 +71,8 @@ const CompanySchema = new mongoose.Schema({
   pendingInvitations: [{
     email: { type: String, required: true },
     role: { type: String, enum: ['admin', 'member'], default: 'member' },
+    accountType: { type: String, enum: ['owner', 'vendor'], default: 'vendor' },
+    message: { type: String, default: '' },
     token: { type: String, required: true },
     invitedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     invitedAt: { type: Date, default: Date.now },

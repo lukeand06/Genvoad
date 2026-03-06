@@ -77,7 +77,8 @@
                         </svg>
                         <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
                     </a>
-                    <a href="/create-project.html" id="cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <!-- Project CTA intentionally disabled on feed page -->
+                    <!-- <a href="/create-project.html" id="cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a> -->
                     <div class="relative" id="user-menu">
                         <button id="user-menu-btn" class="flex items-center space-x-2">
                             <div id="user-avatar"></div>
@@ -116,9 +117,10 @@
                 <a href="/messages.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
                 <a href="/notifications.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Notifications</a>
             </nav>
-            <div class="p-4 border-t border-gray-200">
+            <!-- Project CTA intentionally disabled on feed page -->
+            <!-- <div class="p-4 border-t border-gray-200">
                 <a href="/create-project.html" class="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Post Project</a>
-            </div>
+            </div> -->
         </div>
     </div>
 
@@ -236,8 +238,8 @@
             <p class="text-gray-600 mt-1" id="dashboard-subtitle">Here's what's happening with your projects</p>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="mb-8" id="stats-grid">
+        <!-- Stats Grid intentionally disabled on feed page -->
+        <!-- <div class="mb-8" id="stats-grid">
             <!-- For Owners -->
             <div id="owner-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
                 <button onclick="handleStatClick('active-projects-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
@@ -355,7 +357,7 @@
                     </div>
                 </button>
             </div>
-        </div>
+        </div> -->
 
         <!-- Two Column Layout -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -413,7 +415,6 @@
                                 <option value="post">Posts</option>
                                 <option value="article">Articles</option>
                                 <option value="news">News</option>
-                                <option value="project_update">Project Updates</option>
                                 <option value="achievement">Achievements</option>
                             </select>
                             <select id="feed-timeframe-filter" onchange="applyFeedFilters()" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 bg-white cursor-pointer">
@@ -484,27 +485,29 @@
                     </div>
                 </div>
 
-                <!-- Recommendations -->
+                <!-- Recommendations intentionally disabled on feed page -->
+                <!--
                 <div class="bg-white rounded-lg border border-gray-200 mb-6">
                     <div class="p-6 border-b border-gray-200">
                         <h2 class="text-lg font-semibold text-gray-900">Projects You May Like</h2>
                         <p class="text-xs text-gray-500 mt-1">Opportunities matching your profile</p>
                     </div>
                     <div id="recommendations" class="divide-y divide-gray-200">
-                        <!-- Recommendations will be loaded here -->
                         <div class="p-6 text-center text-gray-500">
                             <p class="text-sm">Loading opportunities...</p>
                         </div>
                     </div>
                 </div>
+                -->
 
                 <!-- Quick Actions -->
                 <div class="bg-white rounded-lg border border-gray-200">
                     <div class="p-6">
                         <h3 class="font-semibold text-gray-900 mb-4">Quick Actions</h3>
                         <div class="space-y-2">
-                            <a href="/create-project.html" id="quick-post-project" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">+ Post a Project</a>
-                            <a href="/browse.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">🔍 Find Contractors</a>
+                            <!-- Project/bid actions intentionally disabled on feed page -->
+                            <!-- <a href="/create-project.html" id="quick-post-project" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">+ Post a Project</a> -->
+                            <!-- <a href="/browse.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">🔍 Find Contractors</a> -->
                             <a href="/settings.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">⚙️ Update Profile</a>
                         </div>
                     </div>
@@ -514,8 +517,8 @@
     </div>
 
     <!-- Modals -->
-    <!-- Active Projects Modal -->
-    <div id="active-projects-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <!-- Active Projects Modal intentionally disabled on feed page -->
+    <!-- <div id="active-projects-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-scrollable">
             <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
                 <h2 class="text-xl font-semibold text-gray-900">Active Projects</h2>
@@ -529,10 +532,10 @@
                 <p class="text-gray-500">Loading...</p>
             </div>
         </div>
-    </div>
+    </div> -->
 
-    <!-- New Bids Modal -->
-    <div id="new-bids-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <!-- New Bids Modal intentionally disabled on feed page -->
+    <!-- <div id="new-bids-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
                 <h2 class="text-xl font-semibold text-gray-900">New Bids</h2>
@@ -546,7 +549,7 @@
                 <p class="text-gray-500">Loading...</p>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <!-- Messages Modal -->
     <div id="messages-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -565,8 +568,8 @@
         </div>
     </div>
 
-    <!-- Completed Projects Modal -->
-    <div id="completed-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <!-- Completed Projects Modal intentionally disabled on feed page -->
+    <!-- <div id="completed-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
                 <h2 class="text-xl font-semibold text-gray-900">Completed Projects</h2>
@@ -580,10 +583,10 @@
                 <p class="text-gray-500">Loading...</p>
             </div>
         </div>
-    </div>
+    </div> -->
 
-    <!-- Vendor Completed Projects Modal -->
-    <div id="vendor-completed-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <!-- Vendor Completed Projects Modal intentionally disabled on feed page -->
+    <!-- <div id="vendor-completed-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
                 <h2 class="text-xl font-semibold text-gray-900">Completed Projects</h2>
@@ -597,7 +600,7 @@
                 <p class="text-gray-500">Loading...</p>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <script src="/public/js/auth.js?v=20260202-2"></script>
     <script>
@@ -710,18 +713,8 @@
         
         // Role-based UI customization
         const isVendor = getUserRole() === 'vendor';
-        const ctaBtn = document.getElementById('cta-button');
         const subtitle = document.getElementById('dashboard-subtitle');
-        
-        if (isVendor) {
-            ctaBtn.textContent = 'Find Work';
-            ctaBtn.href = '/projects.html';
-            subtitle.textContent = 'Track your bids and discover new opportunities';
-        } else {
-            ctaBtn.textContent = 'Post Project';
-            ctaBtn.href = '/create-project.html';
-            subtitle.textContent = "Here's what's happening with your projects";
-        }
+        subtitle.textContent = 'Here is what is happening in your community feed';
 
         // User menu toggle
         document.getElementById('user-menu-btn').addEventListener('click', () => {
@@ -934,83 +927,9 @@
         // Load dashboard data
         async function loadDashboard() {
             try {
-                const role = getUserRole();
-                const isOwner = role === 'owner';
-                
-                // Show/hide role-specific stats
-                const ownerStats = document.getElementById('owner-stats');
-                const vendorStats = document.getElementById('vendor-stats');
-                ownerStats.classList.toggle('hidden', !isOwner);
-                vendorStats.classList.toggle('hidden', isOwner);
-
-                if (isOwner) {
-                    // Load owner dashboard
-                    const ownerId = user.id || user._id;
-                    const projectsRes = await authFetch(`/api/projects?owner=${ownerId}`);
-                    if (!projectsRes.ok) {
-                        const ct = projectsRes.headers.get('content-type') || '';
-                        const errMsg = ct.includes('application/json') ? (await projectsRes.json()).error || 'Failed to load projects' : `HTTP ${projectsRes.status}`;
-                        throw new Error(errMsg);
-                    }
-                    const projectsData = await projectsRes.json();
-                    userProjects = projectsData.projects || [];
-                    
-                    // Calculate owner stats
-                    const activeProjects = userProjects.filter(p => p.status === 'open' || p.status === 'in_progress');
-                    const completedProjects = userProjects.filter(p => p.status === 'completed');
-                    
-                    let totalBids = 0;
-                    userProjects.forEach(p => {
-                        // Count only pending and rejected bids (exclude accepted bids)
-                        const pendingBids = (p.bids || []).filter(b => b.status !== 'accepted');
-                        totalBids += pendingBids.length;
-                    });
-
-                    document.getElementById('active-projects').textContent = activeProjects.length;
-                    document.getElementById('new-bids').textContent = totalBids;
-                    document.getElementById('completed-projects').textContent = completedProjects.length;
-                } else {
-                    // Load vendor dashboard
-                    try {
-                        // Available projects count
-                        const allProjectsRes = await authFetch('/api/projects');
-                        if (allProjectsRes.ok) {
-                            const allData = await allProjectsRes.json();
-                            const availableProjects = allData.projects?.filter(p => p.status === 'open') || [];
-                            document.getElementById('vendor-available-projects').textContent = availableProjects.length;
-                        }
-                    } catch (err) {
-                        console.error('Error loading available projects:', err);
-                        document.getElementById('vendor-available-projects').textContent = '0';
-                    }
-
-                    // Vendor's bids and completed projects
-                    document.getElementById('vendor-active-bids').textContent = userProjects.filter(p => p.bids && p.bids.some(b => b.user._id === user.id)).length;
-                    document.getElementById('vendor-active-work').textContent = userProjects.filter(p => p.status === 'in_progress' && p.acceptedContractor && p.acceptedContractor._id === user.id).length;
-                    document.getElementById('vendor-completed-projects').textContent = userProjects.filter(p => p.status === 'completed' && p.acceptedContractor && p.acceptedContractor._id === user.id).length;
-                }
-
-                // Load messages count (same for both roles)
-                try {
-                    const messagesRes = await authFetch('/api/messages/conversations');
-                    if (!messagesRes.ok) {
-                        const ct = messagesRes.headers.get('content-type') || '';
-                        const d = ct.includes('application/json') ? await messagesRes.json() : null;
-                        throw new Error((d && d.error) || `HTTP ${messagesRes.status}`);
-                    }
-                    const data = await messagesRes.json();
-                    const conversations = Array.isArray(data.conversations) ? data.conversations : [];
-                    messagesData = conversations;
-                    const unreadCount = Number.isFinite(data.unreadCount)
-                        ? data.unreadCount
-                        : conversations.reduce((sum, c) => sum + (c?.unread ?? c?.unreadCount ?? 0), 0);
-                    const unreadElement = document.getElementById('unread-messages');
-                    if (unreadElement) unreadElement.textContent = unreadCount;
-                } catch (err) {
-                    console.error('Messages error:', err);
-                    const unreadElement = document.getElementById('unread-messages');
-                    if (unreadElement) unreadElement.textContent = '0';
-                }
+                // Project/bid dashboard widgets are intentionally disabled on the feed page.
+                userProjects = [];
+                messagesData = [];
             } catch (error) {
                 console.error('Error loading dashboard:', error);
             }
@@ -1093,7 +1012,6 @@
             initializePostUserAvatar();
             await loadDashboard();
             await loadFeed();
-            await loadRecommendations();
             await loadRecentNotifications();
             
             // Start notification polling for real-time updates
@@ -1619,29 +1537,8 @@
             const isProject = post.isProject || false;
 
             if (isProject) {
-                // Render project recommendation as post
-                return `
-                    <div class="p-6 hover:bg-gray-50 transition" data-post-id="${post._id}">
-                        <div class="flex items-start gap-3 mb-4">
-                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">
-                                ${post.author.firstName.charAt(0)}
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-900">${post.authorName}</p>
-                                <p class="text-xs text-gray-500">${post.author.company || 'Project Owner'} • ${getTimeAgo(new Date(post.createdAt))}</p>
-                            </div>
-                        </div>
-                        <div class="mb-4">
-                            <h3 class="text-base font-semibold text-gray-900 mb-2">${post.title}</h3>
-                            <p class="text-gray-700 text-sm mb-3 line-clamp-3">${post.content}</p>
-                            ${post.location ? `<p class="text-xs text-gray-500 mb-2">📍 ${post.location}</p>` : ''}
-                            ${post.budget ? `<p class="text-sm font-semibold text-blue-600">Budget: ${formatCurrency(post.budget)}</p>` : ''}
-                        </div>
-                        <a href="/projects.html" class="inline-block px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-sm font-medium transition">
-                            View Project
-                        </a>
-                    </div>
-                `;
+                // Project cards are intentionally hidden on the feed page.
+                return '';
             }
 
             // Regular post

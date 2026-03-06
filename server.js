@@ -4765,12 +4765,13 @@ app.post('/api/admin/companies/:id/reject', authMiddleware, async (req, res) => 
 // Invite team member to company
 app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
   try {
-    const { email, role, message } = req.body;
+    const { email, role, message, accountType } = req.body;
     const normalizedEmail = (email || '').toString().trim().toLowerCase();
+    const normalizedAccountType = (accountType || '').toString().trim().toLowerCase();
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     
-    if (!normalizedEmail || !emailPattern.test(normalizedEmail) || !['admin', 'member'].includes(role)) {
-      return res.status(400).json({ error: 'Invalid email or role' });
+    if (!normalizedEmail || !emailPattern.test(normalizedEmail) || !['admin', 'member'].includes(role) || !['owner', 'vendor'].includes(normalizedAccountType)) {
+      return res.status(400).json({ error: 'Invalid email, role, or account type' });
     }
 
     const company = await Company.findById(req.params.id);
@@ -4807,6 +4808,7 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
     company.pendingInvitations.push({
       email: normalizedEmail,
       role,
+      accountType: normalizedAccountType,
       token,
       message: message || null,
       invitedBy: req.user._id,
@@ -4834,6 +4836,7 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2>Join ${company.name} on Genovad</h2>
             <p><strong>${inviter.firstName} ${inviter.lastName}</strong> invited you to join <strong>${company.name}</strong> as a ${role}.</p>
+            <p>This referral is for a <strong>${normalizedAccountType}</strong> account.</p>
             
             ${company.verified ? '<p style="color: #059669;">✓ This is a verified community</p>' : ''}
             
@@ -4862,6 +4865,7 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
             <h2>You're invited to join ${company.name}</h2>
             <p><strong>${inviter.firstName} ${inviter.lastName}</strong> invited you to join <strong>${company.name}</strong> as a ${role}.</p>
+            <p>This referral is for a <strong>${normalizedAccountType}</strong> account.</p>
 
             ${message ? `<div style="background: #f0f0f0; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #1a1a1a;"><p style="margin: 0;"><strong>Message from ${inviter.firstName}:</strong></p><p style="margin: 10px 0 0 0;">${message}</p></div>` : ''}
 
@@ -4888,7 +4892,7 @@ app.post('/api/companies/:id/invite', authMiddleware, async (req, res) => {
     res.json({
       success: true,
       message: 'Invitation sent',
-      invitation: { email: normalizedEmail, role, token },
+      invitation: { email: normalizedEmail, role, accountType: normalizedAccountType, token },
       recipientStatus: registeredUser ? 'registered' : 'unregistered'
     });
   } catch (error) {
@@ -4926,7 +4930,8 @@ app.get('/api/companies/invitations/:token', async (req, res) => {
       },
       invitation: {
         role: invitation.role,
-        email: invitation.email
+        email: invitation.email,
+        accountType: invitation.accountType || null
       }
     });
   } catch (error) {
@@ -4961,6 +4966,10 @@ app.post('/api/companies/invitations/:token/accept', authMiddleware, async (req,
     const user = await User.findById(req.user._id);
     if (user.email !== invitation.email) {
       return res.status(403).json({ error: 'This invitation is for a different email address' });
+    }
+
+    if (invitation.accountType && user.role !== invitation.accountType) {
+      return res.status(403).json({ error: `This referral is for a ${invitation.accountType} account. Please sign in with the correct role.` });
     }
 
     // Add user to company
@@ -5007,7 +5016,7 @@ app.post('/api/companies/invitations/:token/accept', authMiddleware, async (req,
       success: true,
       message: 'Successfully joined company',
       company,
-      invitation: { role: invitation.role }
+      invitation: { role: invitation.role, accountType: invitation.accountType || null }
     });
   } catch (error) {
     console.error('Accept invitation error:', error);

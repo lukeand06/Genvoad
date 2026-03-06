@@ -56,6 +56,8 @@
                     <p id="company-name" class="font-semibold text-gray-900"></p>
                     <p class="text-sm text-gray-600 mt-3 mb-1">Your Role</p>
                     <p id="role" class="font-semibold text-gray-900"></p>
+                    <p class="text-sm text-gray-600 mt-3 mb-1">Account Type</p>
+                    <p id="account-type" class="font-semibold text-gray-900"></p>
                 </div>
 
                 <div id="login-prompt" class="hidden mb-6">
@@ -114,6 +116,7 @@
                 document.getElementById('invitation-details').classList.remove('hidden');
                 document.getElementById('company-name').textContent = data.company.name;
                 document.getElementById('role').textContent = data.invitation.role;
+                document.getElementById('account-type').textContent = data.invitation.accountType || 'Not specified';
 
                 if (!user) {
                     // Not logged in - show login prompt
