@@ -41,7 +41,8 @@
       <h2 class="text-lg font-semibold text-gray-900 mb-3">Community tools</h2>
       <p class="text-sm text-gray-600 mb-4">Use these tools after joining a community.</p>
       <div class="flex flex-wrap gap-3">
-        <a href="/projects.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Projects</a>
+        <a href="/dashboard.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Feed</a>
+        <a href="/network.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">People</a>
         <a href="/messages.html" class="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50">Messenger</a>
       </div>
     </section>
@@ -153,6 +154,13 @@
         state.activeCommunityId = data.activeCommunityId || state.communities[0]?._id || null;
         setCommunityLockedState(!state.activeCommunityId);
 
+        if (state.activeCommunityId) {
+          const user = getCurrentUser();
+          if (user) {
+            setCurrentUser({ ...user, activeCommunityId: state.activeCommunityId, companyId: state.activeCommunityId });
+          }
+        }
+
         renderCommunitySelect();
         renderCommunityCards();
 
@@ -217,7 +225,8 @@
           <p class="text-xs text-gray-500 mt-2">Access code: <span class="font-medium text-gray-700">${c.accessCode || 'pending'}</span></p>
           <div class="mt-3 flex gap-2">
             <button data-community="${c._id}" class="switch-community-btn px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Make active</button>
-            <a href="/company.html" class="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Open community</a>
+            <a href="/dashboard.html" class="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Enter feed</a>
+            <!-- <a href="/company.html" class="px-3 py-1.5 text-xs border border-gray-300 rounded-lg hover:bg-gray-50">Open community</a> -->
           </div>
         </article>
       `).join('');
@@ -346,7 +355,7 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to accept invitation');
 
-        await loadHub();
+        window.location.href = '/dashboard.html';
       } catch (error) {
         showError(error.message || 'Failed to accept invitation');
       }
@@ -371,7 +380,7 @@
 
         document.getElementById('access-code-input').value = '';
         setCommunityLockedState(false);
-        await loadHub();
+        window.location.href = '/dashboard.html';
       } catch (error) {
         showError(error.message || 'Failed to join community');
       }
