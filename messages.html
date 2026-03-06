@@ -58,7 +58,7 @@
                         </svg>
                         <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
                     </a>
-                    <a href="/create-project.html" id="cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <a href="/company.html?refer=true" id="cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Refer User</a>
                     <div class="relative" id="user-menu">
                         <button id="user-menu-btn" class="flex items-center space-x-2">
                             <div id="user-avatar"></div>
@@ -98,7 +98,7 @@
                 <a href="/notifications.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Notifications</a>
             </nav>
             <div class="p-4 border-t border-gray-200">
-                <a href="/create-project.html" class="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Post Project</a>
+                <a href="/company.html?refer=true" class="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Refer User</a>
             </div>
         </div>
     </div>
@@ -114,7 +114,8 @@
                         <button id="new-thread-btn" class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">+ New thread</button>
                     </div>
 
-                    <!-- Filter Tabs -->
+                    <!-- Partner filters and partner quick list intentionally disabled. Messages are community-only. -->
+                    <!--
                     <div class="px-4 py-3 border-b border-gray-200 flex gap-2">
                         <button class="filter-tab px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 border-b-2 border-transparent active" data-filter="all">
                             All Messages
@@ -136,6 +137,7 @@
                             <p class="text-xs text-gray-500">Loading...</p>
                         </div>
                     </div>
+                    -->
                     <div id="conversations-list" class="overflow-y-auto" style="height: calc(100% - 200px);">
                         <div class="p-4 text-center text-gray-500">Loading conversations...</div>
                     </div>
@@ -333,13 +335,7 @@
         
         const isMobile = () => window.innerWidth < 768;
 
-        // Role-based nav button
-        const isVendor = user.role === 'vendor';
-        const navCta = document.getElementById('nav-cta-button');
-        if (isVendor && navCta) {
-            navCta.textContent = 'Find Work';
-            navCta.href = '/projects.html';
-        }
+        // Header CTA is standardized to community referral action.
         
         document.getElementById('user-menu-btn').addEventListener('click', () => {
             document.getElementById('user-dropdown').classList.toggle('hidden');
@@ -386,7 +382,7 @@
             document.getElementById('new-thread-modal').classList.add('hidden');
         });
 
-        // Recipient Search with Partner Suggestions
+        // Recipient Search (community members only)
         let searchTimeout;
         document.getElementById('recipient-search').addEventListener('input', async (e) => {
             clearTimeout(searchTimeout);
@@ -404,18 +400,10 @@
                     const isEmail = query.includes('@');
                     let results = [];
                     
-                    // If query is less than 2 chars and not an email, show partner suggestions
-                    if (query.length < 2 && !isEmail) {
-                        results = partners.filter(p => 
-                            `${p.firstName} ${p.lastName}`.toLowerCase().includes(query.toLowerCase()) ||
-                            (p.company && p.company.toLowerCase().includes(query.toLowerCase()))
-                        );
-                    } else {
-                        // Search via API
-                        const res = await authFetch(`/api/users/search?q=${encodeURIComponent(query)}&scope=community`);
-                        const data = await res.json();
-                        results = Array.isArray(data?.users) ? data.users : [];
-                    }
+                    // Search via API (community-scoped)
+                    const res = await authFetch(`/api/users/search?q=${encodeURIComponent(query)}&scope=community`);
+                    const data = await res.json();
+                    results = Array.isArray(data?.users) ? data.users : [];
                     
                     if (results.length === 0) {
                         resultsContainer.innerHTML = `
@@ -429,14 +417,12 @@
                             const safeName = (u.name || `${u.firstName} ${u.lastName}` || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                             const safeEmail = (u.email || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
                             const displayName = u.name || `${u.firstName} ${u.lastName}`;
-                            const isPartner = partners.some(p => p._id === u._id);
                             return `
                                 <div class="p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer transition" onclick="selectRecipient('${u._id || ''}', '${safeName}', '${safeEmail}', ${u.isRegistered})">
                                     <div class="flex items-center justify-between">
                                         <div class="flex-1">
                                             <div class="flex items-center gap-2">
                                                 <div class="font-medium text-gray-900">${displayName}</div>
-                                                ${isPartner ? '<span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">Partner</span>' : ''}
                                             </div>
                                             <div class="text-xs text-gray-600 mt-0.5">${u.email}</div>
                                             ${u.company ? `<div class="text-xs text-gray-500">${u.company}</div>` : ''}
@@ -456,31 +442,7 @@
             }, 300); // 300ms debounce
         });
         
-        // Show partner suggestions when recipient search is focused
-        document.getElementById('recipient-search').addEventListener('focus', () => {
-            if (partners && partners.length > 0) {
-                const resultsContainer = document.getElementById('search-results');
-                resultsContainer.innerHTML = `
-                    <div class="p-3 text-xs font-semibold text-gray-700 bg-gray-50 border-b border-gray-100">Your Partners</div>
-                    ${partners.slice(0, 5).map(p => {
-                        const safeName = `${p.firstName} ${p.lastName}`.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                        return `
-                            <div class="p-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer transition" onclick="selectRecipient('${p._id}', '${safeName}', '${p.email || ''}', true)">
-                                <div class="flex items-center justify-between">
-                                    <div>
-                                        <div class="font-medium text-gray-900">${p.firstName} ${p.lastName}</div>
-                                        ${p.company ? `<div class="text-xs text-gray-500 mt-0.5">${p.company}</div>` : ''}
-                                    </div>
-                                    <span class="text-blue-100">✓</span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                    ${partners.length > 5 ? `<div class="p-2 text-center text-xs text-gray-500">+${partners.length - 5} more partners</div>` : ''}
-                `;
-                resultsContainer.classList.remove('hidden');
-            }
-        });
+        // Focus behavior intentionally simple: type to search community members.
 
         function selectRecipient(id, name, email, isRegistered) {
             document.getElementById('selected-recipient-id').value = id || '';
@@ -535,18 +497,7 @@
             const items = conversationsContainer.querySelectorAll('[data-conversation-id]');
             
             items.forEach(item => {
-                const type = item.dataset.conversationType || 'direct';
-                let show = false;
-                
-                if (currentFilter === 'all') {
-                    show = true;
-                } else if (currentFilter === 'partners') {
-                    show = type === 'partner';
-                } else if (currentFilter === 'direct') {
-                    show = type === 'direct';
-                }
-                
-                item.style.display = show ? 'block' : 'none';
+                item.style.display = 'block';
             });
         }
 
@@ -629,26 +580,12 @@
         }
 
         async function loadPartners() {
-            try {
-                const res = await authFetch('/api/partners');
-                const ct = res.headers.get('content-type') || '';
-                if (!res.ok || !ct.includes('application/json')) {
-                    let err;
-                    try { err = await res.json(); } catch {}
-                    throw new Error((err && (err.error || err.message)) || `Failed to load partners (HTTP ${res.status})`);
-                }
-                const data = await res.json();
-                partners = data.partners || [];
-                renderPartners();
-                renderInviteMenu();
-            } catch (e) {
-                console.error('Error loading partners', e);
-                document.getElementById('partners-list').innerHTML = '<p class="text-xs text-red-500">Failed to load partners</p>';
-            }
+            partners = [];
         }
 
         function renderPartners() {
             const container = document.getElementById('partners-list');
+            if (!container) return;
             if (!partners || partners.length === 0) {
                 container.innerHTML = '<p class="text-xs text-gray-500">No partners yet</p>';
                 return;
@@ -698,7 +635,7 @@
                 <button 
                     onclick="openChat('${userId}')" 
                     data-conversation-id="${userId}"
-                    data-conversation-type="${conv.type || 'direct'}"
+                    data-conversation-type="direct"
                     class="w-full p-4 hover:bg-gray-50 border-b border-gray-100 text-left ${currentChatUserId === userId ? 'bg-gray-50' : ''}">
                     <div class="flex items-center gap-3">
                         ${getAvatarHTML(user, 'w-12 h-12')}
@@ -707,7 +644,6 @@
                                 <div class="flex items-center gap-1.5 min-w-0 flex-1">
                                     <p class="font-medium text-gray-900 truncate">${user.company || `${user.firstName || 'User'} ${user.lastName || ''}`}</p>
                                     ${getVerificationBadge(user, 'small')}
-                                    ${conv.type === 'partner' ? '<span class="ml-1 px-1.5 py-0.5 bg-blue-100 text-blue-700 text-xs rounded">Partner</span>' : ''}
                                 </div>
                                 ${(conv.unread || conv.unreadCount || 0) > 0 ? `<span class="ml-2 px-2 py-1 bg-blue-500 text-white text-xs rounded-full flex-shrink-0">${conv.unread || conv.unreadCount}</span>` : ''}
                             </div>
@@ -1164,7 +1100,8 @@
             });
         });
 
-        document.getElementById('reload-partners').addEventListener('click', loadPartners);
+        const reloadPartnersBtn = document.getElementById('reload-partners');
+        if (reloadPartnersBtn) reloadPartnersBtn.addEventListener('click', loadPartners);
 
         // Toggle quick prompts on mobile
         const togglePromptsBtn = document.getElementById('toggle-prompts');
@@ -1322,7 +1259,6 @@
         window.addEventListener('resize', syncPanelsOnResize);
 
         (async () => {
-            await loadPartners();
             await loadConversations();
             syncPanelsOnResize();
         })();

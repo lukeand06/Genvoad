@@ -5037,7 +5037,7 @@ app.get('/api/companies/:id/members', authMiddleware, async (req, res) => {
     }
 
     const company = await Company.findById(req.params.id)
-      .populate('members', 'firstName lastName email avatar title companyRole role company');
+      .populate('members', 'firstName lastName email avatar title companyRole role company bio phone location city state yearsExperience skills services links rating reviewCount projectsCompleted');
     
     if (!company) return res.status(404).json({ error: 'Company not found' });
     

@@ -77,8 +77,7 @@
                         </svg>
                         <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
                     </a>
-                    <!-- Project CTA intentionally disabled on feed page -->
-                    <!-- <a href="/create-project.html" id="cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a> -->
+                    <a href="/company.html?refer=true" id="cta-button" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Refer User</a>
                     <div class="relative" id="user-menu">
                         <button id="user-menu-btn" class="flex items-center space-x-2">
                             <div id="user-avatar"></div>
@@ -117,10 +116,9 @@
                 <a href="/messages.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
                 <a href="/notifications.html" class="block px-4 py-3 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Notifications</a>
             </nav>
-            <!-- Project CTA intentionally disabled on feed page -->
-            <!-- <div class="p-4 border-t border-gray-200">
-                <a href="/create-project.html" class="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Post Project</a>
-            </div> -->
+            <div class="p-4 border-t border-gray-200">
+                <a href="/company.html?refer=true" class="block w-full px-4 py-3 text-center text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Refer User</a>
+            </div>
         </div>
     </div>
 
@@ -359,10 +357,10 @@
             </div>
         </div> -->
 
-        <!-- Two Column Layout -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Centered Feed Layout -->
+        <div class="grid grid-cols-1 gap-8 max-w-4xl mx-auto">
             <!-- Activity Feed (LinkedIn-style) -->
-            <div id="activity-feed-section" class="lg:col-span-2">
+            <div id="activity-feed-section" class="w-full">
                 <!-- Create Post Card -->
                 <div class="bg-white rounded-lg border border-gray-200 mb-6 shadow-sm">
                     <div class="p-4 border-b border-gray-200">
@@ -448,9 +446,10 @@
                 </div>
             </div>
 
-            <!-- Sidebar -->
-            <div class="lg:col-span-1">
-                <!-- Trending Posts -->
+            <!-- Secondary Panels -->
+            <div class="w-full">
+                <!-- Trending Now intentionally disabled on feed page -->
+                <!--
                 <div class="bg-white rounded-lg border border-gray-200 mb-6">
                     <div class="p-6 border-b border-gray-200">
                         <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
@@ -467,6 +466,7 @@
                         </div>
                     </div>
                 </div>
+                -->
 
                 <!-- Notifications Inbox -->
                 <div id="notifications-section" class="bg-white rounded-lg border border-gray-200 mb-6">
@@ -500,18 +500,17 @@
                 </div>
                 -->
 
-                <!-- Quick Actions -->
+                <!-- Quick Actions intentionally disabled on feed page -->
+                <!--
                 <div class="bg-white rounded-lg border border-gray-200">
                     <div class="p-6">
                         <h3 class="font-semibold text-gray-900 mb-4">Quick Actions</h3>
                         <div class="space-y-2">
-                            <!-- Project/bid actions intentionally disabled on feed page -->
-                            <!-- <a href="/create-project.html" id="quick-post-project" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">+ Post a Project</a> -->
-                            <!-- <a href="/browse.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">🔍 Find Contractors</a> -->
                             <a href="/settings.html" class="block px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-lg text-sm font-medium text-gray-700">⚙️ Update Profile</a>
                         </div>
                     </div>
                 </div>
+                -->
             </div>
         </div>
     </div>
@@ -1220,11 +1219,13 @@
 
         async function loadTrendingPosts() {
             try {
+                const trendingContainer = document.getElementById('trending-posts');
+                if (!trendingContainer) return;
+
                 const res = await authFetch('/api/trending-posts?timeframe=7d&limit=5');
                 if (!res.ok) return;
 
                 const data = await res.json();
-                const trendingContainer = document.getElementById('trending-posts');
 
                 if (!data.posts || data.posts.length === 0) {
                     trendingContainer.innerHTML = `
