@@ -104,8 +104,7 @@
         if (currentRoleLabel) currentRoleLabel.textContent = userRole.charAt(0).toUpperCase() + userRole.slice(1);
         if (roleContainer) {
             roleContainer.innerHTML = `
-                <div class="px-3 py-2 text-sm text-gray-700">Account Type: <span class="font-semibold">${userRole.charAt(0).toUpperCase() + userRole.slice(1)}</span></div>
-                <a href="/settings.html#role-ui" class="block w-full px-3 py-2 text-sm font-medium text-gray-700 rounded hover:bg-gray-50">Manage Account Type</a>
+                <div class="px-3 py-2 text-sm text-gray-700">Account Type: <span class="font-semibold capitalize">${userRole}</span></div>
             `;
         }
         

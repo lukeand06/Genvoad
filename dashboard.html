@@ -678,11 +678,12 @@
         function initializeRoleSwitcher() {
             const currentRole = getUserRole();
             const roleSwitcher = document.getElementById('role-switcher');
+            const currentRoleEl = document.getElementById('current-role');
+            if (currentRoleEl) currentRoleEl.textContent = currentRole;
             roleSwitcher.innerHTML = `
                 <div class="px-3 py-2 text-sm text-gray-700">
                     Account Type: <span class="font-semibold capitalize">${currentRole}</span>
                 </div>
-                <a href="/settings.html#role-ui" class="block w-full mt-1 px-3 py-2 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50">Manage Account Type</a>
             `;
         }
         
