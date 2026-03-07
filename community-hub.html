@@ -16,7 +16,7 @@
       <div class="flex justify-between items-center h-16">
         <div class="flex items-center gap-6">
           <a href="/community-hub.html" class="flex items-center">
-            <img src="/public/logo-icon.png" alt="Genovad" class="h-10 w-auto" />
+            <img src="/public/logo-icon.png" alt="Genovad" class="h-12 w-auto" />
           </a>
           <div class="hidden md:flex gap-1">
             <a href="/community-hub.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Community</a>
@@ -30,7 +30,6 @@
             </svg>
             <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
           </a>
-          <a href="/company.html?refer=true" id="cta-button" class="inline-flex items-center bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Refer a person</a>
           <div class="relative" id="user-menu">
             <button id="user-menu-btn" class="flex items-center space-x-2">
               <div id="user-avatar"></div>
@@ -57,9 +56,15 @@
     <div id="error-message" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded"></div>
 
     <section class="bg-white border border-gray-200 rounded-xl p-6">
-      <div>
-        <h1 class="text-3xl font-bold text-gray-900">Community Hub</h1>
-        <p class="text-gray-600 mt-1">Join a community, review invitations, and see your members + projects in one place.</p>
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Community Hub</h1>
+          <p class="text-gray-600 mt-1">Join a community, review invitations, and see your members + projects in one place.</p>
+        </div>
+
+        <div class="md:flex-shrink-0">
+          <a href="/create-community.html" class="inline-flex items-center justify-center px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Create new community</a>
+        </div>
 
         <!-- Keep hidden selector for state sync in existing scripts -->
         <div class="hidden" aria-hidden="true">
@@ -75,22 +80,6 @@
       <div id="community-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <p class="text-gray-500">No communities joined yet.</p>
       </div>
-    </section>
-
-    <section class="bg-white border border-gray-200 rounded-xl p-6">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold text-gray-900">Invitation inbox</h2>
-        <span id="invite-count" class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">0</span>
-      </div>
-      <div id="invite-inbox" class="space-y-3 text-sm text-gray-600">
-        <p>No pending invitations.</p>
-      </div>
-    </section>
-
-    <section class="bg-white border border-gray-200 rounded-xl p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-3">Create a new community</h2>
-      <p class="text-sm text-gray-600 mb-4">Start a fresh community space and invite members in minutes.</p>
-      <a href="/create-community.html" class="inline-flex items-center justify-center px-4 py-2 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Create new community</a>
     </section>
 
     <section class="bg-white border border-gray-200 rounded-xl p-6">
@@ -144,8 +133,7 @@
       }
 
       await Promise.all([
-        loadCommunities(),
-        loadInviteInbox()
+        loadCommunities()
       ]);
     }
 

@@ -72,11 +72,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-8">
-                    <a href="/community-hub.html" class="inline-flex items-center text-gray-600 hover:text-gray-900" title="Back to Community Home">
-                        <span class="text-xl leading-none">←</span>
-                    </a>
                     <a href="/community-hub.html" class="flex items-center">
-                        <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-10 w-auto" onerror="console.error('Logo failed to load:', this.src)">
+                        <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-12 w-auto" onerror="console.error('Logo failed to load:', this.src)">
                     </a>
                     
                     <div class="hidden md:flex space-x-1">
@@ -100,7 +97,7 @@
                         </svg>
                         <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
                     </a>
-                    <a href="/company.html?refer=true" id="cta-button" class="hidden bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Refer User</a>
+                    <a href="/company.html?refer=true" id="cta-button" class="inline-flex items-center bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Refer a person</a>
                     <div class="relative" id="user-menu">
                         <button id="user-menu-btn" class="flex items-center space-x-2">
                             <div id="user-avatar"></div>
@@ -538,6 +535,7 @@
         const joinParams = new URLSearchParams(window.location.search);
         const joinedFromCommunity = joinParams.get('joined') === '1';
         const joinedCommunityName = joinParams.get('community') ? decodeURIComponent(joinParams.get('community')) : '';
+        const sharedPostId = joinParams.get('post');
 
         async function ensureUser() {
             if (user) return user;
@@ -1007,6 +1005,12 @@
 
             await loadDashboard();
             await loadFeed();
+
+            if (sharedPostId) {
+                setTimeout(() => {
+                    scrollToPost(sharedPostId);
+                }, 300);
+            }
 
             if (joinedFromCommunity) {
                 const name = (joinedCommunityName || currentCommunity?.name || 'your community').trim();
@@ -1708,7 +1712,7 @@
                             </svg>
                             <span>${post.commentCount || 0}</span>
                         </button>
-                        <button class="flex items-center gap-1 hover:text-green-600 transition">
+                        <button onclick="sharePost('${post._id}')" class="flex items-center gap-1 hover:text-green-600 transition">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C9.577 14.591 10.92 15.55 12.448 15.999m0 0c1.528.45 2.871 1.409 3.764 2.658m-9.212-2.658a9 9 0 01-2.905-7.12m2.905 7.12a9.01 9.01 0 0016.122-9.231m-16.122 0c-.663-4.343 1.7-8.476 5.738-9.687m16.122 9.231c.663 4.343-1.7 8.476-5.738 9.687"/>
                             </svg>
@@ -1738,6 +1742,36 @@
                 await loadFeed();
             } catch (error) {
                 console.error('Like error:', error);
+            }
+        }
+
+        async function sharePost(postId) {
+            try {
+                const shareUrl = `${window.location.origin}/dashboard.html?post=${encodeURIComponent(postId)}`;
+                const shareTitle = 'Genovad Community Feed Post';
+                const shareText = 'Check out this post in our community feed.';
+
+                if (navigator.share) {
+                    await navigator.share({
+                        title: shareTitle,
+                        text: shareText,
+                        url: shareUrl
+                    });
+                    return;
+                }
+
+                if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(shareUrl);
+                    showNotificationToast('Post link copied to clipboard', 'success', 3500);
+                    return;
+                }
+
+                window.prompt('Copy this post link:', shareUrl);
+            } catch (error) {
+                if (error?.name !== 'AbortError') {
+                    console.error('Share error:', error);
+                    showNotificationToast('Could not share post right now', 'error', 3500);
+                }
             }
         }
 
