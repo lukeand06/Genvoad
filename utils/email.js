@@ -68,7 +68,22 @@ async function sendVerificationEmail(email, firstName, code) {
   }
 }
 
-async function sendEmail(to, subject, htmlContent, fromEmail = null) {
+async function sendEmail(toOrOptions, subjectArg, htmlContentArg, fromEmailArg = null) {
+  const usingOptionsObject = toOrOptions && typeof toOrOptions === 'object' && !Array.isArray(toOrOptions);
+
+  const to = usingOptionsObject ? toOrOptions.to : toOrOptions;
+  const subject = usingOptionsObject ? toOrOptions.subject : subjectArg;
+  const htmlContent = usingOptionsObject
+    ? (toOrOptions.html || toOrOptions.htmlContent)
+    : htmlContentArg;
+  const fromEmail = usingOptionsObject
+    ? (toOrOptions.from || toOrOptions.fromEmail || null)
+    : fromEmailArg;
+
+  if (!to || !subject || !htmlContent) {
+    throw new Error('sendEmail requires to, subject, and html content');
+  }
+
   if (!process.env.RESEND_API_KEY || !resend) {
     console.error(`❌ Resend not configured - Cannot send email to ${to}`);
     throw new Error('Email service not configured. Please set RESEND_API_KEY.');
@@ -78,9 +93,9 @@ async function sendEmail(to, subject, htmlContent, fromEmail = null) {
     const { Resend } = resend;
     const client = new Resend(process.env.RESEND_API_KEY);
     await client.emails.send({
-      from: process.env.RESEND_FROM || 'noreply@genovad.com',
-      to: to,
-      subject: subject,
+      from: fromEmail || process.env.RESEND_FROM || 'noreply@genovad.com',
+      to,
+      subject,
       html: htmlContent
     });
     console.log(`✓ Email sent to ${to}`);
