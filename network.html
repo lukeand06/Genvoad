@@ -420,9 +420,10 @@
       const location = member.location || [member.city, member.state].filter(Boolean).join(', ') || 'Not provided';
       const badges = getRoleBadges(member);
       const isOwner = (member.role || '').toLowerCase() === 'owner';
-      const companyProfileUrl = state.activeCommunityId
-        ? `/company.html?companyId=${state.activeCommunityId}`
-        : `/profile.html?id=${member._id}`;
+      const memberProfileId = member?._id || member?.id || '';
+      const memberProfileUrl = memberProfileId
+        ? `/profile.html?id=${memberProfileId}`
+        : '/profile.html';
 
       content.innerHTML = `
         <div class="flex items-start gap-4 mb-6">
@@ -433,7 +434,7 @@
             <div class="mt-2 flex gap-2 text-xs">
               ${badges.map(b => `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(b)}</span>`).join('')}
             </div>
-            <a href="${companyProfileUrl}" class="inline-flex mt-3 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Go to Profile</a>
+            <a href="${memberProfileUrl}" class="inline-flex mt-3 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Go to Profile</a>
           </div>
         </div>
 

@@ -26,7 +26,7 @@
                     
                     <div class="hidden md:flex space-x-1">
                         <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Dashboard</a>
-                        <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Projects</a>
+                        <!-- <a href="/projects.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Projects</a> -->
                         <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
                         <a href="/community-hub.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Community</a>
                     </div>
@@ -39,7 +39,7 @@
                         </svg>
                         <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
                     </a>
-                    <a href="/create-project.html" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a>
+                    <!-- <a href="/create-project.html" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Post Project</a> -->
                     <div class="relative" id="user-menu">
                         <button id="user-menu-btn" class="flex items-center space-x-2">
                             <div id="user-avatar"></div>
@@ -285,12 +285,12 @@
                                         </svg>
                                         Send Message
                                     </a>
-                                    <button id="add-partner-btn" onclick="addAsPartner('${profile._id}')" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
+                                    <!-- <button id="add-partner-btn" onclick="addAsPartner('${profile._id}')" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition flex items-center justify-center gap-2">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                                         </svg>
                                         <span id="partner-btn-text">Add Partner</span>
-                                    </button>
+                                    </button> -->
                                 `}
                             </div>
                         </div>
@@ -585,7 +585,7 @@
                         ` : ''}
 
                         <!-- Projects Section -->
-                        <div class="bg-white rounded-lg border border-gray-200 p-6" id="projects-section">
+                        <!-- <div class="bg-white rounded-lg border border-gray-200 p-6" id="projects-section">
                             <h2 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                 <svg class="w-5 h-5 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -600,7 +600,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
 
                         <!-- Reviews Section -->
                         <div class="bg-white rounded-lg border border-gray-200 p-6" id="reviews-main-section">
@@ -633,8 +633,8 @@
             // Load reviews
             loadReviews(profile._id);
 
-            // Load projects
-            loadProjects(profile);
+            // Load projects (temporarily disabled on profile page)
+            // loadProjects(profile);
 
             // Setup review form if viewing someone else
             if (!isOwnProfile && profile.company) {
@@ -1086,6 +1086,7 @@
                 
                 const btn = document.getElementById('add-partner-btn');
                 const btnText = document.getElementById('partner-btn-text');
+                if (!btn || !btnText) return;
                 
                 if (isPartner) {
                     btnText.textContent = '✓ Partner';
