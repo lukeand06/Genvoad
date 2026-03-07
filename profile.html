@@ -324,12 +324,21 @@
                                 <p class="text-2xl sm:text-3xl font-bold text-gray-900">${profile.rating ? profile.rating.toFixed(1) : '0.0'}</p>
                                 <p class="text-xs sm:text-sm text-gray-600 font-medium mt-1">${profile.reviewCount || 0} review${(profile.reviewCount || 0) !== 1 ? 's' : ''}</p>
                             </div>
+                            <!--
                             <div class="p-4 sm:p-6 text-center hover:bg-white transition">
                                 <svg class="w-8 h-8 mx-auto text-green-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 <p class="text-2xl sm:text-3xl font-bold text-gray-900">${profile.projectsCompleted || 0}</p>
                                 <p class="text-xs sm:text-sm text-gray-600 font-medium mt-1">completed</p>
+                            </div>
+                            -->
+                            <div class="p-4 sm:p-6 text-center hover:bg-white transition">
+                                <svg class="w-8 h-8 mx-auto text-indigo-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A8.965 8.965 0 0112 15c2.2 0 4.216.794 5.879 2.111M15 11a3 3 0 11-6 0 3 3 0 016 0zM22 12a10 10 0 11-20 0 10 10 0 0120 0z"/>
+                                </svg>
+                                <p class="text-2xl sm:text-3xl font-bold text-gray-900 capitalize">${profile.companyRole || profile.role || 'member'}</p>
+                                <p class="text-xs sm:text-sm text-gray-600 font-medium mt-1">community role</p>
                             </div>
                             <div class="p-4 sm:p-6 text-center hover:bg-white transition">
                                 <svg class="w-8 h-8 mx-auto text-blue-500 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">

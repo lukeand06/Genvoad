@@ -425,16 +425,18 @@
         : '/profile.html';
 
       content.innerHTML = `
-        <div class="flex items-start gap-4 mb-6">
-          <div>${getAvatarHTML(member, 'w-16 h-16')}</div>
-          <div>
-            <h3 class="text-2xl font-bold text-gray-900">${esc(fullName)}</h3>
-            <p class="text-gray-600">${esc(member.title || 'Community member')}</p>
-            <div class="mt-2 flex gap-2 text-xs">
-              ${badges.map(b => `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(b)}</span>`).join('')}
+        <div class="flex items-start justify-between gap-4 mb-6">
+          <div class="flex items-start gap-4 min-w-0">
+            <div>${getAvatarHTML(member, 'w-16 h-16')}</div>
+            <div class="min-w-0">
+              <h3 class="text-2xl font-bold text-gray-900">${esc(fullName)}</h3>
+              <p class="text-gray-600">${esc(member.title || 'Community member')}</p>
+              <div class="mt-2 flex gap-2 text-xs flex-wrap">
+                ${badges.map(b => `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(b)}</span>`).join('')}
+              </div>
             </div>
-            <a href="${memberProfileUrl}" class="inline-flex mt-3 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Go to Profile</a>
           </div>
+          <a href="${memberProfileUrl}" class="inline-flex shrink-0 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Go to Profile</a>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
