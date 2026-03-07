@@ -837,18 +837,33 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
 
     let communityConstraint = null;
     if (scope === 'community') {
-      const requester = await User.findById(requesterId).select('activeCommunityId companyId communityIds');
+      const requester = await User.findById(requesterId).select('activeCommunityId companyId communityIds company');
       const requesterCommunityIds = [
         requester?.activeCommunityId,
         requester?.companyId,
         ...(Array.isArray(requester?.communityIds) ? requester.communityIds : [])
       ].filter(Boolean).map(id => id.toString());
+      const requesterCompanyName = typeof requester?.company === 'string' ? requester.company.trim() : '';
 
-      if (!requesterCommunityIds.length) {
+      const communityLookupQuery = requesterCommunityIds.length
+        ? {
+            $or: [
+              { _id: { $in: requesterCommunityIds } },
+              { members: requesterId }
+            ]
+          }
+        : { members: requesterId };
+
+      const communityDocs = await Company.find(communityLookupQuery).select('_id members');
+      const resolvedCommunityIds = Array.from(new Set([
+        ...requesterCommunityIds,
+        ...communityDocs.map(c => c?._id).filter(Boolean).map(id => id.toString())
+      ]));
+
+      if (!resolvedCommunityIds.length && !requesterCompanyName) {
         return res.json({ users: [] });
       }
 
-      const communityDocs = await Company.find({ _id: { $in: requesterCommunityIds } }).select('members');
       const communityMemberIds = communityDocs
         .flatMap(company => Array.isArray(company.members) ? company.members : [])
         .filter(Boolean)
@@ -856,13 +871,20 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
 
       const eligibleUserIds = Array.from(new Set(communityMemberIds));
 
+      const communityOrClauses = [
+        { _id: { $in: eligibleUserIds } },
+        { activeCommunityId: { $in: resolvedCommunityIds } },
+        { companyId: { $in: resolvedCommunityIds } },
+        { communityIds: { $in: resolvedCommunityIds } }
+      ];
+
+      if (requesterCompanyName) {
+        const escapedCompany = requesterCompanyName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        communityOrClauses.push({ company: new RegExp(`^${escapedCompany}$`, 'i') });
+      }
+
       communityConstraint = {
-        $or: [
-          { _id: { $in: eligibleUserIds } },
-          { activeCommunityId: { $in: requesterCommunityIds } },
-          { companyId: { $in: requesterCommunityIds } },
-          { communityIds: { $in: requesterCommunityIds } }
-        ]
+        $or: communityOrClauses
       };
     }
     
@@ -928,7 +950,8 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
       $or: [
         { firstName: searchRegex },
         { lastName: searchRegex },
-        { company: searchRegex }
+        { company: searchRegex },
+        { email: searchRegex }
       ]
     };
 
@@ -2243,6 +2266,79 @@ app.post('/api/messages', authMiddleware, upload.array('attachments', 5), async 
   } catch (error) {
     console.error('Send message error:', error);
     res.status(500).json({ error: 'Failed to send message' });
+  }
+});
+
+// Create thread from new-thread modal (JSON payload)
+app.post('/api/messages/create-thread', authMiddleware, async (req, res) => {
+  try {
+    const { recipientId, subject, message, projectId } = req.body;
+
+    if (!recipientId) {
+      return res.status(400).json({ error: 'Recipient is required' });
+    }
+
+    const [sender, recipient] = await Promise.all([
+      User.findById(req.user._id).select('activeCommunityId companyId communityIds blockedUsers firstName'),
+      User.findById(recipientId).select('activeCommunityId companyId communityIds blockedUsers deletedAt firstName')
+    ]);
+
+    if (!recipient || recipient.deletedAt) {
+      return res.status(404).json({ error: 'Recipient not found' });
+    }
+
+    const senderCommunityIds = [
+      sender?.activeCommunityId,
+      sender?.companyId,
+      ...(Array.isArray(sender?.communityIds) ? sender.communityIds : [])
+    ].filter(Boolean).map(id => id.toString());
+
+    const recipientCommunityIds = [
+      recipient?.activeCommunityId,
+      recipient?.companyId,
+      ...(Array.isArray(recipient?.communityIds) ? recipient.communityIds : [])
+    ].filter(Boolean).map(id => id.toString());
+
+    const sharedCommunity = senderCommunityIds.some(id => recipientCommunityIds.includes(id));
+    if (!sharedCommunity) {
+      return res.status(403).json({ error: 'Messaging is limited to people in your community' });
+    }
+
+    const senderBlocked = Array.isArray(sender?.blockedUsers) && sender.blockedUsers.some(id => id.toString() === recipientId.toString());
+    const recipientBlocked = Array.isArray(recipient?.blockedUsers) && recipient.blockedUsers.some(id => id.toString() === req.user._id.toString());
+    if (senderBlocked || recipientBlocked) {
+      return res.status(403).json({ error: 'Cannot message this user' });
+    }
+
+    const trimmedSubject = typeof subject === 'string' ? subject.trim() : '';
+    const trimmedMessage = typeof message === 'string' ? message.trim() : '';
+
+    const content = [
+      trimmedSubject ? `Subject: ${trimmedSubject}` : '',
+      trimmedMessage
+    ].filter(Boolean).join('\n\n') || `Hi ${recipient.firstName || ''}, I'd like to start a conversation.`.trim();
+
+    const payload = {
+      sender: req.user._id,
+      recipient: recipientId,
+      content,
+      type: 'standard'
+    };
+
+    if (projectId) {
+      payload.project = projectId;
+    }
+
+    const createdMessage = await Message.create(payload);
+
+    res.json({
+      success: true,
+      participantId: recipientId,
+      thread: createdMessage
+    });
+  } catch (error) {
+    console.error('Create thread error:', error);
+    res.status(500).json({ error: 'Failed to create thread' });
   }
 });
 

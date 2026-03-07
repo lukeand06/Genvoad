@@ -534,10 +534,11 @@
 
                 if (!res.ok) throw new Error('Failed to create thread');
                 const thread = await res.json();
+                const participantId = thread.participantId || recipientId;
 
                 // Load conversations and navigate to new thread
                 await loadConversations();
-                selectConversation(thread.participantId);
+                await openChat(participantId);
 
                 // Close modal and reset form
                 document.getElementById('new-thread-modal').classList.add('hidden');
