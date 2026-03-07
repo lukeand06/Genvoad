@@ -829,10 +829,15 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     const query = req.query.q || '';
     const roleFilter = req.query.role; // Optional role filter: 'vendor' or 'owner'
     const scope = req.query.scope;
+    const requesterId = req.user?._id || req.user?.id;
+
+    if (!requesterId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
 
     let communityConstraint = null;
     if (scope === 'community') {
-      const requester = await User.findById(req.user._id).select('activeCommunityId companyId communityIds');
+      const requester = await User.findById(requesterId).select('activeCommunityId companyId communityIds');
       const requesterCommunityIds = [
         requester?.activeCommunityId,
         requester?.companyId,
@@ -843,8 +848,17 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
         return res.json({ users: [] });
       }
 
+      const communityDocs = await Company.find({ _id: { $in: requesterCommunityIds } }).select('members');
+      const communityMemberIds = communityDocs
+        .flatMap(company => Array.isArray(company.members) ? company.members : [])
+        .filter(Boolean)
+        .map(id => id.toString());
+
+      const eligibleUserIds = Array.from(new Set(communityMemberIds));
+
       communityConstraint = {
         $or: [
+          { _id: { $in: eligibleUserIds } },
           { activeCommunityId: { $in: requesterCommunityIds } },
           { companyId: { $in: requesterCommunityIds } },
           { communityIds: { $in: requesterCommunityIds } }
@@ -852,7 +866,13 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
       };
     }
     
-    if (query.length < 2) {
+    if (query.length < 1) {
+      return res.json({ users: [] });
+    }
+
+    // For community recipient autocomplete, allow suggestions from the first typed character.
+    // Keep stricter threshold for broader/global searches.
+    if (scope !== 'community' && query.length < 2) {
       return res.json({ users: [] });
     }
     
@@ -861,7 +881,7 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     
     if (isEmail) {
       // Search for registered user with this email
-      const searchQuery = { email: query, deletedAt: null, _id: { $ne: req.user._id } };
+      const searchQuery = { email: query, deletedAt: null, _id: { $ne: requesterId } };
       if (scope !== 'community') {
         searchQuery.verified = true;
       }
@@ -904,7 +924,7 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     const searchRegex = new RegExp(query, 'i');
     const searchQuery = {
       deletedAt: null,
-      _id: { $ne: req.user._id },
+      _id: { $ne: requesterId },
       $or: [
         { firstName: searchRegex },
         { lastName: searchRegex },
