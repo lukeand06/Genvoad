@@ -861,7 +861,10 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     
     if (isEmail) {
       // Search for registered user with this email
-      const searchQuery = { email: query, verified: true, deletedAt: null, _id: { $ne: req.user._id } };
+      const searchQuery = { email: query, deletedAt: null, _id: { $ne: req.user._id } };
+      if (scope !== 'community') {
+        searchQuery.verified = true;
+      }
       if (roleFilter) {
         searchQuery.role = roleFilter;
       }
@@ -900,7 +903,6 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
     // Text search by name or company
     const searchRegex = new RegExp(query, 'i');
     const searchQuery = {
-      verified: true,
       deletedAt: null,
       _id: { $ne: req.user._id },
       $or: [
@@ -909,6 +911,10 @@ app.get('/api/users/search', authMiddleware, async (req, res) => {
         { company: searchRegex }
       ]
     };
+
+    if (scope !== 'community') {
+      searchQuery.verified = true;
+    }
     
     // Add role filter if specified
     if (roleFilter) {
