@@ -13,6 +13,12 @@
             const params = new URLSearchParams(window.location.search);
             const companyId = params.get('companyId');
             const userId = params.get('userId');
+            const referMode = params.get('refer') === 'true';
+
+            if (referMode) {
+                window.location.replace('/company-refer.html');
+                return;
+            }
 
             if (userId) {
                 window.location.replace(`/profile.html?id=${encodeURIComponent(userId)}`);
