@@ -813,8 +813,11 @@ app.post('/api/auth/reset-password', async (req, res) => {
 // ============ USER ROUTES ============
 
 // Get user profile
-app.get('/api/users/:id', authMiddleware, async (req, res) => {
+app.get('/api/users/:id', authMiddleware, async (req, res, next) => {
   try {
+    if (req.params.id === 'search') {
+      return next();
+    }
     const user = await User.findById(req.params.id).select('-password -verificationCode');
     if (!user || user.deletedAt) return res.status(404).json({ error: 'User not found' });
     res.json({ user });

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>People - Genovad</title>
+  <title>Members - Genovad</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="/public/css/mobile-calm-mode.css">
   <style>
@@ -34,12 +34,12 @@
           <a href="/community-hub.html" class="inline-flex items-center text-gray-600 hover:text-gray-900" title="Back to Community Home">
             <span class="text-xl leading-none">←</span>
           </a>
-          <a href="/dashboard.html" class="flex items-center">
+          <a href="/community-hub.html" class="flex items-center">
             <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-10 w-auto" onerror="console.error('Logo failed to load:', this.src)">
           </a>
           <div class="hidden md:flex space-x-1">
             <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Community Feed</a>
-            <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">People</a>
+            <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Members</a>
             <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
           </div>
         </div>
@@ -88,13 +88,13 @@
     <section class="bg-white border border-gray-200 rounded-xl p-6">
       <div class="max-w-6xl mx-auto mb-6">
         <div class="text-center">
-          <h1 class="text-3xl font-bold text-gray-900">People</h1>
+          <h1 class="text-3xl font-bold text-gray-900">Members</h1>
           <p class="text-sm text-gray-600 mt-1 mobile-secondary">Explore members in your active community.</p>
         </div>
 
         <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
           <div class="flex items-center justify-between gap-3">
-            <p class="text-xs font-medium uppercase tracking-wide text-gray-600">People Filters</p>
+            <p class="text-xs font-medium uppercase tracking-wide text-gray-600">Member Filters</p>
             <button id="toggle-filters-btn" class="px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 rounded-lg bg-white hover:bg-gray-100">Show advanced filters</button>
           </div>
 
@@ -169,7 +169,7 @@
     <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
       <div class="bottom-nav-row gap-1 text-center text-xs font-medium">
         <a href="/dashboard.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Community Feed</a>
-        <a href="/network.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">People</a>
+        <a href="/network.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">Members</a>
         <a href="/messages.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
       </div>
     </div>
@@ -363,7 +363,7 @@
       }
 
       state.filtered = list;
-      if (summary) summary.textContent = `${list.length} of ${state.members.length} people shown`;
+      if (summary) summary.textContent = `${list.length} of ${state.members.length} members shown`;
 
       if (!list.length) {
         host.innerHTML = '<p class="text-gray-500">No members match your filters.</p>';
