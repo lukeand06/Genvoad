@@ -247,7 +247,7 @@
         // Check if user is a vendor - keep them in global workflow if project posting is restricted
         const user = getCurrentUser();
         if (user.role === 'vendor') {
-            window.location.href = '/genovad.html?vendor-restricted=true';
+            window.location.href = '/dashboard.html?vendor-restricted=true';
         }
 
         let selectedFiles = [];

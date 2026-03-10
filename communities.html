@@ -14,13 +14,13 @@
   <nav class="bg-white border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="h-16 flex items-center justify-between">
-        <a href="/login.html" class="flex items-center gap-3">
+        <a href="/dashboard.html" class="flex items-center gap-3">
           <img src="/public/logo-icon.png" alt="Genovad" class="h-10 w-auto" />
           <span class="text-sm text-gray-500 hidden sm:inline">Main Platform</span>
         </a>
         <div class="flex items-center gap-2">
-          <a href="/login.html" class="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">Regular Login</a>
-          <a href="/communities-login.html" class="px-3 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800">Communities Login</a>
+          <a href="/dashboard.html" class="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">Back to Feed</a>
+          <a href="/community-hub.html" class="px-3 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-800">Open Communities</a>
         </div>
       </div>
     </div>
@@ -34,7 +34,7 @@
         Communities is a dedicated collaboration area for invite-based groups, member-only activity, and shared internal coordination.
       </p>
       <div class="mt-6 flex flex-wrap gap-3">
-        <a href="/communities-login.html" class="px-5 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Enter Communities</a>
+        <a href="/community-hub.html" class="px-5 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Enter Communities</a>
         <a href="/create-community.html" class="px-5 py-2.5 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50">Create Community</a>
       </div>
     </section>
@@ -42,12 +42,17 @@
 
   <script src="/public/js/auth.js"></script>
   <script>
-    document.querySelectorAll('a[href="/communities-login.html"]').forEach((link) => {
-      link.addEventListener('click', () => setActivePlatform('communities'));
-    });
-    document.querySelectorAll('a[href="/login.html"]').forEach((link) => {
-      link.addEventListener('click', () => setActivePlatform('genovad'));
-    });
+    setActivePlatform('communities');
+
+    if (isAuthenticated()) {
+      const user = getCurrentUser();
+
+      if (!user?.onboardingCompleted) {
+        window.location.href = '/onboarding-profile.html';
+      } else {
+        window.location.href = '/community-hub.html';
+      }
+    }
   </script>
 </body>
 </html>

@@ -153,7 +153,7 @@ function requirePlatform(expectedPlatform, redirectPath = null) {
       return false;
     }
 
-    window.location.href = current === 'communities' ? '/community-dashboard.html' : '/genovad.html';
+    window.location.href = current === 'communities' ? '/community-dashboard.html' : '/dashboard.html';
     return false;
   }
 
@@ -212,7 +212,7 @@ function getPostAuthRoute(user = null, platform = null) {
   if (activePlatform === 'communities') {
     return '/community-dashboard.html';
   }
-  return '/genovad.html';
+  return '/dashboard.html';
 }
 
 function getPrimaryCommunityId(user = null) {

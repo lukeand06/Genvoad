@@ -5728,8 +5728,9 @@ app.post('/api/posts', authMiddleware, upload.array('images', 5), async (req, re
 // Get personalized feed with smart ranking
 app.get('/api/feed', authMiddleware, async (req, res) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
-    const skip = (page - 1) * limit;
+    const { page = 1, limit = 20, communityOnly } = req.query;
+    const parsedLimit = parseInt(limit, 10) || 20;
+    const parsedPage = parseInt(page, 10) || 1;
 
     const user = await User.findById(req.user._id).populate('partners');
     if (!user) {
@@ -5737,6 +5738,74 @@ app.get('/api/feed', authMiddleware, async (req, res) => {
     }
 
     const partnerIds = user.partners ? user.partners.map(p => p._id) : [];
+
+    if (communityOnly === 'true') {
+      const activeCommunityId = user.activeCommunityId || user.companyId || (Array.isArray(user.communityIds) ? user.communityIds[0] : null);
+
+      if (!activeCommunityId) {
+        return res.json({
+          success: true,
+          posts: [],
+          hasMore: false,
+          page: parsedPage,
+          limit: parsedLimit
+        });
+      }
+
+      const community = await Company.findOne({
+        $or: [
+          { _id: activeCommunityId },
+          { members: req.user._id }
+        ]
+      }).select('_id members');
+
+      const memberIds = new Set(
+        (community?.members || []).map(id => id.toString())
+      );
+      memberIds.add(req.user._id.toString());
+
+      const inferredMembers = await User.find({
+        $or: [
+          { activeCommunityId },
+          { companyId: activeCommunityId },
+          { communityIds: activeCommunityId }
+        ],
+        deletedAt: { $exists: false }
+      }).select('_id');
+
+      inferredMembers.forEach(member => memberIds.add(member._id.toString()));
+
+      const communityPosts = await Post.find({
+        author: { $in: Array.from(memberIds) },
+        visibility: { $in: ['public', 'partners'] },
+        status: 'published'
+      })
+        .populate('author', 'firstName lastName avatar role company')
+        .sort({ createdAt: -1 })
+        .skip((parsedPage - 1) * parsedLimit)
+        .limit(parsedLimit)
+        .lean();
+
+      const totalCommunityPosts = await Post.countDocuments({
+        author: { $in: Array.from(memberIds) },
+        visibility: { $in: ['public', 'partners'] },
+        status: 'published'
+      });
+
+      const enrichedCommunityPosts = communityPosts.map(post => ({
+        ...post,
+        isLiked: post.likes ? post.likes.some(id => id.toString() === req.user._id.toString()) : false,
+        engagementRate: (post.likeCount || 0) + ((post.commentCount || 0) * 2) + ((post.shares || 0) * 3)
+      }));
+
+      return res.json({
+        success: true,
+        posts: enrichedCommunityPosts,
+        hasMore: (parsedPage * parsedLimit) < totalCommunityPosts,
+        page: parsedPage,
+        limit: parsedLimit
+      });
+    }
 
     // PHASE 1: Get partner posts (highest priority)
     const partnerPosts = await Post.find({
@@ -5857,10 +5926,10 @@ app.get('/api/feed', authMiddleware, async (req, res) => {
 
     res.json({
       success: true,
-      posts: enrichedPosts.slice(0, limit),
-      hasMore: feedPosts.length > limit,
-      page,
-      limit
+      posts: enrichedPosts.slice(0, parsedLimit),
+      hasMore: feedPosts.length > parsedLimit,
+      page: parsedPage,
+      limit: parsedLimit
     });
   } catch (error) {
     console.error('Feed error:', error);
@@ -6407,7 +6476,7 @@ const htmlPages = [
   'messages.html', 'notifications.html', 'settings.html', 'create-project.html',
   'project-detail.html', 'signup.html', 'login.html', 'owner-signup.html',
   'owner-login.html', 'vendor-signup.html', 'vendor-login.html', 'communities-login.html', 'company.html',
-  'company-invite.html', 'company-refer.html', 'community-hub.html', 'communities.html', 'community-dashboard.html', 'community-people.html', 'community-messages.html', 'genovad.html', 'onboarding-profile.html',
+  'company-invite.html', 'company-refer.html', 'community-hub.html', 'communities.html', 'community-dashboard.html', 'community-people.html', 'community-messages.html', 'onboarding-profile.html',
   'all-projects.html', 'admin-companies.html', 'browse.html',
   'network.html', 'feed.html'
 ];
