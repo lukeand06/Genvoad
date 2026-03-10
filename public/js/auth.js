@@ -138,6 +138,28 @@ function requireAuth() {
   return true;
 }
 
+function requirePlatform(expectedPlatform, redirectPath = null) {
+  const expected = expectedPlatform === 'communities' ? 'communities' : 'genovad';
+
+  if (!isAuthenticated()) {
+    window.location.href = getLoginRoute(expected);
+    return false;
+  }
+
+  const current = getActivePlatform();
+  if (current !== expected) {
+    if (redirectPath) {
+      window.location.href = redirectPath;
+      return false;
+    }
+
+    window.location.href = current === 'communities' ? '/community-dashboard.html' : '/genovad.html';
+    return false;
+  }
+
+  return true;
+}
+
 function updateNotificationBadges(unreadCount) {
   const badges = document.querySelectorAll('[id="notification-badge"], [id="nav-notification-badge"]');
   if (!badges.length) return;

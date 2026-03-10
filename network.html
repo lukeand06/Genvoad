@@ -134,6 +134,7 @@
   <script src="/public/js/auth.js"></script>
   <script>
     if (!requireAuth()) throw new Error('Not authenticated');
+    if (!requirePlatform('genovad')) throw new Error('Global platform access only');
 
     const user = getCurrentUser();
     document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');

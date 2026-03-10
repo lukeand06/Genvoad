@@ -34,6 +34,7 @@
   <script>
     setActivePlatform('communities');
     if (!requireAuth()) throw new Error('Not authenticated');
+    if (!requirePlatform('communities')) throw new Error('Communities platform access only');
     if (!requireCommunityMembership('/community-hub.html')) throw new Error('Community membership required');
 
     async function loadMembers() {

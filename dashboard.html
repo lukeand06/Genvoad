@@ -565,6 +565,9 @@
         if (!requireAuth()) {
             throw new Error('Not authenticated');
         }
+        if (!requirePlatform('genovad')) {
+            throw new Error('Global platform access only');
+        }
 
         let user = getCurrentUser();
         let currentCommunity = null;

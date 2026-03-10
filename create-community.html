@@ -47,6 +47,9 @@
     if (!requireAuth()) {
       throw new Error('Not authenticated');
     }
+    if (!requirePlatform('communities')) {
+      throw new Error('Communities platform access only');
+    }
 
     const nameInput = document.getElementById('community-name-input');
     const descriptionInput = document.getElementById('community-description-input');

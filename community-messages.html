@@ -30,8 +30,8 @@
       <p class="text-gray-500">Loading conversations...</p>
     </div>
 
-    <div class="mt-6">
-      <a href="/messages.html" class="inline-flex px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">Open full Messages workspace</a>
+    <div class="mt-6 rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600">
+      You are in the Communities messaging workspace.
     </div>
   </main>
 
@@ -39,6 +39,7 @@
   <script>
     setActivePlatform('communities');
     if (!requireAuth()) throw new Error('Not authenticated');
+    if (!requirePlatform('communities')) throw new Error('Communities platform access only');
     if (!requireCommunityMembership('/community-hub.html')) throw new Error('Community membership required');
 
     async function loadConversations() {

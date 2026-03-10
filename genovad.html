@@ -61,6 +61,7 @@
   <script src="/public/js/auth.js"></script>
   <script>
     if (!requireAuth()) throw new Error('Not authenticated');
+    if (!requirePlatform('genovad')) throw new Error('Global platform access only');
     setActivePlatform('genovad');
   </script>
 </body>
