@@ -45,6 +45,7 @@
 
   <script src="/public/js/auth.js"></script>
   <script>
+    setActivePlatform('genovad');
     redirectIfAuth();
     document.getElementById('login-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -73,6 +74,7 @@
         if (!response.ok) throw new Error(data.error || `Login failed (HTTP ${response.status})`);
         setToken(data.token);
         setCurrentUser(data.user);
+        setActivePlatform('genovad');
         window.location.href = getPostAuthRoute(data.user);
       } catch (err) {
         console.error('Login error:', err);

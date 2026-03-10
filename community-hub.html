@@ -216,7 +216,7 @@
             console.warn('Could not switch active community before open:', error);
           }
 
-          window.location.href = '/dashboard.html';
+          window.location.href = '/community-dashboard.html';
         });
       });
     }
@@ -281,7 +281,7 @@
         if (!res.ok) throw new Error(data.error || 'Failed to accept invitation');
 
         const encodedName = encodeURIComponent(companyName || data?.company?.name || '');
-        window.location.href = `/dashboard.html?joined=1${encodedName ? `&community=${encodedName}` : ''}`;
+        window.location.href = `/community-dashboard.html?joined=1${encodedName ? `&community=${encodedName}` : ''}`;
       } catch (error) {
         showError(error.message || 'Failed to accept invitation');
       }
@@ -307,7 +307,7 @@
         document.getElementById('access-code-input').value = '';
         const joinedName = data?.community?.name || data?.company?.name || '';
         const encodedName = encodeURIComponent(joinedName);
-        window.location.href = `/dashboard.html?joined=1${encodedName ? `&community=${encodedName}` : ''}`;
+        window.location.href = `/community-dashboard.html?joined=1${encodedName ? `&community=${encodedName}` : ''}`;
       } catch (error) {
         showError(error.message || 'Failed to join community');
       }

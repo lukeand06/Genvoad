@@ -6406,8 +6406,8 @@ const htmlPages = [
   'index.html', 'dashboard.html', 'projects.html', 'browse.html', 'profile.html',
   'messages.html', 'notifications.html', 'settings.html', 'create-project.html',
   'project-detail.html', 'signup.html', 'login.html', 'owner-signup.html',
-  'owner-login.html', 'vendor-signup.html', 'vendor-login.html', 'company.html',
-  'company-invite.html', 'company-refer.html', 'community-hub.html', 'communities.html', 'onboarding-profile.html',
+  'owner-login.html', 'vendor-signup.html', 'vendor-login.html', 'communities-login.html', 'company.html',
+  'company-invite.html', 'company-refer.html', 'community-hub.html', 'communities.html', 'community-dashboard.html', 'community-people.html', 'community-messages.html', 'genovad.html', 'onboarding-profile.html',
   'all-projects.html', 'admin-companies.html', 'browse.html',
   'network.html', 'feed.html'
 ];

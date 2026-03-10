@@ -116,6 +116,7 @@
         let selectedRole = 'owner';
 
         window.addEventListener('load', () => {
+            setActivePlatform('genovad');
             redirectIfAuth();
 
             let authConfig = { providers: {}, clientIds: {} };
@@ -169,6 +170,7 @@
 
                     setToken(data.token);
                     setCurrentUser(data.user);
+                    setActivePlatform('genovad');
                     setActiveRole(data.user.activeRole || data.user.role || selectedRole);
                     window.location.href = getPostAuthRoute(data.user);
                 } catch (err) {
@@ -318,6 +320,7 @@
                     // Set token and user
                     setToken(data.token);
                     setCurrentUser(data.user);
+                    setActivePlatform('genovad');
                     setActiveRole(data.user.activeRole || data.user.role || selectedRole);
                     window.location.href = getPostAuthRoute(data.user);
                 } catch (error) {

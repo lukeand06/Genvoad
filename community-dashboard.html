@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community Feed - Genovad Communities</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <nav class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="/community-dashboard.html" class="flex items-center gap-3">
+        <img src="/public/logo-icon.png" alt="Genovad" class="h-10 w-auto" />
+        <span class="text-sm text-gray-500 hidden sm:inline">Communities</span>
+      </a>
+      <div class="flex items-center gap-2 text-sm">
+        <a href="/community-dashboard.html" class="px-3 py-2 rounded-lg bg-gray-900 text-white">Feed</a>
+        <a href="/community-people.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">People</a>
+        <a href="/community-messages.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Messages</a>
+        <a href="/community-hub.html" class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Hub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
+    <h1 class="text-3xl font-bold text-gray-900">Community Feed</h1>
+    <p class="text-sm text-gray-600">Activity from your active community.</p>
+    <div id="feed-list" class="space-y-3">
+      <p class="text-gray-500">Loading feed...</p>
+    </div>
+  </main>
+
+  <script src="/public/js/auth.js"></script>
+  <script>
+    setActivePlatform('communities');
+    if (!requireAuth()) throw new Error('Not authenticated');
+    if (!requireCommunityMembership('/community-hub.html')) throw new Error('Community membership required');
+
+    async function loadFeed() {
+      const host = document.getElementById('feed-list');
+      try {
+        const res = await authFetch('/api/feed?communityOnly=true&limit=20');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load feed');
+        const posts = data.posts || [];
+        if (!posts.length) {
+          host.innerHTML = '<div class="bg-white border border-gray-200 rounded-lg p-4 text-gray-500">No community posts yet.</div>';
+          return;
+        }
+        host.innerHTML = posts.map(p => {
+          const author = p.author?.company || `${p.author?.firstName || ''} ${p.author?.lastName || ''}`.trim() || 'Member';
+          const content = (p.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return `<article class="bg-white border border-gray-200 rounded-lg p-4"><p class="text-sm text-gray-500">${author}</p><p class="text-gray-900 mt-2 whitespace-pre-wrap">${content || 'No content'}</p></article>`;
+        }).join('');
+      } catch (e) {
+        host.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">${e.message}</div>`;
+      }
+    }
+
+    loadFeed();
+  </script>
+</body>
+</html>

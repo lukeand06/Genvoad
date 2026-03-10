@@ -61,6 +61,21 @@ function getToken() {
   return localStorage.getItem('token');
 }
 
+function setActivePlatform(platform) {
+  const normalized = platform === 'communities' ? 'communities' : 'genovad';
+  localStorage.setItem('activePlatform', normalized);
+}
+
+function getActivePlatform() {
+  const platform = localStorage.getItem('activePlatform');
+  return platform === 'communities' ? 'communities' : 'genovad';
+}
+
+function getLoginRoute(platform = null) {
+  const target = platform || getActivePlatform();
+  return target === 'communities' ? '/communities-login.html' : '/login.html';
+}
+
 // Set token in localStorage
 function setToken(token) {
   localStorage.setItem('token', token);
@@ -68,9 +83,10 @@ function setToken(token) {
 
 // Remove token
 function logout() {
+  const platform = getActivePlatform();
   localStorage.removeItem('token');
   localStorage.removeItem('user');
-  window.location.href = '/login.html';
+  window.location.href = getLoginRoute(platform);
 }
 
 // Get current user
@@ -116,7 +132,7 @@ function isAuthenticated() {
 // Redirect if not authenticated
 function requireAuth() {
   if (!isAuthenticated()) {
-    window.location.href = '/login.html';
+    window.location.href = getLoginRoute();
     return false;
   }
   return true;
@@ -165,12 +181,16 @@ function initNotificationBadge() {
 initNotificationBadge();
 
 // Redirect if authenticated (for login/signup pages)
-function getPostAuthRoute(user = null) {
+function getPostAuthRoute(user = null, platform = null) {
   const profile = user || getCurrentUser();
   if (profile && !profile.onboardingCompleted) {
     return '/onboarding-profile.html';
   }
-  return '/dashboard.html';
+  const activePlatform = platform || getActivePlatform();
+  if (activePlatform === 'communities') {
+    return '/community-dashboard.html';
+  }
+  return '/genovad.html';
 }
 
 function getPrimaryCommunityId(user = null) {
@@ -192,7 +212,7 @@ function hasJoinedCommunity(user = null) {
 function requireCommunityMembership(redirectTo = '/community-hub.html') {
   const profile = getCurrentUser();
   if (!profile) {
-    window.location.href = '/login.html';
+    window.location.href = getLoginRoute('communities');
     return false;
   }
 

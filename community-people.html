@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Community People - Genovad Communities</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <nav class="bg-white border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="/community-dashboard.html" class="flex items-center gap-3">
+        <img src="/public/logo-icon.png" alt="Genovad" class="h-10 w-auto" />
+        <span class="text-sm text-gray-500 hidden sm:inline">Communities</span>
+      </a>
+      <div class="flex items-center gap-2 text-sm">
+        <a href="/community-dashboard.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Feed</a>
+        <a href="/community-people.html" class="px-3 py-2 rounded-lg bg-gray-900 text-white">People</a>
+        <a href="/community-messages.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Messages</a>
+        <a href="/community-hub.html" class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Hub</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold text-gray-900">Community People</h1>
+    <p class="text-sm text-gray-600 mt-1">Members in your active community.</p>
+    <div id="people-list" class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+      <p class="text-gray-500">Loading members...</p>
+    </div>
+  </main>
+
+  <script src="/public/js/auth.js"></script>
+  <script>
+    setActivePlatform('communities');
+    if (!requireAuth()) throw new Error('Not authenticated');
+    if (!requireCommunityMembership('/community-hub.html')) throw new Error('Community membership required');
+
+    async function loadMembers() {
+      const host = document.getElementById('people-list');
+      const communityId = getPrimaryCommunityId();
+      if (!communityId) {
+        host.innerHTML = '<div class="text-gray-500">No active community selected.</div>';
+        return;
+      }
+      try {
+        const res = await authFetch(`/api/companies/${communityId}/members`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load members');
+        const members = data.members || [];
+        if (!members.length) {
+          host.innerHTML = '<div class="bg-white border border-gray-200 rounded-lg p-4 text-gray-500">No members found.</div>';
+          return;
+        }
+        host.innerHTML = members.map(m => {
+          const name = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Member';
+          const role = (m.companyRole || m.role || 'member').toUpperCase();
+          const email = (m.email || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return `<article class="bg-white border border-gray-200 rounded-lg p-4"><h2 class="font-semibold text-gray-900">${name}</h2><p class="text-xs text-gray-500 mt-1">${role}</p><p class="text-sm text-gray-700 mt-2">${email}</p></article>`;
+        }).join('');
+      } catch (e) {
+        host.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">${e.message}</div>`;
+      }
+    }
+
+    loadMembers();
+  </script>
+</body>
+</html>
