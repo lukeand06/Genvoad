@@ -170,10 +170,7 @@ function getPostAuthRoute(user = null) {
   if (profile && !profile.onboardingCompleted) {
     return '/onboarding-profile.html';
   }
-  if (hasJoinedCommunity(profile)) {
-    return '/dashboard.html';
-  }
-  return '/community-hub.html';
+  return '/dashboard.html';
 }
 
 function getPrimaryCommunityId(user = null) {
