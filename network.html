@@ -3,21 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Members - Genovad</title>
+  <title>People - Genovad</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="/public/css/mobile-calm-mode.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
     * { font-family: 'Inter', sans-serif; }
 
-    /* Keep mobile bottom nav size identical to community standard */
     .mobile-bottom-nav .bottom-nav-link {
       min-height: 0 !important;
       display: block !important;
       white-space: nowrap;
     }
 
-    /* Keep bottom nav horizontal on mobile */
     .mobile-bottom-nav .bottom-nav-row {
       display: flex !important;
       flex-direction: row !important;
@@ -31,21 +28,17 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between items-center h-16">
         <div class="flex items-center space-x-8">
-          <a href="/community-hub.html" class="flex items-center">
+          <a href="/dashboard.html" class="flex items-center">
             <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-12 w-auto" onerror="console.error('Logo failed to load:', this.src)">
           </a>
           <div class="hidden md:flex space-x-1">
-            <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Community Feed</a>
-            <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Members</a>
+            <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Feed</a>
+            <a href="/browse.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Companies</a>
+            <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">People</a>
             <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+            <a href="/communities.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Communities</a>
           </div>
         </div>
-
-        <button id="mobile-menu-btn" class="hidden md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg mr-2" aria-hidden="true" tabindex="-1">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-          </svg>
-        </button>
 
         <div class="flex items-center space-x-4">
           <a href="/notifications.html" class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
@@ -54,7 +47,7 @@
             </svg>
             <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
           </a>
-          <button type="button" id="cta-button" onclick="openReferModal()" class="inline-flex items-center bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Refer a person</button>
+          <a href="/browse.html" id="cta-button" class="inline-flex items-center bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800">Browse Companies</a>
           <div class="relative" id="user-menu">
             <button id="user-menu-btn" class="flex items-center space-x-2">
               <div id="user-avatar"></div>
@@ -64,9 +57,7 @@
                 <p class="text-xs text-gray-500 uppercase tracking-wide">Current Role</p>
                 <p class="text-sm font-semibold text-gray-900 capitalize mt-1" id="current-role">Owner</p>
               </div>
-              <div id="role-switcher" class="px-2 py-2 border-b border-gray-100">
-                <!-- Role buttons will be inserted here -->
-              </div>
+              <div id="role-switcher" class="px-2 py-2 border-b border-gray-100"></div>
               <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
               <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
               <button id="feedback-btn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Send Feedback</button>
@@ -79,20 +70,19 @@
     </div>
   </nav>
 
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8 space-y-6 mobile-thumb-zone">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8 space-y-6">
     <div id="error-message" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded"></div>
 
     <section class="bg-white border border-gray-200 rounded-xl p-6">
       <div class="max-w-6xl mx-auto mb-6">
         <div class="text-center">
-          <h1 class="text-3xl font-bold text-gray-900">Members</h1>
-          <p class="text-sm text-gray-600 mt-1 mobile-secondary">Explore members in your active community.</p>
+          <h1 class="text-3xl font-bold text-gray-900">Finding People</h1>
+          <p class="text-sm text-gray-600 mt-1">Discover owners and vendors across Genovad.</p>
         </div>
 
         <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
           <div class="flex items-center justify-between gap-3">
-            <p class="text-xs font-medium uppercase tracking-wide text-gray-600">Member Filters</p>
-            <button id="toggle-filters-btn" class="px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 rounded-lg bg-white hover:bg-gray-100">Show advanced filters</button>
+            <p class="text-xs font-medium uppercase tracking-wide text-gray-600">People Filters</p>
           </div>
 
           <div class="mt-3 space-y-3">
@@ -104,101 +94,38 @@
                 <button type="button" class="role-pill px-3 py-1.5 text-xs font-medium rounded-md text-gray-700 hover:bg-gray-100" data-role="owner">Owners</button>
                 <button type="button" class="role-pill px-3 py-1.5 text-xs font-medium rounded-md text-gray-700 hover:bg-gray-100" data-role="vendor">Vendors</button>
               </div>
-              <span class="text-xs text-gray-500 mobile-secondary">Owner / Vendor is always available above</span>
+              <button id="people-clear-filters" class="px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 rounded-lg bg-white hover:bg-gray-100">Clear filters</button>
             </div>
 
-            <select id="people-role-filter" class="hidden" aria-hidden="true" tabindex="-1">
-              <option value="all">All account roles</option>
-              <option value="owner">Owners</option>
-              <option value="vendor">Vendors</option>
-            </select>
+            <input id="people-skill-filter" type="text" placeholder="Skill or service keyword" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
           </div>
 
-          <div id="people-filters-panel" class="hidden mt-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
-
-            <select id="people-company-role-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-              <option value="all">All community access</option>
-              <option value="owner">Owner</option>
-              <option value="admin">Admin</option>
-              <option value="member">Member</option>
-            </select>
-
-            <select id="people-location-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-              <option value="all">All locations</option>
-              <option value="with">Has location</option>
-              <option value="without">No location</option>
-            </select>
-
-            <select id="people-experience-filter" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-              <option value="all">All experience</option>
-              <option value="0-2">0-2 years</option>
-              <option value="3-5">3-5 years</option>
-              <option value="6+">6+ years</option>
-            </select>
-
-            <input id="people-skill-filter" type="text" placeholder="Skill or service keyword" class="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
-
-            <button id="people-clear-filters" class="px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg bg-white hover:bg-gray-100">Clear filters</button>
-          </div>
-
-          <p id="people-results-summary" class="text-xs text-gray-600 mt-3 text-center mobile-secondary">Loading members...</p>
+          <p id="people-results-summary" class="text-xs text-gray-600 mt-3 text-center">Loading people...</p>
         </div>
       </div>
 
       <div id="people-list" class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <p class="text-gray-500">Loading members...</p>
+        <p class="text-gray-500">Loading people...</p>
       </div>
     </section>
   </main>
 
-  <div id="member-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+  <div id="person-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
       <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-gray-900">Member Profile</h2>
-        <button id="close-member-modal" class="text-gray-500 hover:text-gray-700">✕</button>
+        <h2 class="text-xl font-semibold text-gray-900">Person Profile</h2>
+        <button id="close-person-modal" class="text-gray-500 hover:text-gray-700">✕</button>
       </div>
-      <div id="member-modal-content" class="p-6"></div>
+      <div id="person-modal-content" class="p-6"></div>
     </div>
   </div>
 
-  <div id="refer-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg max-w-lg w-full p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-gray-900">Refer a person</h2>
-        <button id="close-refer-modal" class="text-gray-500 hover:text-gray-700">✕</button>
-      </div>
-
-      <div id="refer-status" class="hidden mb-4 rounded-lg px-4 py-3 text-sm"></div>
-
-      <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-        <p class="text-xs uppercase tracking-wide text-gray-500">Active community</p>
-        <p id="refer-community-name" class="text-sm font-semibold text-gray-900 mt-1">Loading...</p>
-      </div>
-
-      <form id="refer-form" class="space-y-3">
-        <input id="refer-email" type="email" required placeholder="Email address" class="w-full px-3 py-2 border border-gray-300 rounded-lg" />
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <select id="refer-role" class="px-3 py-2 border border-gray-300 rounded-lg">
-            <option value="member">Member</option>
-            <option value="admin">Admin</option>
-          </select>
-          <select id="refer-account-type" class="px-3 py-2 border border-gray-300 rounded-lg">
-            <option value="vendor">Vendor</option>
-            <option value="owner">Owner</option>
-          </select>
-        </div>
-        <textarea id="refer-message" rows="3" maxlength="500" placeholder="Optional message" class="w-full px-3 py-2 border border-gray-300 rounded-lg resize-none"></textarea>
-        <button id="refer-submit" type="submit" class="w-full px-4 py-2.5 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800">Send referral</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Mobile Floating Community Nav -->
   <div class="mobile-bottom-nav md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
     <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
       <div class="bottom-nav-row gap-1 text-center text-xs font-medium">
-        <a href="/dashboard.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Community Feed</a>
-        <a href="/network.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">Members</a>
+        <a href="/dashboard.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Feed</a>
+        <a href="/browse.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Companies</a>
+        <a href="/network.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">People</a>
         <a href="/messages.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
       </div>
     </div>
@@ -207,7 +134,6 @@
   <script src="/public/js/auth.js"></script>
   <script>
     if (!requireAuth()) throw new Error('Not authenticated');
-    if (!requireCommunityMembership('/community-hub.html')) throw new Error('Community membership required');
 
     const user = getCurrentUser();
     document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
@@ -216,145 +142,79 @@
     if (currentRoleEl) currentRoleEl.textContent = currentRole;
     const roleSwitcher = document.getElementById('role-switcher');
     if (roleSwitcher) {
-      roleSwitcher.innerHTML = `
-        <div class="px-3 py-2 text-sm text-gray-700">Account Type: <span class="font-semibold capitalize">${currentRole}</span></div>
-      `;
+      roleSwitcher.innerHTML = `<div class="px-3 py-2 text-sm text-gray-700">Account Type: <span class="font-semibold capitalize">${currentRole}</span></div>`;
     }
 
     const state = {
-      activeCommunityId: getPrimaryCommunityId(),
-      members: [],
-      filtered: []
+      users: [],
+      filtered: [],
+      role: 'all'
     };
 
     const esc = (v) => String(v || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
     document.getElementById('logout-btn').addEventListener('click', logout);
-    document.getElementById('people-search').addEventListener('input', renderMembers);
-    document.getElementById('people-skill-filter').addEventListener('input', renderMembers);
-    document.getElementById('people-role-filter').addEventListener('change', renderMembers);
-    document.querySelectorAll('.role-pill').forEach(btn => {
-      btn.addEventListener('click', () => setRoleFilter(btn.dataset.role));
-    });
-    document.getElementById('people-company-role-filter').addEventListener('change', renderMembers);
-    document.getElementById('people-location-filter').addEventListener('change', renderMembers);
-    document.getElementById('people-experience-filter').addEventListener('change', renderMembers);
-    document.getElementById('people-clear-filters').addEventListener('click', clearFilters);
-    document.getElementById('toggle-filters-btn').addEventListener('click', toggleFiltersPanel);
-    document.getElementById('close-member-modal').addEventListener('click', () => document.getElementById('member-modal').classList.add('hidden'));
-    document.getElementById('member-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'member-modal') document.getElementById('member-modal').classList.add('hidden');
-    });
-
     document.getElementById('user-menu-btn').addEventListener('click', () => {
       document.getElementById('user-dropdown').classList.toggle('hidden');
     });
 
-    function toggleFiltersPanel() {
-      const panel = document.getElementById('people-filters-panel');
-      const btn = document.getElementById('toggle-filters-btn');
-      if (!panel || !btn) return;
+    document.getElementById('people-search').addEventListener('input', renderPeople);
+    document.getElementById('people-skill-filter').addEventListener('input', renderPeople);
+    document.getElementById('people-clear-filters').addEventListener('click', clearFilters);
 
-      panel.classList.toggle('hidden');
-      btn.textContent = panel.classList.contains('hidden') ? 'Show advanced filters' : 'Hide advanced filters';
-    }
-
-    function setRoleFilter(role, shouldRender = true) {
-      const roleSelect = document.getElementById('people-role-filter');
-      roleSelect.value = role;
-
-      document.querySelectorAll('.role-pill').forEach(btn => {
-        const active = btn.dataset.role === role;
-        btn.classList.toggle('bg-gray-900', active);
-        btn.classList.toggle('text-white', active);
-        btn.classList.toggle('text-gray-700', !active);
-        btn.classList.toggle('hover:bg-gray-100', !active);
+    document.querySelectorAll('.role-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.role = btn.dataset.role || 'all';
+        document.querySelectorAll('.role-pill').forEach(p => {
+          const active = p.dataset.role === state.role;
+          p.classList.toggle('bg-gray-900', active);
+          p.classList.toggle('text-white', active);
+          p.classList.toggle('text-gray-700', !active);
+          p.classList.toggle('hover:bg-gray-100', !active);
+        });
+        renderPeople();
       });
+    });
 
-      if (shouldRender) renderMembers();
-    }
+    document.getElementById('close-person-modal').addEventListener('click', () => {
+      document.getElementById('person-modal').classList.add('hidden');
+    });
 
-    function getRoleBadges(member) {
-      const badges = [];
-      const accountRole = (member.role || '').toLowerCase();
-      const communityRole = (member.companyRole || '').toLowerCase();
-
-      if (accountRole) badges.push(accountRole.toUpperCase());
-      if (communityRole && communityRole !== accountRole) badges.push(communityRole);
-
-      if (!badges.length) badges.push('MEMBER');
-
-      return badges;
-    }
-
-    async function loadPeoplePage() {
-      if (!state.activeCommunityId) {
-        window.location.href = '/community-hub.html?join-required=true';
-        return;
-      }
-
-      try {
-        const res = await authFetch(`/api/companies/${state.activeCommunityId}/members`);
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to load members');
-
-        state.members = data.members || [];
-        renderMembers();
-      } catch (error) {
-        const msg = document.getElementById('error-message');
-        msg.textContent = error.message || 'Failed to load members';
-        msg.classList.remove('hidden');
-      }
-    }
+    document.getElementById('person-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'person-modal') document.getElementById('person-modal').classList.add('hidden');
+    });
 
     function clearFilters() {
       document.getElementById('people-search').value = '';
       document.getElementById('people-skill-filter').value = '';
-      setRoleFilter('all', false);
-      document.getElementById('people-company-role-filter').value = 'all';
-      document.getElementById('people-location-filter').value = 'all';
-      document.getElementById('people-experience-filter').value = 'all';
-      renderMembers();
+      state.role = 'all';
+      document.querySelectorAll('.role-pill').forEach(p => {
+        const active = p.dataset.role === 'all';
+        p.classList.toggle('bg-gray-900', active);
+        p.classList.toggle('text-white', active);
+        p.classList.toggle('text-gray-700', !active);
+        p.classList.toggle('hover:bg-gray-100', !active);
+      });
+      renderPeople();
     }
 
-    function inExperienceRange(years, range) {
-      if (range === 'all') return true;
-      const value = Number(years || 0);
-      if (range === '0-2') return value >= 0 && value <= 2;
-      if (range === '3-5') return value >= 3 && value <= 5;
-      if (range === '6+') return value >= 6;
-      return true;
+    function getRoleBadge(member) {
+      const role = (member.role || 'member').toLowerCase();
+      if (role === 'owner') return { text: 'OWNER', cls: 'bg-amber-100 text-amber-700' };
+      if (role === 'vendor') return { text: 'VENDOR', cls: 'bg-emerald-100 text-emerald-700' };
+      return { text: role.toUpperCase(), cls: 'bg-gray-100 text-gray-700' };
     }
 
-    function renderMembers() {
+    function renderPeople() {
       const search = document.getElementById('people-search').value.trim().toLowerCase();
       const skillKeyword = document.getElementById('people-skill-filter').value.trim().toLowerCase();
-      const role = document.getElementById('people-role-filter').value;
-      const companyRole = document.getElementById('people-company-role-filter').value;
-      const locationFilter = document.getElementById('people-location-filter').value;
-      const experienceFilter = document.getElementById('people-experience-filter').value;
       const host = document.getElementById('people-list');
       const summary = document.getElementById('people-results-summary');
 
-      let list = [...state.members];
+      let list = [...state.users];
 
-      if (role !== 'all') {
-        list = list.filter(member => (member.role || '').toLowerCase() === role);
-      }
-
-      if (companyRole !== 'all') {
-        list = list.filter(member => (member.companyRole || '').toLowerCase() === companyRole);
-      }
-
-      if (locationFilter !== 'all') {
-        list = list.filter(member => {
-          const hasLocation = Boolean(member.location || member.city || member.state);
-          return locationFilter === 'with' ? hasLocation : !hasLocation;
-        });
-      }
-
-      if (experienceFilter !== 'all') {
-        list = list.filter(member => inExperienceRange(member.yearsExperience, experienceFilter));
+      if (state.role !== 'all') {
+        list = list.filter(member => (member.role || '').toLowerCase() === state.role);
       }
 
       if (skillKeyword) {
@@ -370,7 +230,7 @@
       }
 
       if (search) {
-        const searchTerms = search.split(/\s+/).filter(Boolean);
+        const terms = search.split(/\s+/).filter(Boolean);
         list = list.filter(member => {
           const fullName = `${member.firstName || ''} ${member.lastName || ''}`;
           const location = member.location || [member.city, member.state].filter(Boolean).join(', ');
@@ -382,56 +242,54 @@
             member.bio,
             location,
             member.role,
-            member.companyRole,
             ...(member.skills || []),
             ...(member.services || [])
           ].filter(Boolean).join(' ').toLowerCase();
-
-          return searchTerms.every(term => haystack.includes(term));
+          return terms.every(term => haystack.includes(term));
         });
       }
 
       state.filtered = list;
-      if (summary) summary.textContent = `${list.length} of ${state.members.length} members shown`;
+      if (summary) summary.textContent = `${list.length} of ${state.users.length} people shown`;
 
       if (!list.length) {
-        host.innerHTML = '<p class="text-gray-500">No members match your filters.</p>';
+        host.innerHTML = '<p class="text-gray-500">No people match your filters.</p>';
         return;
       }
 
       host.innerHTML = list.map((member, idx) => {
         const skills = (member.skills || []).slice(0, 3);
         const location = member.location || [member.city, member.state].filter(Boolean).join(', ') || 'Location not set';
-        const badges = getRoleBadges(member);
-        const isOwner = (member.role || '').toLowerCase() === 'owner';
+        const roleBadge = getRoleBadge(member);
+        const rating = Number(member.rating || 0);
+
         return `
-          <article class="border border-gray-200 rounded-xl p-4 bg-white hover:shadow-md transition cursor-pointer" data-member-idx="${idx}">
+          <article class="border border-gray-200 rounded-xl p-4 bg-white hover:shadow-md transition cursor-pointer" data-person-idx="${idx}">
             <div class="flex items-start gap-3">
               <div>${getAvatarHTML(member, 'w-12 h-12')}</div>
               <div class="min-w-0 flex-1">
                 <h3 class="font-semibold text-gray-900 truncate">${esc(member.firstName)} ${esc(member.lastName)}</h3>
-                <p class="text-sm text-gray-600 truncate">${esc(member.title || member.companyRole || 'Community member')}</p>
+                <p class="text-sm text-gray-600 truncate">${esc(member.title || member.company || 'Genovad member')}</p>
                 <p class="text-xs text-gray-500 truncate mt-0.5">${esc(location)}</p>
               </div>
             </div>
-            <p class="text-sm text-gray-700 mt-3 line-clamp-2 mobile-secondary">${esc(member.bio || 'No bio added yet.')}</p>
+            <p class="text-sm text-gray-700 mt-3 line-clamp-2">${esc(member.bio || 'No bio added yet.')}</p>
             <div class="mt-3 text-xs text-gray-500 flex flex-wrap gap-2">
-              ${badges.map(b => `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(b)}</span>`).join('')}
+              <span class="px-2 py-1 rounded-full ${roleBadge.cls}">${esc(roleBadge.text)}</span>
               ${member.yearsExperience ? `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(member.yearsExperience)} yrs exp</span>` : ''}
+              ${(rating > 0) ? `<span class="px-2 py-1 bg-gray-100 rounded-full">⭐ ${rating.toFixed(1)}</span>` : ''}
             </div>
-            ${!isOwner ? `
             <div class="mt-3 flex flex-wrap gap-2">
               ${skills.map(s => `<span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">${esc(s)}</span>`).join('')}
             </div>
-            ` : ''}
           </article>
         `;
       }).join('');
 
-      host.querySelectorAll('[data-member-idx]').forEach(el => {
+      host.querySelectorAll('[data-person-idx]').forEach(el => {
         el.addEventListener('click', () => {
-          const member = state.filtered[Number(el.dataset.memberIdx)];
-          openMemberModal(member);
+          const member = state.filtered[Number(el.dataset.personIdx)];
+          openPersonModal(member);
         });
       });
     }
@@ -442,16 +300,13 @@
       return `<a href="${esc(href)}" target="_blank" rel="noopener" class="text-blue-600 hover:underline">${esc(label)}</a>`;
     }
 
-    function openMemberModal(member) {
-      const content = document.getElementById('member-modal-content');
+    function openPersonModal(member) {
+      const content = document.getElementById('person-modal-content');
       const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim();
       const location = member.location || [member.city, member.state].filter(Boolean).join(', ') || 'Not provided';
-      const badges = getRoleBadges(member);
-      const isOwner = (member.role || '').toLowerCase() === 'owner';
-      const memberProfileId = member?._id || member?.id || '';
-      const memberProfileUrl = memberProfileId
-        ? `/profile.html?id=${memberProfileId}`
-        : '/profile.html';
+      const roleBadge = getRoleBadge(member);
+      const profileId = member?._id || member?.id || '';
+      const profileUrl = profileId ? `/profile.html?id=${profileId}` : '/profile.html';
 
       content.innerHTML = `
         <div class="flex items-start justify-between gap-4 mb-6">
@@ -459,13 +314,13 @@
             <div>${getAvatarHTML(member, 'w-16 h-16')}</div>
             <div class="min-w-0">
               <h3 class="text-2xl font-bold text-gray-900">${esc(fullName)}</h3>
-              <p class="text-gray-600">${esc(member.title || 'Community member')}</p>
+              <p class="text-gray-600">${esc(member.title || 'Genovad member')}</p>
               <div class="mt-2 flex gap-2 text-xs flex-wrap">
-                ${badges.map(b => `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(b)}</span>`).join('')}
+                <span class="px-2 py-1 rounded-full ${roleBadge.cls}">${esc(roleBadge.text)}</span>
               </div>
             </div>
           </div>
-          <a href="${memberProfileUrl}" class="inline-flex shrink-0 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Go to Profile</a>
+          <a href="${profileUrl}" class="inline-flex shrink-0 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Go to Profile</a>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
@@ -477,16 +332,14 @@
             <p class="text-gray-500 mb-1">Location</p>
             <p class="text-gray-900">${esc(location)}</p>
           </div>
-          ${!isOwner ? `
           <div class="border border-gray-200 rounded-lg p-4">
             <p class="text-gray-500 mb-1">Experience</p>
             <p class="text-gray-900">${member.yearsExperience ? `${esc(member.yearsExperience)} years` : 'Not provided'}</p>
           </div>
           <div class="border border-gray-200 rounded-lg p-4">
-            <p class="text-gray-500 mb-1">Community stats</p>
-            <p class="text-gray-900">${esc(member.projectsCompleted || 0)} projects • ${esc(member.reviewCount || 0)} reviews • ⭐ ${esc((member.rating || 0).toFixed ? member.rating.toFixed(1) : member.rating || 0)}</p>
+            <p class="text-gray-500 mb-1">Stats</p>
+            <p class="text-gray-900">${esc(member.projectsCompleted || 0)} projects • ${esc(member.reviewCount || 0)} reviews • ⭐ ${esc((Number(member.rating || 0)).toFixed(1))}</p>
           </div>
-          ` : ''}
         </div>
 
         <div class="mb-6">
@@ -494,7 +347,6 @@
           <p class="text-gray-700">${esc(member.bio || 'No bio provided.')}</p>
         </div>
 
-        ${!isOwner ? `
         <div class="mb-6">
           <h4 class="font-semibold text-gray-900 mb-2">Skills</h4>
           <div class="flex flex-wrap gap-2">
@@ -508,7 +360,6 @@
             ${(member.services || []).length ? (member.services || []).map(s => `<span class="text-xs px-2 py-1 bg-green-50 text-green-700 rounded-full">${esc(s)}</span>`).join('') : '<p class="text-gray-500 text-sm">No services listed.</p>'}
           </div>
         </div>
-        ` : ''}
 
         <div>
           <h4 class="font-semibold text-gray-900 mb-2">Links</h4>
@@ -521,87 +372,24 @@
         </div>
       `;
 
-      document.getElementById('member-modal').classList.remove('hidden');
+      document.getElementById('person-modal').classList.remove('hidden');
     }
 
-    let referCommunityId = null;
-
-    function setReferStatus(message, type = 'info') {
-      const status = document.getElementById('refer-status');
-      if (!status) return;
-      const styles = {
-        success: 'bg-green-50 border border-green-200 text-green-800',
-        error: 'bg-red-50 border border-red-200 text-red-700',
-        info: 'bg-blue-50 border border-blue-200 text-blue-700'
-      };
-      status.className = `mb-4 rounded-lg px-4 py-3 text-sm ${styles[type] || styles.info}`;
-      status.textContent = message;
-      status.classList.remove('hidden');
-    }
-
-    async function ensureReferCommunity() {
-      if (referCommunityId) return referCommunityId;
-      const res = await authFetch('/api/companies/my/company');
-      const data = await res.json();
-      if (!res.ok || !data?.company?._id) {
-        throw new Error(data?.error || 'Unable to find active community');
-      }
-      referCommunityId = data.company._id;
-      const nameEl = document.getElementById('refer-community-name');
-      if (nameEl) nameEl.textContent = data.company.name || 'Community';
-      return referCommunityId;
-    }
-
-    async function openReferModal() {
-      const modal = document.getElementById('refer-modal');
-      if (!modal) return;
-      modal.classList.remove('hidden');
+    async function loadPeoplePage() {
       try {
-        await ensureReferCommunity();
-      } catch (error) {
-        setReferStatus(error.message || 'Failed to load community', 'error');
-      }
-    }
-
-    function closeReferModal() {
-      const modal = document.getElementById('refer-modal');
-      if (modal) modal.classList.add('hidden');
-    }
-
-    document.getElementById('close-refer-modal')?.addEventListener('click', closeReferModal);
-    document.getElementById('refer-modal')?.addEventListener('click', (e) => {
-      if (e.target.id === 'refer-modal') closeReferModal();
-    });
-
-    document.getElementById('refer-form')?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const submitBtn = document.getElementById('refer-submit');
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Sending...';
-
-      try {
-        const companyId = await ensureReferCommunity();
-        const email = document.getElementById('refer-email').value.trim();
-        const role = document.getElementById('refer-role').value;
-        const accountType = document.getElementById('refer-account-type').value;
-        const message = document.getElementById('refer-message').value.trim();
-
-        const res = await authFetch(`/api/companies/${companyId}/invite`, {
-          method: 'POST',
-          body: JSON.stringify({ email, role, accountType, message })
-        });
+        const res = await authFetch('/api/users');
         const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || 'Failed to send referral');
+        if (!res.ok) throw new Error(data.error || 'Failed to load people');
 
-        document.getElementById('refer-form').reset();
-        setReferStatus(`Referral sent to ${email}.`, 'success');
+        const userId = (getCurrentUser()?._id || getCurrentUser()?.id || '').toString();
+        state.users = (data.users || []).filter(u => (u._id || '').toString() !== userId);
+        renderPeople();
       } catch (error) {
-        setReferStatus(error.message || 'Failed to send referral', 'error');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Send referral';
+        const msg = document.getElementById('error-message');
+        msg.textContent = error.message || 'Failed to load people';
+        msg.classList.remove('hidden');
       }
-    });
+    }
 
     loadPeoplePage();
   </script>
