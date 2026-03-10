@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Community Feed - Genovad Communities</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+  </style>
 </head>
 <body class="bg-gray-50">
   <nav class="bg-white border-b border-gray-200">
@@ -13,22 +17,91 @@
         <img src="/public/logo-icon.png" alt="Genovad" class="h-10 w-auto" />
         <span class="text-sm text-gray-500 hidden sm:inline">Communities</span>
       </a>
-      <div class="flex items-center gap-2 text-sm">
+      <div class="hidden md:flex items-center gap-2 text-sm">
         <a href="/community-dashboard.html" class="px-3 py-2 rounded-lg bg-gray-900 text-white">Feed</a>
         <a href="/community-people.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Members</a>
         <a href="/community-messages.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Messages</a>
         <a href="/community-hub.html" class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Hub</a>
       </div>
+      <div class="flex items-center gap-3">
+        <a href="/notifications.html" class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+          </svg>
+          <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
+        </a>
+        <div class="relative" id="user-menu">
+          <button id="user-menu-btn" class="flex items-center space-x-2">
+            <div id="user-avatar"></div>
+          </button>
+          <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+            <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
+            <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
+            <hr class="my-1">
+            <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
+          </div>
+        </div>
+      </div>
     </div>
   </nav>
 
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-4">
-    <h1 class="text-3xl font-bold text-gray-900">Community Feed</h1>
-    <p class="text-sm text-gray-600">Activity from your active community.</p>
-    <div id="feed-list" class="space-y-3">
-      <p class="text-gray-500">Loading feed...</p>
-    </div>
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8 space-y-6">
+    <section class="bg-white border border-gray-200 rounded-lg p-5">
+      <h1 class="text-2xl font-bold text-gray-900">Community Feed</h1>
+      <p class="text-sm text-gray-600 mt-1">Explore activity from your active community.</p>
+    </section>
+
+    <section class="bg-white border border-gray-200 rounded-lg shadow-sm">
+      <div class="p-4 border-b border-gray-200">
+        <div class="flex items-center gap-3">
+          <div id="user-post-avatar" class="w-10 h-10 rounded-full bg-gray-200"></div>
+          <button onclick="openPostModal()" class="flex-1 text-left px-4 py-3 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-500 text-sm cursor-pointer transition">
+            Share an update with your community...
+          </button>
+        </div>
+      </div>
+      <div id="activity-feed" class="divide-y divide-gray-200">
+        <div class="p-6 text-center text-gray-500"><p>Loading feed...</p></div>
+      </div>
+    </section>
   </main>
+
+  <div class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
+    <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
+      <div class="flex gap-1 text-center text-xs font-medium">
+        <a href="/community-dashboard.html" class="flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">Feed</a>
+        <a href="/community-people.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Members</a>
+        <a href="/community-messages.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="post-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-end sm:items-center justify-center p-4">
+    <div class="bg-white rounded-t-lg sm:rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-lg">
+      <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
+        <h2 class="text-xl font-semibold text-gray-900">Create a Post</h2>
+        <button onclick="closePostModal()" class="text-gray-500 hover:text-gray-700">✕</button>
+      </div>
+      <form id="post-form" class="p-6 space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Title (optional)</label>
+          <input type="text" id="post-title" maxlength="200" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm" placeholder="Post title" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">What's on your mind?</label>
+          <textarea id="post-content" rows="6" maxlength="5000" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm resize-none" placeholder="Share an update..." required></textarea>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Add Images (optional)</label>
+          <input type="file" id="post-images" multiple accept="image/*" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-sm" />
+        </div>
+        <div class="flex gap-2 pt-4 border-t border-gray-200">
+          <button type="button" onclick="closePostModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition">Cancel</button>
+          <button type="button" id="post-submit-btn" onclick="createPost()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Post</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="/public/js/auth.js"></script>
   <script>
@@ -37,24 +110,180 @@
     if (!requirePlatform('communities')) throw new Error('Communities platform access only');
     if (!requireCommunityMembership('/community-hub.html')) throw new Error('Community membership required');
 
+    const currentUser = getCurrentUser();
+    document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
+    document.getElementById('user-post-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
+
+    document.getElementById('user-menu-btn').addEventListener('click', () => {
+      document.getElementById('user-dropdown').classList.toggle('hidden');
+    });
+    document.getElementById('logout-btn').addEventListener('click', logout);
+
+    function openPostModal() {
+      document.getElementById('post-modal').classList.remove('hidden');
+      document.getElementById('post-content').focus();
+    }
+
+    function closePostModal() {
+      document.getElementById('post-modal').classList.add('hidden');
+      document.getElementById('post-form').reset();
+    }
+
+    async function createPost() {
+      const content = document.getElementById('post-content').value.trim();
+      const title = document.getElementById('post-title').value.trim();
+      const fileInput = document.getElementById('post-images');
+      const submitBtn = document.getElementById('post-submit-btn');
+
+      if (!content) {
+        alert('Please write something before posting');
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Posting...';
+      try {
+        const formData = new FormData();
+        formData.append('content', content);
+        formData.append('title', title);
+        formData.append('type', 'post');
+
+        if (fileInput.files.length > 0) {
+          for (const file of fileInput.files) {
+            formData.append('images', file);
+          }
+        }
+
+        const res = await authFetch('/api/posts', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to create post');
+
+        closePostModal();
+        await loadFeed();
+      } catch (error) {
+        alert(error.message || 'Failed to create post');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Post';
+      }
+    }
+
+    function getTimeAgo(date) {
+      const now = new Date();
+      const diff = now - new Date(date);
+      const minutes = Math.floor(diff / 60000);
+      const hours = Math.floor(diff / 3600000);
+      const days = Math.floor(diff / 86400000);
+      if (minutes < 60) return `${minutes}m ago`;
+      if (hours < 24) return `${hours}h ago`;
+      if (days < 7) return `${days}d ago`;
+      return new Date(date).toLocaleDateString();
+    }
+
+    function renderPostCard(post) {
+      const isLiked = post.isLiked || false;
+      const authorName = post.author?.company || post.authorName || 'Member';
+      const safeContent = (post.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+      return `
+        <div class="p-6 hover:bg-gray-50 transition" data-post-id="${post._id}">
+          <div class="flex items-start gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-600 flex items-center justify-center text-white font-semibold">
+              ${authorName.charAt(0).toUpperCase()}
+            </div>
+            <div class="flex-1">
+              <p class="font-medium text-gray-900">${authorName}</p>
+              <p class="text-xs text-gray-500">${getTimeAgo(post.createdAt)}</p>
+            </div>
+          </div>
+
+          ${post.title ? `<h3 class="text-base font-semibold text-gray-900 mb-2">${post.title}</h3>` : ''}
+          <p class="text-gray-800 text-sm mb-3 whitespace-pre-wrap">${safeContent}</p>
+
+          ${post.images && post.images.length ? `
+            <div class="mb-4 flex flex-wrap gap-2">
+              ${post.images.map(img => `<img src="${img}" alt="Post image" class="max-h-96 rounded-lg object-cover">`).join('')}
+            </div>
+          ` : ''}
+
+          <div class="flex items-center gap-4 text-gray-600 text-sm pt-3 border-t border-gray-100">
+            <button onclick="likePost('${post._id}')" class="flex items-center gap-1 hover:text-red-600 transition ${isLiked ? 'text-red-600' : ''}">
+              <span>❤️</span><span>${post.likeCount || 0}</span>
+            </button>
+            <button onclick="toggleComments('${post._id}')" class="flex items-center gap-1 hover:text-blue-600 transition">
+              <span>💬</span><span>${post.commentCount || 0}</span>
+            </button>
+            <button onclick="sharePost('${post._id}')" class="flex items-center gap-1 hover:text-green-600 transition">Share</button>
+          </div>
+
+          <div id="comments-${post._id}" class="hidden mt-4 pt-4 border-t border-gray-100 space-y-3">
+            <div class="flex items-center gap-2">
+              <input type="text" id="comment-input-${post._id}" placeholder="Write a comment..." class="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm">
+              <button onclick="postComment('${post._id}')" class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Post</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     async function loadFeed() {
-      const host = document.getElementById('feed-list');
+      const host = document.getElementById('activity-feed');
       try {
         const res = await authFetch('/api/feed?communityOnly=true&limit=20');
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to load feed');
+
         const posts = data.posts || [];
         if (!posts.length) {
-          host.innerHTML = '<div class="bg-white border border-gray-200 rounded-lg p-4 text-gray-500">No community posts yet.</div>';
+          host.innerHTML = '<div class="p-12 text-center text-gray-500"><p class="text-sm">No posts yet. Be the first to share something with your community.</p></div>';
           return;
         }
-        host.innerHTML = posts.map(p => {
-          const author = p.author?.company || `${p.author?.firstName || ''} ${p.author?.lastName || ''}`.trim() || 'Member';
-          const content = (p.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          return `<article class="bg-white border border-gray-200 rounded-lg p-4"><p class="text-sm text-gray-500">${author}</p><p class="text-gray-900 mt-2 whitespace-pre-wrap">${content || 'No content'}</p></article>`;
-        }).join('');
-      } catch (e) {
-        host.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">${e.message}</div>`;
+
+        host.innerHTML = posts.map(renderPostCard).join('');
+      } catch (error) {
+        host.innerHTML = `<div class="p-6 text-center text-red-500"><p class="text-sm">${error.message || 'Failed to load feed'}</p></div>`;
+      }
+    }
+
+    async function likePost(postId) {
+      try {
+        const res = await authFetch(`/api/posts/${postId}/like`, { method: 'POST' });
+        if (!res.ok) throw new Error('Failed to like post');
+        await loadFeed();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    function toggleComments(postId) {
+      document.getElementById(`comments-${postId}`).classList.toggle('hidden');
+    }
+
+    async function postComment(postId) {
+      const input = document.getElementById(`comment-input-${postId}`);
+      const content = input.value.trim();
+      if (!content) return;
+      try {
+        const res = await authFetch(`/api/posts/${postId}/comments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content })
+        });
+        if (!res.ok) throw new Error('Failed to post comment');
+        input.value = '';
+        await loadFeed();
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
+    async function sharePost(postId) {
+      const shareUrl = `${window.location.origin}/community-dashboard.html?post=${encodeURIComponent(postId)}`;
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Post link copied to clipboard');
+      } else {
+        window.prompt('Copy this post link:', shareUrl);
       }
     }
 

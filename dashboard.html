@@ -232,14 +232,14 @@
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8 space-y-6 mobile-thumb-zone">
 
-        <!-- Community Summary (compact) -->
-        <section id="community-summary-card" class="hidden bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-5">
+        <!-- Explore Summary (user-focused) -->
+        <section id="explore-summary-card" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-5">
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Community</p>
-                    <h1 id="community-name" class="text-lg sm:text-xl font-semibold text-gray-900 truncate">Your community</h1>
-                    <p id="community-meta" class="text-sm text-gray-600 mt-1 mobile-secondary"></p>
-                    <p id="community-summary" class="text-sm text-gray-700 mt-2 mobile-secondary"></p>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Global Explore</p>
+                    <h1 id="explore-user-name" class="text-lg sm:text-xl font-semibold text-gray-900 truncate">Welcome back</h1>
+                    <p id="explore-user-meta" class="text-sm text-gray-600 mt-1 mobile-secondary"></p>
+                    <p class="text-sm text-gray-700 mt-2 mobile-secondary">This is your global activity stream, personalized to your profile, partners, and network relevance.</p>
                 </div>
             </div>
         </section>
@@ -597,6 +597,18 @@
             if (userNameEl) userNameEl.textContent = user.firstName || '';
             document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
             document.getElementById('current-role').textContent = getUserRole();
+
+            const exploreNameEl = document.getElementById('explore-user-name');
+            const exploreMetaEl = document.getElementById('explore-user-meta');
+            if (exploreNameEl) {
+                exploreNameEl.textContent = `Welcome back, ${user.firstName || 'there'}`;
+            }
+            if (exploreMetaEl) {
+                const roleLabel = (getUserRole() || 'member').toUpperCase();
+                const companyLabel = user.company ? ` • ${user.company}` : '';
+                const locationLabel = (user.location || [user.city, user.state].filter(Boolean).join(', '));
+                exploreMetaEl.textContent = `${roleLabel}${companyLabel}${locationLabel ? ` • ${locationLabel}` : ''}`;
+            }
         }
 
         function getActiveCommunityId() {
@@ -1031,8 +1043,6 @@
             renderUserHeader();
             initializeRoleSwitcher();
             initializePostUserAvatar();
-            await loadCommunitySummary();
-
             if (joinedFromCommunity) {
                 try {
                     localStorage.removeItem(getFeedWelcomeDismissKey());
