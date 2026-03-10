@@ -153,7 +153,7 @@ function requirePlatform(expectedPlatform, redirectPath = null) {
       return false;
     }
 
-    window.location.href = current === 'communities' ? '/community-dashboard.html' : '/dashboard.html';
+    window.location.href = current === 'communities' ? '/community-hub.html' : '/dashboard.html';
     return false;
   }
 
@@ -210,7 +210,7 @@ function getPostAuthRoute(user = null, platform = null) {
   }
   const activePlatform = platform || getActivePlatform();
   if (activePlatform === 'communities') {
-    return '/community-dashboard.html';
+    return '/community-hub.html';
   }
   return '/dashboard.html';
 }

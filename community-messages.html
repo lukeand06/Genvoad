@@ -40,14 +40,14 @@
 
   <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
     <h1 class="text-3xl font-bold text-gray-900">Community Messages</h1>
-    <p class="text-sm text-gray-600 mt-1">Recent conversation threads for your account.</p>
+    <p class="text-sm text-gray-600 mt-1">Recent conversation threads for your active community.</p>
 
     <div id="threads" class="mt-5 space-y-3">
       <p class="text-gray-500">Loading conversations...</p>
     </div>
 
-    <div class="mt-6 rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600">
-      You are in the Communities messaging workspace.
+    <div id="messages-context-note" class="mt-6 rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-600">
+      You are in the Communities messaging workspace. You can only chat with members in your active community.
     </div>
   </main>
 
@@ -70,16 +70,43 @@
     if (!requireCommunityMembership('/community-hub.html')) throw new Error('Community membership required');
 
     const currentUser = getCurrentUser();
+    const activeCommunityId = getPrimaryCommunityId();
+    const params = new URLSearchParams(window.location.search);
+    const initialMemberId = params.get('memberId');
+
     document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
     document.getElementById('user-menu-btn').addEventListener('click', () => {
       document.getElementById('user-dropdown').classList.toggle('hidden');
     });
     document.getElementById('logout-btn').addEventListener('click', logout);
 
+    async function ensureThreadForMember(memberId) {
+      if (!memberId || !activeCommunityId) return;
+
+      try {
+        await authFetch('/api/messages/create-thread', {
+          method: 'POST',
+          body: JSON.stringify({
+            recipientId: memberId,
+            message: 'Hi! Starting a conversation in our community.',
+            communityId: activeCommunityId
+          })
+        });
+      } catch (error) {
+        console.warn('Could not create thread:', error);
+      }
+    }
+
     async function loadConversations() {
       const host = document.getElementById('threads');
+
+      if (!activeCommunityId) {
+        host.innerHTML = '<div class="bg-white border border-gray-200 rounded-lg p-4 text-gray-500">No active community selected. Go to Hub and choose a community.</div>';
+        return;
+      }
+
       try {
-        const res = await authFetch('/api/messages/conversations');
+        const res = await authFetch(`/api/messages/conversations?communityId=${encodeURIComponent(activeCommunityId)}`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to load conversations');
 
@@ -93,14 +120,20 @@
           const other = conv.otherUser || conv.user || {};
           const name = `${other.firstName || ''} ${other.lastName || ''}`.trim() || other.company || 'User';
           const preview = (typeof conv.lastMessage === 'string' ? conv.lastMessage : conv.lastMessage?.content || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          return `<article class="bg-white border border-gray-200 rounded-lg p-4"><h2 class="font-semibold text-gray-900">${name}</h2><p class="text-sm text-gray-600 mt-2">${preview || 'No preview available'}</p></article>`;
+          const openUrl = other._id ? `/messages.html?userId=${encodeURIComponent(other._id)}&communityId=${encodeURIComponent(activeCommunityId)}` : '/messages.html';
+          return `<article class="bg-white border border-gray-200 rounded-lg p-4"><div class="flex items-center justify-between gap-3"><h2 class="font-semibold text-gray-900">${name}</h2><a href="${openUrl}" class="text-xs font-medium text-blue-600 hover:text-blue-700">Open chat</a></div><p class="text-sm text-gray-600 mt-2">${preview || 'No preview available'}</p></article>`;
         }).join('');
       } catch (e) {
         host.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">${e.message}</div>`;
       }
     }
 
-    loadConversations();
+    (async () => {
+      if (initialMemberId) {
+        await ensureThreadForMember(initialMemberId);
+      }
+      await loadConversations();
+    })();
   </script>
 </body>
 </html>

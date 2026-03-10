@@ -41,6 +41,21 @@
   <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
     <h1 class="text-3xl font-bold text-gray-900">Community Members</h1>
     <p class="text-sm text-gray-600 mt-1">Members in your active community.</p>
+
+    <div class="mt-4 bg-white border border-gray-200 rounded-lg p-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input id="member-search" type="text" placeholder="Search name or email" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
+        <select id="member-role-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
+          <option value="all">All roles</option>
+          <option value="owner">Owner</option>
+          <option value="vendor">Vendor</option>
+          <option value="admin">Admin</option>
+          <option value="member">Member</option>
+        </select>
+        <button id="member-clear-filters" class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Clear Filters</button>
+      </div>
+    </div>
+
     <div id="people-list" class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
       <p class="text-gray-500">Loading members...</p>
     </div>
@@ -65,36 +80,75 @@
     if (!requireCommunityMembership('/community-hub.html')) throw new Error('Community membership required');
 
     const currentUser = getCurrentUser();
+    let allMembers = [];
+
     document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
     document.getElementById('user-menu-btn').addEventListener('click', () => {
       document.getElementById('user-dropdown').classList.toggle('hidden');
     });
     document.getElementById('logout-btn').addEventListener('click', logout);
 
-    async function loadMembers() {
+    document.getElementById('member-search').addEventListener('input', applyMemberFilters);
+    document.getElementById('member-role-filter').addEventListener('change', applyMemberFilters);
+    document.getElementById('member-clear-filters').addEventListener('click', () => {
+      document.getElementById('member-search').value = '';
+      document.getElementById('member-role-filter').value = 'all';
+      applyMemberFilters();
+    });
+
+    function renderMembers(list) {
       const host = document.getElementById('people-list');
+
+      if (!list.length) {
+        host.innerHTML = '<div class="bg-white border border-gray-200 rounded-lg p-4 text-gray-500">No members match the selected filters.</div>';
+        return;
+      }
+
+      host.innerHTML = list.map(m => {
+        const name = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Member';
+        const roleRaw = (m.companyRole || m.role || 'member').toString().toLowerCase();
+        const role = roleRaw.toUpperCase();
+        const email = (m.email || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const isCurrent = (m._id || '').toString() === (currentUser.id || currentUser._id || '').toString();
+        return `<article class="bg-white border border-gray-200 rounded-lg p-4"><h2 class="font-semibold text-gray-900">${name}</h2><p class="text-xs text-gray-500 mt-1">${role}</p><p class="text-sm text-gray-700 mt-2">${email}</p>${!isCurrent ? `<a href="/community-messages.html?memberId=${encodeURIComponent(m._id || '')}" class="inline-block mt-3 text-xs font-medium text-blue-600 hover:text-blue-700">Message member</a>` : ''}</article>`;
+      }).join('');
+    }
+
+    function applyMemberFilters() {
+      const search = document.getElementById('member-search').value.trim().toLowerCase();
+      const roleFilter = document.getElementById('member-role-filter').value;
+
+      const filtered = allMembers.filter(member => {
+        const name = `${member.firstName || ''} ${member.lastName || ''}`.trim().toLowerCase();
+        const email = (member.email || '').toLowerCase();
+        const role = (member.companyRole || member.role || 'member').toString().toLowerCase();
+
+        const searchMatch = !search || name.includes(search) || email.includes(search);
+        const roleMatch = roleFilter === 'all' || role === roleFilter;
+        return searchMatch && roleMatch;
+      });
+
+      renderMembers(filtered);
+    }
+
+    async function loadMembers() {
       const communityId = getPrimaryCommunityId();
       if (!communityId) {
-        host.innerHTML = '<div class="text-gray-500">No active community selected.</div>';
+        document.getElementById('people-list').innerHTML = '<div class="text-gray-500">No active community selected.</div>';
         return;
       }
       try {
         const res = await authFetch(`/api/companies/${communityId}/members`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to load members');
-        const members = data.members || [];
-        if (!members.length) {
-          host.innerHTML = '<div class="bg-white border border-gray-200 rounded-lg p-4 text-gray-500">No members found.</div>';
+        allMembers = data.members || [];
+        if (!allMembers.length) {
+          document.getElementById('people-list').innerHTML = '<div class="bg-white border border-gray-200 rounded-lg p-4 text-gray-500">No members found.</div>';
           return;
         }
-        host.innerHTML = members.map(m => {
-          const name = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Member';
-          const role = (m.companyRole || m.role || 'member').toUpperCase();
-          const email = (m.email || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-          return `<article class="bg-white border border-gray-200 rounded-lg p-4"><h2 class="font-semibold text-gray-900">${name}</h2><p class="text-xs text-gray-500 mt-1">${role}</p><p class="text-sm text-gray-700 mt-2">${email}</p></article>`;
-        }).join('');
+        applyMemberFilters();
       } catch (e) {
-        host.innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">${e.message}</div>`;
+        document.getElementById('people-list').innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">${e.message}</div>`;
       }
     }
 

@@ -2197,6 +2197,7 @@ app.post('/api/projects/:projectId/bids/:bidId/accept-counter', authMiddleware, 
 app.post('/api/messages', authMiddleware, upload.array('attachments', 5), async (req, res) => {
   try {
     const recipientId = req.body.recipient;
+    const scopedCommunityId = getScopedCommunityId(req);
     if (!recipientId) {
       return res.status(400).json({ error: 'Recipient is required' });
     }
@@ -2210,19 +2211,16 @@ app.post('/api/messages', authMiddleware, upload.array('attachments', 5), async 
       return res.status(404).json({ error: 'Recipient not found' });
     }
 
-    const senderCommunityIds = [
-      sender?.activeCommunityId,
-      sender?.companyId,
-      ...(Array.isArray(sender?.communityIds) ? sender.communityIds : [])
-    ].filter(Boolean).map(id => id.toString());
+    const senderCommunityIds = getUserCommunityIds(sender);
+    const recipientCommunityIds = getUserCommunityIds(recipient);
 
-    const recipientCommunityIds = [
-      recipient?.activeCommunityId,
-      recipient?.companyId,
-      ...(Array.isArray(recipient?.communityIds) ? recipient.communityIds : [])
-    ].filter(Boolean).map(id => id.toString());
+    if (scopedCommunityId && !senderCommunityIds.includes(scopedCommunityId)) {
+      return res.status(403).json({ error: 'You are not a member of this community' });
+    }
 
-    const sharedCommunity = senderCommunityIds.some(id => recipientCommunityIds.includes(id));
+    const sharedCommunity = scopedCommunityId
+      ? recipientCommunityIds.includes(scopedCommunityId)
+      : senderCommunityIds.some(id => recipientCommunityIds.includes(id));
     if (!sharedCommunity) {
       return res.status(403).json({ error: 'Messaging is limited to people in your community' });
     }
@@ -2276,6 +2274,7 @@ app.post('/api/messages', authMiddleware, upload.array('attachments', 5), async 
 app.post('/api/messages/create-thread', authMiddleware, async (req, res) => {
   try {
     const { recipientId, subject, message, projectId } = req.body;
+    const scopedCommunityId = getScopedCommunityId(req);
 
     if (!recipientId) {
       return res.status(400).json({ error: 'Recipient is required' });
@@ -2290,19 +2289,16 @@ app.post('/api/messages/create-thread', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Recipient not found' });
     }
 
-    const senderCommunityIds = [
-      sender?.activeCommunityId,
-      sender?.companyId,
-      ...(Array.isArray(sender?.communityIds) ? sender.communityIds : [])
-    ].filter(Boolean).map(id => id.toString());
+    const senderCommunityIds = getUserCommunityIds(sender);
+    const recipientCommunityIds = getUserCommunityIds(recipient);
 
-    const recipientCommunityIds = [
-      recipient?.activeCommunityId,
-      recipient?.companyId,
-      ...(Array.isArray(recipient?.communityIds) ? recipient.communityIds : [])
-    ].filter(Boolean).map(id => id.toString());
+    if (scopedCommunityId && !senderCommunityIds.includes(scopedCommunityId)) {
+      return res.status(403).json({ error: 'You are not a member of this community' });
+    }
 
-    const sharedCommunity = senderCommunityIds.some(id => recipientCommunityIds.includes(id));
+    const sharedCommunity = scopedCommunityId
+      ? recipientCommunityIds.includes(scopedCommunityId)
+      : senderCommunityIds.some(id => recipientCommunityIds.includes(id));
     if (!sharedCommunity) {
       return res.status(403).json({ error: 'Messaging is limited to people in your community' });
     }
@@ -2643,16 +2639,30 @@ app.post('/api/messages/email-invite', authMiddleware, async (req, res) => {
 });
 
 // Get conversations (blocker-safe alias available at /api/inbox/convos)
+function getUserCommunityIds(profile) {
+  return [
+    profile?.activeCommunityId,
+    profile?.companyId,
+    ...(Array.isArray(profile?.communityIds) ? profile.communityIds : [])
+  ].filter(Boolean).map(id => id.toString());
+}
+
+function getScopedCommunityId(req) {
+  const raw = (req.query?.communityId || req.body?.communityId || '').toString().trim();
+  return raw || null;
+}
+
 async function getConversationsHandler(req, res) {
   try {
     const currentUser = await User.findById(req.user._id).select('partners blockedUsers activeCommunityId companyId communityIds');
     const partnerIds = (currentUser.partners || []).map(p => p.toString());
     const blockedIds = (currentUser.blockedUsers || []).map(b => b.toString());
-    const currentCommunityIds = [
-      currentUser?.activeCommunityId,
-      currentUser?.companyId,
-      ...(Array.isArray(currentUser?.communityIds) ? currentUser.communityIds : [])
-    ].filter(Boolean).map(id => id.toString());
+    const currentCommunityIds = getUserCommunityIds(currentUser);
+    const scopedCommunityId = getScopedCommunityId(req);
+
+    if (scopedCommunityId && !currentCommunityIds.includes(scopedCommunityId)) {
+      return res.status(403).json({ error: 'You are not a member of this community' });
+    }
 
     if (!currentCommunityIds.length) {
       return res.json({ conversations: [], unreadCount: 0 });
@@ -2695,7 +2705,9 @@ async function getConversationsHandler(req, res) {
         : msg.sender._id.toString();
 
       const otherCommunityIds = participantCommunityMap.get(otherUserId) || [];
-      const sharedCommunity = currentCommunityIds.some(id => otherCommunityIds.includes(id));
+      const sharedCommunity = scopedCommunityId
+        ? otherCommunityIds.includes(scopedCommunityId)
+        : currentCommunityIds.some(id => otherCommunityIds.includes(id));
       if (!sharedCommunity) return;
       
       // Skip blocked users
@@ -2739,24 +2751,23 @@ app.get('/api/inbox/convos', authMiddleware, getConversationsHandler);
 // Get messages with user
 app.get('/api/messages/:userId', authMiddleware, async (req, res) => {
   try {
+    const scopedCommunityId = getScopedCommunityId(req);
+    const currentUser = await User.findById(req.user._id).select('activeCommunityId companyId communityIds');
     const otherUser = await User.findById(req.params.userId).select('activeCommunityId companyId communityIds deletedAt');
     if (!otherUser || otherUser.deletedAt) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const currentCommunityIds = [
-      req.user?.activeCommunityId,
-      req.user?.companyId,
-      ...(Array.isArray(req.user?.communityIds) ? req.user.communityIds : [])
-    ].filter(Boolean).map(id => id.toString());
+    const currentCommunityIds = getUserCommunityIds(currentUser);
+    const otherCommunityIds = getUserCommunityIds(otherUser);
 
-    const otherCommunityIds = [
-      otherUser?.activeCommunityId,
-      otherUser?.companyId,
-      ...(Array.isArray(otherUser?.communityIds) ? otherUser.communityIds : [])
-    ].filter(Boolean).map(id => id.toString());
+    if (scopedCommunityId && !currentCommunityIds.includes(scopedCommunityId)) {
+      return res.status(403).json({ error: 'You are not a member of this community' });
+    }
 
-    const sharedCommunity = currentCommunityIds.some(id => otherCommunityIds.includes(id));
+    const sharedCommunity = scopedCommunityId
+      ? otherCommunityIds.includes(scopedCommunityId)
+      : currentCommunityIds.some(id => otherCommunityIds.includes(id));
     if (!sharedCommunity) {
       return res.status(403).json({ error: 'Messaging is limited to people in your community' });
     }
