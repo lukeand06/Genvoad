@@ -5,20 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Community Members - Genovad Communities</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="/public/css/mobile-calm-mode.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+
+    .ios-touch {
+      min-height: 44px;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
 </head>
 <body class="bg-gray-50">
   <nav class="bg-white border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
       <div class="flex items-center gap-6">
-        <a href="/community-dashboard.html" class="flex items-center gap-3">
-          <img src="/public/logo-icon.png" alt="Genovad" class="h-10 w-auto" />
-          <span class="text-sm text-gray-500 hidden sm:inline">Communities</span>
+        <a href="/community-hub.html" class="flex items-center">
+          <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-12 w-auto" />
         </a>
-        <div class="hidden md:flex items-center gap-2 text-sm">
-          <a href="/community-dashboard.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Feed</a>
-          <a href="/community-people.html" class="px-3 py-2 rounded-lg bg-gray-900 text-white">Members</a>
-          <a href="/community-messages.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Messages</a>
-          <a href="/community-hub.html" class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Hub</a>
+        <div class="hidden md:flex space-x-1">
+          <a href="/community-hub.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Hub</a>
+          <a href="/community-dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Feed</a>
+          <a href="/community-people.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Members</a>
+          <a href="/community-messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
         </div>
       </div>
       <div class="flex items-center gap-3">
@@ -39,24 +48,29 @@
   </nav>
 
   <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Community Members</h1>
-    <p class="text-sm text-gray-600 mt-1">Members in your active community.</p>
+    <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-5">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Community Members</h1>
+      <p class="text-sm text-gray-600 mt-1">Browse members in your active community with mobile-first filters.</p>
 
-    <div class="mt-4 bg-white border border-gray-200 rounded-lg p-4">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <input id="member-search" type="text" placeholder="Search name or email" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" />
-        <select id="member-role-filter" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option value="all">All roles</option>
-          <option value="owner">Owner</option>
-          <option value="vendor">Vendor</option>
-          <option value="admin">Admin</option>
-          <option value="member">Member</option>
-        </select>
-        <button id="member-clear-filters" class="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Clear Filters</button>
+      <div class="mt-4 grid grid-cols-1 gap-3">
+        <input id="member-search" type="text" placeholder="Search name or email" class="ios-touch w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" />
+
+        <div class="p-1 bg-gray-100 rounded-xl grid grid-cols-3 gap-1" role="tablist" aria-label="Member type filters">
+          <button id="filter-all" type="button" class="ios-touch px-3 py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white">All</button>
+          <button id="filter-vendor" type="button" class="ios-touch px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-white">Vendors</button>
+          <button id="filter-owner" type="button" class="ios-touch px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-white">Owners</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="mt-5 bg-white border border-gray-200 rounded-lg p-4">
+      <div class="flex items-center justify-between">
+        <p class="text-sm text-gray-600">Results</p>
+        <p id="member-count" class="text-sm font-semibold text-gray-900">0 members</p>
       </div>
     </div>
 
-    <div id="people-list" class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+    <div id="people-list" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
       <p class="text-gray-500">Loading members...</p>
     </div>
   </main>
@@ -64,10 +78,10 @@
   <div class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
     <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
       <div class="flex gap-1 text-center text-xs font-medium">
+        <a href="/community-hub.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Hub</a>
         <a href="/community-dashboard.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Feed</a>
         <a href="/community-people.html" class="flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">Members</a>
         <a href="/community-messages.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
-        <a href="/community-hub.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Hub</a>
       </div>
     </div>
   </div>
@@ -81,6 +95,7 @@
 
     const currentUser = getCurrentUser();
     let allMembers = [];
+    let activeTypeFilter = 'all';
 
     document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
     document.getElementById('user-menu-btn').addEventListener('click', () => {
@@ -89,20 +104,43 @@
     document.getElementById('logout-btn').addEventListener('click', logout);
 
     document.getElementById('member-search').addEventListener('input', applyMemberFilters);
-    document.getElementById('member-role-filter').addEventListener('change', applyMemberFilters);
-    document.getElementById('member-clear-filters').addEventListener('click', () => {
-      document.getElementById('member-search').value = '';
-      document.getElementById('member-role-filter').value = 'all';
+
+    function setTypeFilter(type) {
+      activeTypeFilter = type;
+      const map = {
+        all: document.getElementById('filter-all'),
+        vendor: document.getElementById('filter-vendor'),
+        owner: document.getElementById('filter-owner')
+      };
+
+      Object.entries(map).forEach(([key, btn]) => {
+        if (!btn) return;
+        if (key === type) {
+          btn.classList.add('bg-gray-900', 'text-white');
+          btn.classList.remove('text-gray-700', 'hover:bg-white');
+        } else {
+          btn.classList.remove('bg-gray-900', 'text-white');
+          btn.classList.add('text-gray-700', 'hover:bg-white');
+        }
+      });
+
       applyMemberFilters();
-    });
+    }
+
+    document.getElementById('filter-all').addEventListener('click', () => setTypeFilter('all'));
+    document.getElementById('filter-vendor').addEventListener('click', () => setTypeFilter('vendor'));
+    document.getElementById('filter-owner').addEventListener('click', () => setTypeFilter('owner'));
 
     function renderMembers(list) {
       const host = document.getElementById('people-list');
 
       if (!list.length) {
+        document.getElementById('member-count').textContent = '0 members';
         host.innerHTML = '<div class="bg-white border border-gray-200 rounded-lg p-4 text-gray-500">No members match the selected filters.</div>';
         return;
       }
+
+      document.getElementById('member-count').textContent = `${list.length} ${list.length === 1 ? 'member' : 'members'}`;
 
       host.innerHTML = list.map(m => {
         const name = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Member';
@@ -116,16 +154,20 @@
 
     function applyMemberFilters() {
       const search = document.getElementById('member-search').value.trim().toLowerCase();
-      const roleFilter = document.getElementById('member-role-filter').value;
 
       const filtered = allMembers.filter(member => {
         const name = `${member.firstName || ''} ${member.lastName || ''}`.trim().toLowerCase();
         const email = (member.email || '').toLowerCase();
-        const role = (member.companyRole || member.role || 'member').toString().toLowerCase();
+        const role = [
+          member.role,
+          member.accountType,
+          member.userType,
+          member.companyRole
+        ].map(v => (v || '').toString().toLowerCase()).join(' ');
 
         const searchMatch = !search || name.includes(search) || email.includes(search);
-        const roleMatch = roleFilter === 'all' || role === roleFilter;
-        return searchMatch && roleMatch;
+        const typeMatch = activeTypeFilter === 'all' || role.includes(activeTypeFilter);
+        return searchMatch && typeMatch;
       });
 
       renderMembers(filtered);
