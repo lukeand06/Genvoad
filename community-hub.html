@@ -19,17 +19,15 @@
             <img src="/public/logo-icon.png" alt="Genovad" class="h-12 w-auto" />
           </a>
           <div class="hidden md:flex gap-1">
-            <a href="/community-hub.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Community</a>
+            <a href="/community-dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Feed</a>
+            <a href="/community-people.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Members</a>
+            <a href="/community-messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
+            <a href="/community-hub.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Hub</a>
           </div>
         </div>
 
         <div class="flex items-center space-x-4">
-          <a href="/notifications.html" class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
-            </svg>
-            <span id="notification-badge" class="hidden absolute top-0 right-0 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-medium"></span>
-          </a>
+          <a href="/community-messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Inbox</a>
           <div class="relative" id="user-menu">
             <button id="user-menu-btn" class="flex items-center space-x-2">
               <div id="user-avatar"></div>
@@ -95,6 +93,17 @@
       </div>
     </section>
   </main>
+
+  <div class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
+    <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
+      <div class="flex gap-1 text-center text-xs font-medium">
+        <a href="/community-dashboard.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Feed</a>
+        <a href="/community-people.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Members</a>
+        <a href="/community-messages.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
+        <a href="/community-hub.html" class="flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">Hub</a>
+      </div>
+    </div>
+  </div>
 
   <script src="/public/js/auth.js"></script>
   <script>

@@ -9,20 +9,36 @@
 <body class="bg-gray-50">
   <nav class="bg-white border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <a href="/community-dashboard.html" class="flex items-center gap-3">
-        <img src="/public/logo-icon.png" alt="Genovad" class="h-10 w-auto" />
-        <span class="text-sm text-gray-500 hidden sm:inline">Communities</span>
-      </a>
-      <div class="flex items-center gap-2 text-sm">
-        <a href="/community-dashboard.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Feed</a>
-        <a href="/community-people.html" class="px-3 py-2 rounded-lg bg-gray-900 text-white">Members</a>
-        <a href="/community-messages.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Messages</a>
-        <a href="/community-hub.html" class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Hub</a>
+      <div class="flex items-center gap-6">
+        <a href="/community-dashboard.html" class="flex items-center gap-3">
+          <img src="/public/logo-icon.png" alt="Genovad" class="h-10 w-auto" />
+          <span class="text-sm text-gray-500 hidden sm:inline">Communities</span>
+        </a>
+        <div class="hidden md:flex items-center gap-2 text-sm">
+          <a href="/community-dashboard.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Feed</a>
+          <a href="/community-people.html" class="px-3 py-2 rounded-lg bg-gray-900 text-white">Members</a>
+          <a href="/community-messages.html" class="px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100">Messages</a>
+          <a href="/community-hub.html" class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Hub</a>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <a href="/community-messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Inbox</a>
+        <div class="relative" id="user-menu">
+          <button id="user-menu-btn" class="flex items-center space-x-2">
+            <div id="user-avatar"></div>
+          </button>
+          <div id="user-dropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+            <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
+            <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
+            <hr class="my-1">
+            <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
+          </div>
+        </div>
       </div>
     </div>
   </nav>
 
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
     <h1 class="text-3xl font-bold text-gray-900">Community Members</h1>
     <p class="text-sm text-gray-600 mt-1">Members in your active community.</p>
     <div id="people-list" class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -30,12 +46,30 @@
     </div>
   </main>
 
+  <div class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
+    <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
+      <div class="flex gap-1 text-center text-xs font-medium">
+        <a href="/community-dashboard.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Feed</a>
+        <a href="/community-people.html" class="flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">Members</a>
+        <a href="/community-messages.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
+        <a href="/community-hub.html" class="flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Hub</a>
+      </div>
+    </div>
+  </div>
+
   <script src="/public/js/auth.js"></script>
   <script>
     setActivePlatform('communities');
     if (!requireAuth()) throw new Error('Not authenticated');
     if (!requirePlatform('communities')) throw new Error('Communities platform access only');
     if (!requireCommunityMembership('/community-hub.html')) throw new Error('Community membership required');
+
+    const currentUser = getCurrentUser();
+    document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
+    document.getElementById('user-menu-btn').addEventListener('click', () => {
+      document.getElementById('user-dropdown').classList.toggle('hidden');
+    });
+    document.getElementById('logout-btn').addEventListener('click', logout);
 
     async function loadMembers() {
       const host = document.getElementById('people-list');
