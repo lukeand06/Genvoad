@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>People - Genovad</title>
+  <title>Partners - Genovad</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
@@ -32,11 +32,10 @@
             <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-12 w-auto" onerror="console.error('Logo failed to load:', this.src)">
           </a>
           <div class="hidden md:flex space-x-1">
-            <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Feed</a>
+            <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Explore</a>
             <a href="/browse.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Companies</a>
-            <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">People</a>
+            <a href="/network.html" class="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">Partners</a>
             <a href="/messages.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Messages</a>
-            <a href="/communities.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Communities</a>
           </div>
         </div>
 
@@ -76,13 +75,13 @@
     <section class="bg-white border border-gray-200 rounded-xl p-6">
       <div class="max-w-6xl mx-auto mb-6">
         <div class="text-center">
-          <h1 class="text-3xl font-bold text-gray-900">Finding People</h1>
-          <p class="text-sm text-gray-600 mt-1">Discover owners and vendors across Genovad.</p>
+          <h1 class="text-3xl font-bold text-gray-900">Partners</h1>
+          <p class="text-sm text-gray-600 mt-1">Find people to explore and partner with across Genovad.</p>
         </div>
 
         <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
           <div class="flex items-center justify-between gap-3">
-            <p class="text-xs font-medium uppercase tracking-wide text-gray-600">People Filters</p>
+            <p class="text-xs font-medium uppercase tracking-wide text-gray-600">Partner Filters</p>
           </div>
 
           <div class="mt-3 space-y-3">
@@ -100,12 +99,12 @@
             <input id="people-skill-filter" type="text" placeholder="Skill or service keyword" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
           </div>
 
-          <p id="people-results-summary" class="text-xs text-gray-600 mt-3 text-center">Loading people...</p>
+          <p id="people-results-summary" class="text-xs text-gray-600 mt-3 text-center">Loading partners...</p>
         </div>
       </div>
 
       <div id="people-list" class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <p class="text-gray-500">Loading people...</p>
+        <p class="text-gray-500">Loading partners...</p>
       </div>
     </section>
   </main>
@@ -123,9 +122,9 @@
   <div class="mobile-bottom-nav md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
     <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
       <div class="bottom-nav-row gap-1 text-center text-xs font-medium">
-        <a href="/dashboard.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Feed</a>
+        <a href="/dashboard.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Explore</a>
         <a href="/browse.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Companies</a>
-        <a href="/network.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">People</a>
+        <a href="/network.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl bg-gray-900 text-white">Partners</a>
         <a href="/messages.html" class="bottom-nav-link flex-1 px-2 py-2 rounded-xl text-gray-600 hover:bg-gray-50">Messages</a>
       </div>
     </div>
