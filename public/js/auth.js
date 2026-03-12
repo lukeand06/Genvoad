@@ -382,25 +382,34 @@ function formatCurrency(amount) {
 
 // Get initials from name
 function getInitials(firstName, lastName) {
-  return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  const first = String(firstName || '').trim();
+  const last = String(lastName || '').trim();
+
+  const firstInitial = first ? first.charAt(0) : '';
+  const lastInitial = last ? last.charAt(0) : '';
+  const combined = `${firstInitial}${lastInitial}`.toUpperCase();
+
+  return combined || 'U';
 }
 
 // Generate avatar URL or initials
 function getAvatarHTML(user, size = 'w-10 h-10') {
-  if (user.avatar) {
+  const safeUser = user || {};
+
+  if (safeUser.avatar) {
     // Handle different avatar formats
-    let avatarSrc = user.avatar;
+    let avatarSrc = safeUser.avatar;
     
     // If it's not a data URL and doesn't start with http//, prepend /uploads/
     if (!avatarSrc.startsWith('data:') && !avatarSrc.startsWith('http://') && !avatarSrc.startsWith('https://') && !avatarSrc.startsWith('/')) {
       avatarSrc = `/uploads/${avatarSrc}`;
     }
     
-    const fallback = getInitials(user.firstName, user.lastName);
+    const fallback = getInitials(safeUser.firstName, safeUser.lastName);
     const safeFallback = fallback.replace(/'/g, "\\'");
-    return `<img src="${avatarSrc}" alt="${user.firstName || 'User'}" class="${size} rounded-full object-cover" onerror="this.onerror=null;this.innerHTML='<div class=&quot;${size} rounded-full bg-gray-700 text-white flex items-center justify-center font-medium&quot;>${safeFallback}</div>';this.parentNode.replaceChild(this.parentNode.lastChild, this);">`;
+    return `<img src="${avatarSrc}" alt="${safeUser.firstName || 'User'}" class="${size} rounded-full object-cover" onerror="this.onerror=null;this.innerHTML='<div class=&quot;${size} rounded-full bg-gray-700 text-white flex items-center justify-center font-medium&quot;>${safeFallback}</div>';this.parentNode.replaceChild(this.parentNode.lastChild, this);">`;
   }
-  const initials = getInitials(user.firstName, user.lastName);
+  const initials = getInitials(safeUser.firstName, safeUser.lastName);
   return `<div class="${size} rounded-full bg-gray-700 text-white flex items-center justify-center font-medium">${initials}</div>`;
 }
 
