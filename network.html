@@ -29,7 +29,7 @@
       <div class="flex justify-between items-center h-16">
         <div class="flex items-center space-x-8">
           <a href="/dashboard.html" class="flex items-center">
-            <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-12 w-auto" onerror="console.error('Logo failed to load:', this.src)">
+            <img src="/public/logo-icon.png?v=2" alt="Genovad" class="h-12 w-auto">
           </a>
           <div class="hidden md:flex space-x-1">
             <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg">Explore</a>
@@ -59,7 +59,6 @@
               <div id="role-switcher" class="px-2 py-2 border-b border-gray-100"></div>
               <a href="/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">My Profile</a>
               <a href="/settings.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Settings</a>
-              <button id="feedback-btn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Send Feedback</button>
               <hr class="my-1">
               <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Sign Out</button>
             </div>
@@ -70,23 +69,24 @@
   </nav>
 
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8 space-y-6">
-    <div id="error-message" class="hidden bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded"></div>
-
     <section class="bg-white border border-gray-200 rounded-xl p-6">
-      <div class="max-w-6xl mx-auto mb-6">
-        <div class="text-center">
-          <h1 class="text-3xl font-bold text-gray-900">Partners</h1>
-          <p class="text-sm text-gray-600 mt-1">Find people to explore and partner with across Genovad.</p>
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-gray-900">Partners</h1>
+        <p class="text-sm text-gray-600 mt-1">Discover people, view your partners, and track partner projects.</p>
+      </div>
+
+      <div class="mt-6 border-b border-gray-200">
+        <div class="flex flex-wrap gap-6 justify-center text-sm font-medium">
+          <button class="partner-tab pb-3 border-b-2 border-gray-900 text-gray-900" data-tab="discover">Discover People</button>
+          <button class="partner-tab pb-3 border-b-2 border-transparent text-gray-600 hover:text-gray-900" data-tab="partners">See Partners</button>
+          <button class="partner-tab pb-3 border-b-2 border-transparent text-gray-600 hover:text-gray-900" data-tab="partner-projects">Partner Projects</button>
         </div>
+      </div>
 
-        <div class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <div class="flex items-center justify-between gap-3">
-            <p class="text-xs font-medium uppercase tracking-wide text-gray-600">Partner Filters</p>
-          </div>
-
-          <div class="mt-3 space-y-3">
+      <div id="tab-discover" class="mt-6 space-y-4">
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div class="space-y-3">
             <input id="people-search" type="text" placeholder="Search name, company, title, bio, skills, services, location" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
-
             <div class="flex flex-wrap items-center justify-between gap-3">
               <div id="people-role-pills" class="inline-flex rounded-lg border border-gray-300 bg-white p-1">
                 <button type="button" class="role-pill px-3 py-1.5 text-xs font-medium rounded-md bg-gray-900 text-white" data-role="all">All</button>
@@ -95,29 +95,29 @@
               </div>
               <button id="people-clear-filters" class="px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 rounded-lg bg-white hover:bg-gray-100">Clear filters</button>
             </div>
-
             <input id="people-skill-filter" type="text" placeholder="Skill or service keyword" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white" />
           </div>
+          <p id="people-results-summary" class="text-xs text-gray-600 mt-3 text-center">Loading people...</p>
+        </div>
 
-          <p id="people-results-summary" class="text-xs text-gray-600 mt-3 text-center">Loading partners...</p>
+        <div id="discover-people-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <p class="text-gray-500">Loading discover people...</p>
         </div>
       </div>
 
-      <div id="people-list" class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        <p class="text-gray-500">Loading partners...</p>
+      <div id="tab-partners" class="mt-6 hidden">
+        <div id="partners-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <p class="text-gray-500">Loading partners...</p>
+        </div>
+      </div>
+
+      <div id="tab-partner-projects" class="mt-6 hidden">
+        <div id="partner-projects-list" class="grid grid-cols-1 gap-4">
+          <p class="text-gray-500">Loading partner projects...</p>
+        </div>
       </div>
     </section>
   </main>
-
-  <div id="person-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-      <div class="p-6 border-b border-gray-200 flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-gray-900">Person Profile</h2>
-        <button id="close-person-modal" class="text-gray-500 hover:text-gray-700">✕</button>
-      </div>
-      <div id="person-modal-content" class="p-6"></div>
-    </div>
-  </div>
 
   <div class="mobile-bottom-nav md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
     <div class="bg-white border border-gray-200 shadow-lg rounded-2xl px-2 py-1.5">
@@ -137,18 +137,16 @@
 
     const user = getCurrentUser();
     document.getElementById('user-avatar').innerHTML = getAvatarHTML(user, 'w-10 h-10');
-    const currentRole = getUserRole();
-    const currentRoleEl = document.getElementById('current-role');
-    if (currentRoleEl) currentRoleEl.textContent = currentRole;
-    const roleSwitcher = document.getElementById('role-switcher');
-    if (roleSwitcher) {
-      roleSwitcher.innerHTML = `<div class="px-3 py-2 text-sm text-gray-700">Account Type: <span class="font-semibold capitalize">${currentRole}</span></div>`;
-    }
+    document.getElementById('current-role').textContent = getUserRole();
+    document.getElementById('role-switcher').innerHTML = `<div class="px-3 py-2 text-sm text-gray-700">Account Type: <span class="font-semibold capitalize">${getUserRole()}</span></div>`;
 
     const state = {
-      users: [],
-      filtered: [],
-      role: 'all'
+      role: 'all',
+      discoverPeople: [],
+      filteredPeople: [],
+      partners: [],
+      partnerIdSet: new Set(),
+      activeTab: 'discover'
     };
 
     const esc = (v) => String(v || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
@@ -158,66 +156,135 @@
       document.getElementById('user-dropdown').classList.toggle('hidden');
     });
 
-    document.getElementById('people-search').addEventListener('input', renderPeople);
-    document.getElementById('people-skill-filter').addEventListener('input', renderPeople);
-    document.getElementById('people-clear-filters').addEventListener('click', clearFilters);
+    document.getElementById('people-search').addEventListener('input', renderDiscoverPeople);
+    document.getElementById('people-skill-filter').addEventListener('input', renderDiscoverPeople);
+    document.getElementById('people-clear-filters').addEventListener('click', () => {
+      document.getElementById('people-search').value = '';
+      document.getElementById('people-skill-filter').value = '';
+      setRoleFilter('all');
+      renderDiscoverPeople();
+    });
 
-    document.querySelectorAll('.role-pill').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.role = btn.dataset.role || 'all';
-        document.querySelectorAll('.role-pill').forEach(p => {
-          const active = p.dataset.role === state.role;
-          p.classList.toggle('bg-gray-900', active);
-          p.classList.toggle('text-white', active);
-          p.classList.toggle('text-gray-700', !active);
-          p.classList.toggle('hover:bg-gray-100', !active);
-        });
-        renderPeople();
+    document.querySelectorAll('.partner-tab').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const tab = btn.dataset.tab;
+        switchTab(tab);
+        if (tab === 'discover') {
+          renderDiscoverPeople();
+        } else if (tab === 'partners') {
+          await loadPartners(true);
+        } else if (tab === 'partner-projects') {
+          await loadPartnerProjects();
+        }
       });
     });
 
-    document.getElementById('close-person-modal').addEventListener('click', () => {
-      document.getElementById('person-modal').classList.add('hidden');
+    document.querySelectorAll('.role-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setRoleFilter(btn.dataset.role || 'all');
+        renderDiscoverPeople();
+      });
     });
 
-    document.getElementById('person-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'person-modal') document.getElementById('person-modal').classList.add('hidden');
-    });
+    function switchTab(tab) {
+      state.activeTab = tab;
+      ['discover', 'partners', 'partner-projects'].forEach(name => {
+        document.getElementById(`tab-${name}`).classList.toggle('hidden', name !== tab);
+      });
 
-    function clearFilters() {
-      document.getElementById('people-search').value = '';
-      document.getElementById('people-skill-filter').value = '';
-      state.role = 'all';
+      document.querySelectorAll('.partner-tab').forEach(btn => {
+        const active = btn.dataset.tab === tab;
+        btn.classList.toggle('border-gray-900', active);
+        btn.classList.toggle('text-gray-900', active);
+        btn.classList.toggle('border-transparent', !active);
+        btn.classList.toggle('text-gray-600', !active);
+      });
+    }
+
+    function setRoleFilter(role) {
+      state.role = role;
       document.querySelectorAll('.role-pill').forEach(p => {
-        const active = p.dataset.role === 'all';
+        const active = p.dataset.role === role;
         p.classList.toggle('bg-gray-900', active);
         p.classList.toggle('text-white', active);
         p.classList.toggle('text-gray-700', !active);
         p.classList.toggle('hover:bg-gray-100', !active);
       });
-      renderPeople();
     }
 
-    function getRoleBadge(member) {
-      const role = (member.role || 'member').toLowerCase();
+    function getRoleBadge(person) {
+      const role = (person.role || 'member').toLowerCase();
       if (role === 'owner') return { text: 'OWNER', cls: 'bg-amber-100 text-amber-700' };
       if (role === 'vendor') return { text: 'VENDOR', cls: 'bg-emerald-100 text-emerald-700' };
       return { text: role.toUpperCase(), cls: 'bg-gray-100 text-gray-700' };
     }
 
-    function renderPeople() {
-      const search = document.getElementById('people-search').value.trim().toLowerCase();
-      const skillKeyword = document.getElementById('people-skill-filter').value.trim().toLowerCase();
-      const host = document.getElementById('people-list');
-      const summary = document.getElementById('people-results-summary');
+    function renderPeopleCards(hostId, list, { emptyText = 'No people found.', allowPartnerButton = false } = {}) {
+      const host = document.getElementById(hostId);
+      if (!list.length) {
+        host.innerHTML = `<p class="text-gray-500">${esc(emptyText)}</p>`;
+        return;
+      }
 
-      let list = [...state.users];
+      host.innerHTML = list.map(person => {
+        const fullName = `${person.firstName || ''} ${person.lastName || ''}`.trim() || 'Member';
+        const location = person.location || [person.city, person.state].filter(Boolean).join(', ') || 'Location not set';
+        const roleBadge = getRoleBadge(person);
+        const skills = (person.skills || []).slice(0, 3);
+        const isAlreadyPartner = state.partnerIdSet.has(String(person._id || ''));
+        const canAddPartner = allowPartnerButton && !isAlreadyPartner && String(person._id || '') !== String(user._id || user.id || '');
+        const profileHref = `/profile.html?id=${encodeURIComponent(person._id || '')}`;
+
+        return `
+          <article class="border border-gray-200 rounded-xl p-4 bg-white hover:shadow-md transition">
+            <div class="flex items-start gap-3">
+              <div>${getAvatarHTML(person, 'w-12 h-12')}</div>
+              <div class="min-w-0 flex-1">
+                <h3 class="font-semibold text-gray-900 truncate">${esc(fullName)}</h3>
+                <p class="text-sm text-gray-600 truncate">${esc(person.title || person.company || 'Genovad member')}</p>
+                <p class="text-xs text-gray-500 truncate mt-0.5">${esc(location)}</p>
+              </div>
+            </div>
+
+            <p class="text-sm text-gray-700 mt-3 line-clamp-2">${esc(person.bio || 'No bio added yet.')}</p>
+
+            <div class="mt-3 text-xs text-gray-500 flex flex-wrap gap-2">
+              <span class="px-2 py-1 rounded-full ${roleBadge.cls}">${esc(roleBadge.text)}</span>
+              ${person.yearsExperience ? `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(person.yearsExperience)} yrs exp</span>` : ''}
+            </div>
+
+            <div class="mt-3 flex flex-wrap gap-2">
+              ${skills.map(s => `<span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">${esc(s)}</span>`).join('')}
+            </div>
+
+            <div class="mt-4 flex gap-2">
+              <a href="${profileHref}" class="flex-1 px-3 py-2 text-xs font-semibold text-center rounded-lg bg-gray-900 text-white hover:bg-gray-800">View profile</a>
+              ${canAddPartner ? `<button data-partner-id="${esc(person._id)}" class="add-partner-btn px-3 py-2 text-xs font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Add partner</button>` : ''}
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      host.querySelectorAll('.add-partner-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const partnerId = btn.dataset.partnerId;
+          if (!partnerId) return;
+          await addPartner(partnerId, btn);
+        });
+      });
+    }
+
+    function renderDiscoverPeople() {
+      const search = document.getElementById('people-search').value.trim().toLowerCase();
+      const skill = document.getElementById('people-skill-filter').value.trim().toLowerCase();
+
+      let list = [...state.discoverPeople];
 
       if (state.role !== 'all') {
         list = list.filter(member => (member.role || '').toLowerCase() === state.role);
       }
 
-      if (skillKeyword) {
+      if (skill) {
         list = list.filter(member => {
           const searchable = [
             ...(member.skills || []),
@@ -225,7 +292,7 @@
             member.title,
             member.bio
           ].filter(Boolean).join(' ').toLowerCase();
-          return searchable.includes(skillKeyword);
+          return searchable.includes(skill);
         });
       }
 
@@ -249,149 +316,143 @@
         });
       }
 
-      state.filtered = list;
-      if (summary) summary.textContent = `${list.length} of ${state.users.length} people shown`;
-
-      if (!list.length) {
-        host.innerHTML = '<p class="text-gray-500">No people match your filters.</p>';
-        return;
-      }
-
-      host.innerHTML = list.map((member, idx) => {
-        const skills = (member.skills || []).slice(0, 3);
-        const location = member.location || [member.city, member.state].filter(Boolean).join(', ') || 'Location not set';
-        const roleBadge = getRoleBadge(member);
-        const rating = Number(member.rating || 0);
-
-        return `
-          <article class="border border-gray-200 rounded-xl p-4 bg-white hover:shadow-md transition cursor-pointer" data-person-idx="${idx}">
-            <div class="flex items-start gap-3">
-              <div>${getAvatarHTML(member, 'w-12 h-12')}</div>
-              <div class="min-w-0 flex-1">
-                <h3 class="font-semibold text-gray-900 truncate">${esc(member.firstName)} ${esc(member.lastName)}</h3>
-                <p class="text-sm text-gray-600 truncate">${esc(member.title || member.company || 'Genovad member')}</p>
-                <p class="text-xs text-gray-500 truncate mt-0.5">${esc(location)}</p>
-              </div>
-            </div>
-            <p class="text-sm text-gray-700 mt-3 line-clamp-2">${esc(member.bio || 'No bio added yet.')}</p>
-            <div class="mt-3 text-xs text-gray-500 flex flex-wrap gap-2">
-              <span class="px-2 py-1 rounded-full ${roleBadge.cls}">${esc(roleBadge.text)}</span>
-              ${member.yearsExperience ? `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(member.yearsExperience)} yrs exp</span>` : ''}
-              ${(rating > 0) ? `<span class="px-2 py-1 bg-gray-100 rounded-full">⭐ ${rating.toFixed(1)}</span>` : ''}
-            </div>
-            <div class="mt-3 flex flex-wrap gap-2">
-              ${skills.map(s => `<span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">${esc(s)}</span>`).join('')}
-            </div>
-          </article>
-        `;
-      }).join('');
-
-      host.querySelectorAll('[data-person-idx]').forEach(el => {
-        el.addEventListener('click', () => {
-          const member = state.filtered[Number(el.dataset.personIdx)];
-          openPersonModal(member);
-        });
+      state.filteredPeople = list;
+      document.getElementById('people-results-summary').textContent = `${list.length} of ${state.discoverPeople.length} people shown`;
+      renderPeopleCards('discover-people-list', list, {
+        emptyText: 'No discover people match your filters.',
+        allowPartnerButton: true
       });
     }
 
-    function linkHtml(label, url) {
-      if (!url) return '';
-      const href = url.startsWith('http') ? url : `https://${url}`;
-      return `<a href="${esc(href)}" target="_blank" rel="noopener" class="text-blue-600 hover:underline">${esc(label)}</a>`;
+    async function addPartner(partnerId, button) {
+      const original = button.innerHTML;
+      try {
+        button.disabled = true;
+        button.innerHTML = 'Adding...';
+        const res = await authFetch(`/api/partners/${partnerId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to add partner');
+
+        state.partnerIdSet.add(String(partnerId));
+        button.innerHTML = 'Added';
+        button.classList.add('bg-green-600', 'text-white', 'border-green-600');
+        setTimeout(() => renderDiscoverPeople(), 300);
+      } catch (error) {
+        button.disabled = false;
+        button.innerHTML = original;
+        alert(error.message || 'Failed to add partner');
+      }
     }
 
-    function openPersonModal(member) {
-      const content = document.getElementById('person-modal-content');
-      const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim();
-      const location = member.location || [member.city, member.state].filter(Boolean).join(', ') || 'Not provided';
-      const roleBadge = getRoleBadge(member);
-      const profileId = member?._id || member?.id || '';
-      const profileUrl = profileId ? `/profile.html?id=${profileId}` : '/profile.html';
-
-      content.innerHTML = `
-        <div class="flex items-start justify-between gap-4 mb-6">
-          <div class="flex items-start gap-4 min-w-0">
-            <div>${getAvatarHTML(member, 'w-16 h-16')}</div>
-            <div class="min-w-0">
-              <h3 class="text-2xl font-bold text-gray-900">${esc(fullName)}</h3>
-              <p class="text-gray-600">${esc(member.title || 'Genovad member')}</p>
-              <div class="mt-2 flex gap-2 text-xs flex-wrap">
-                <span class="px-2 py-1 rounded-full ${roleBadge.cls}">${esc(roleBadge.text)}</span>
-              </div>
-            </div>
-          </div>
-          <a href="${profileUrl}" class="inline-flex shrink-0 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg hover:bg-gray-800">Go to Profile</a>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-6">
-          <div class="border border-gray-200 rounded-lg p-4">
-            <p class="text-gray-500 mb-1">Company</p>
-            <p class="text-gray-900">${esc(member.company || 'Not set')}</p>
-          </div>
-          <div class="border border-gray-200 rounded-lg p-4">
-            <p class="text-gray-500 mb-1">Location</p>
-            <p class="text-gray-900">${esc(location)}</p>
-          </div>
-          <div class="border border-gray-200 rounded-lg p-4">
-            <p class="text-gray-500 mb-1">Experience</p>
-            <p class="text-gray-900">${member.yearsExperience ? `${esc(member.yearsExperience)} years` : 'Not provided'}</p>
-          </div>
-          <div class="border border-gray-200 rounded-lg p-4">
-            <p class="text-gray-500 mb-1">Stats</p>
-            <p class="text-gray-900">${esc(member.projectsCompleted || 0)} projects • ${esc(member.reviewCount || 0)} reviews • ⭐ ${esc((Number(member.rating || 0)).toFixed(1))}</p>
-          </div>
-        </div>
-
-        <div class="mb-6">
-          <h4 class="font-semibold text-gray-900 mb-2">Bio</h4>
-          <p class="text-gray-700">${esc(member.bio || 'No bio provided.')}</p>
-        </div>
-
-        <div class="mb-6">
-          <h4 class="font-semibold text-gray-900 mb-2">Skills</h4>
-          <div class="flex flex-wrap gap-2">
-            ${(member.skills || []).length ? (member.skills || []).map(s => `<span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">${esc(s)}</span>`).join('') : '<p class="text-gray-500 text-sm">No skills listed.</p>'}
-          </div>
-        </div>
-
-        <div class="mb-6">
-          <h4 class="font-semibold text-gray-900 mb-2">Services</h4>
-          <div class="flex flex-wrap gap-2">
-            ${(member.services || []).length ? (member.services || []).map(s => `<span class="text-xs px-2 py-1 bg-green-50 text-green-700 rounded-full">${esc(s)}</span>`).join('') : '<p class="text-gray-500 text-sm">No services listed.</p>'}
-          </div>
-        </div>
-
-        <div>
-          <h4 class="font-semibold text-gray-900 mb-2">Links</h4>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-            ${linkHtml('Website', member.links?.website) || '<span class="text-gray-500">Website: not provided</span>'}
-            ${linkHtml('LinkedIn', member.links?.linkedin) || '<span class="text-gray-500">LinkedIn: not provided</span>'}
-            ${linkHtml('GitHub', member.links?.github) || '<span class="text-gray-500">GitHub: not provided</span>'}
-            ${linkHtml('Instagram', member.links?.instagram) || '<span class="text-gray-500">Instagram: not provided</span>'}
-          </div>
-        </div>
-      `;
-
-      document.getElementById('person-modal').classList.remove('hidden');
-    }
-
-    async function loadPeoplePage() {
+    async function loadDiscoverPeople() {
       try {
         const res = await authFetch('/api/users');
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to load people');
 
-        const userId = (getCurrentUser()?._id || getCurrentUser()?.id || '').toString();
-        state.users = (data.users || []).filter(u => (u._id || '').toString() !== userId);
-        renderPeople();
+        const me = String(user._id || user.id || '');
+        state.discoverPeople = (data.users || []).filter(u => String(u._id || '') !== me);
+        renderDiscoverPeople();
       } catch (error) {
-        const msg = document.getElementById('error-message');
-        msg.textContent = error.message || 'Failed to load people';
-        msg.classList.remove('hidden');
+        document.getElementById('discover-people-list').innerHTML = `<p class="text-red-600">${esc(error.message || 'Failed to load people')}</p>`;
       }
     }
 
-    loadPeoplePage();
+    async function loadPartners(forceRender = false) {
+      try {
+        const res = await authFetch('/api/partners');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load partners');
+
+        state.partners = data.partners || [];
+        state.partnerIdSet = new Set(state.partners.map(p => String(p._id || '')));
+
+        if (forceRender || state.activeTab === 'partners') {
+          renderPeopleCards('partners-list', state.partners, {
+            emptyText: 'No partners yet.',
+            allowPartnerButton: false
+          });
+        }
+      } catch (error) {
+        document.getElementById('partners-list').innerHTML = `<p class="text-red-600">${esc(error.message || 'Failed to load partners')}</p>`;
+      }
+    }
+
+    async function loadPartnerProjects() {
+      const host = document.getElementById('partner-projects-list');
+      try {
+        if (!state.partners.length) {
+          await loadPartners(false);
+        }
+
+        if (!state.partners.length) {
+          host.innerHTML = '<p class="text-gray-500">No partner projects yet.</p>';
+          return;
+        }
+
+        const partnerIds = new Set(state.partners.map(p => String(p._id || '')));
+        const projectsRes = await authFetch('/api/projects');
+        const projectsData = await projectsRes.json();
+        if (!projectsRes.ok) throw new Error(projectsData.error || 'Failed to load projects');
+
+        const partnerProjects = (projectsData.projects || []).filter(project => {
+          const ownerId = String(project?.owner?._id || project?.owner || '');
+          return partnerIds.has(ownerId) && project.status !== 'completed';
+        });
+
+        if (!partnerProjects.length) {
+          host.innerHTML = '<p class="text-gray-500">No active projects from partners.</p>';
+          return;
+        }
+
+        host.innerHTML = partnerProjects.map(project => {
+          const budgetMin = project.budget?.min || 0;
+          const budgetMax = project.budget?.max || 0;
+          const ownerName = project.owner?.company || `${project.owner?.firstName || ''} ${project.owner?.lastName || ''}`.trim() || 'Unknown';
+          const location = project.location || `${project.owner?.city || ''} ${project.owner?.state || ''}`.trim() || 'Not specified';
+          const status = project.status === 'in_progress' ? 'In Progress' : (project.status || 'open').replace('_', ' ');
+
+          return `
+            <article class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200">
+              <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b border-gray-200">
+                <div class="flex items-start justify-between gap-3 mb-2">
+                  <h3 class="text-base font-bold text-gray-900 line-clamp-2 flex-1">${esc(project.title)}</h3>
+                  <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded uppercase whitespace-nowrap">${esc(status)}</span>
+                </div>
+                <p class="text-xs text-gray-700">${esc(ownerName)}</p>
+              </div>
+              <div class="p-4">
+                <p class="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">${esc(project.description || '')}</p>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase mb-0.5">Budget</p>
+                    <p class="font-bold text-gray-900">$${Number(budgetMin).toLocaleString()} - $${Number(budgetMax).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase mb-0.5">Location</p>
+                    <p class="font-bold text-gray-900">${esc(location)}</p>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <a href="/project-detail.html?id=${encodeURIComponent(project._id)}" class="inline-flex px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-gray-800">View Project</a>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join('');
+      } catch (error) {
+        host.innerHTML = `<p class="text-red-600">${esc(error.message || 'Failed to load partner projects')}</p>`;
+      }
+    }
+
+    (async () => {
+      await loadPartners(false);
+      await loadDiscoverPeople();
+      switchTab('discover');
+    })();
   </script>
 </body>
 </html>

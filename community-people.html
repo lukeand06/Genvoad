@@ -47,32 +47,55 @@
     </div>
   </nav>
 
-  <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
-    <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-5">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Community Members</h1>
-      <p class="text-sm text-gray-600 mt-1">Browse members in your active community with mobile-first filters.</p>
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
+    <section class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
+      <div class="text-center">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Members</h1>
+        <p class="text-sm text-gray-600 mt-1">Discover members, see your member list, and track member projects in your active community.</p>
+      </div>
 
-      <div class="mt-4 grid grid-cols-1 gap-3">
-        <input id="member-search" type="text" placeholder="Search name or email" class="ios-touch w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm" />
+      <div class="mt-6 border-b border-gray-200">
+        <div class="flex flex-wrap justify-center gap-6 text-sm font-medium">
+          <button class="member-tab pb-3 border-b-2 border-gray-900 text-gray-900" data-tab="discover">Discover Members</button>
+          <button class="member-tab pb-3 border-b-2 border-transparent text-gray-600 hover:text-gray-900" data-tab="members">Your Members</button>
+          <button class="member-tab pb-3 border-b-2 border-transparent text-gray-600 hover:text-gray-900" data-tab="member-projects">Member Projects</button>
+        </div>
+      </div>
 
-        <div class="p-1 bg-gray-100 rounded-xl grid grid-cols-3 gap-1" role="tablist" aria-label="Member type filters">
-          <button id="filter-all" type="button" class="ios-touch px-3 py-2 rounded-lg text-sm font-semibold bg-gray-900 text-white">All</button>
-          <button id="filter-vendor" type="button" class="ios-touch px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-white">Vendors</button>
-          <button id="filter-owner" type="button" class="ios-touch px-3 py-2 rounded-lg text-sm font-semibold text-gray-700 hover:bg-white">Owners</button>
+      <div id="tab-discover" class="mt-6 space-y-4">
+        <div class="rounded-xl border border-gray-200 bg-gray-50 p-4">
+          <div class="space-y-3">
+            <input id="member-search" type="text" placeholder="Search name, email, company, title, bio, skills" class="ios-touch w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm bg-white" />
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="inline-flex rounded-lg border border-gray-300 bg-white p-1">
+                <button id="filter-all" type="button" class="ios-touch role-pill px-3 py-2 rounded-md text-xs font-semibold bg-gray-900 text-white" data-role="all">All</button>
+                <button id="filter-vendor" type="button" class="ios-touch role-pill px-3 py-2 rounded-md text-xs font-semibold text-gray-700 hover:bg-gray-100" data-role="vendor">Vendors</button>
+                <button id="filter-owner" type="button" class="ios-touch role-pill px-3 py-2 rounded-md text-xs font-semibold text-gray-700 hover:bg-gray-100" data-role="owner">Owners</button>
+              </div>
+              <button id="member-clear-filters" class="px-3 py-2 text-xs font-semibold text-gray-700 border border-gray-300 rounded-lg bg-white hover:bg-gray-100">Clear filters</button>
+            </div>
+          </div>
+          <p id="member-results-summary" class="text-xs text-gray-600 mt-3 text-center">Loading members...</p>
+        </div>
+
+        <div id="discover-members-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <p class="text-gray-500">Loading members...</p>
+        </div>
+      </div>
+
+      <div id="tab-members" class="mt-6 hidden">
+        <div class="mb-3 text-sm text-gray-600">All members in your active community.</div>
+        <div id="your-members-list" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          <p class="text-gray-500">Loading members...</p>
+        </div>
+      </div>
+
+      <div id="tab-member-projects" class="mt-6 hidden">
+        <div id="member-projects-list" class="grid grid-cols-1 gap-4">
+          <p class="text-gray-500">Loading member projects...</p>
         </div>
       </div>
     </section>
-
-    <div class="mt-5 bg-white border border-gray-200 rounded-lg p-4">
-      <div class="flex items-center justify-between">
-        <p class="text-sm text-gray-600">Results</p>
-        <p id="member-count" class="text-sm font-semibold text-gray-900">0 members</p>
-      </div>
-    </div>
-
-    <div id="people-list" class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-      <p class="text-gray-500">Loading members...</p>
-    </div>
   </main>
 
   <div class="md:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md">
@@ -94,8 +117,18 @@
     if (!requireCommunityMembership('/community-hub.html')) throw new Error('Community membership required');
 
     const currentUser = getCurrentUser();
-    let allMembers = [];
-    let activeTypeFilter = 'all';
+    const currentUserId = String(currentUser?.id || currentUser?._id || '');
+
+    const state = {
+      activeTab: 'discover',
+      activeRole: 'all',
+      allMembers: [],
+      filteredMembers: [],
+      memberIdSet: new Set(),
+      memberById: new Map()
+    };
+
+    const esc = (v) => String(v || '').replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
     document.getElementById('user-avatar').innerHTML = getAvatarHTML(currentUser, 'w-10 h-10');
     document.getElementById('user-menu-btn').addEventListener('click', () => {
@@ -103,98 +136,244 @@
     });
     document.getElementById('logout-btn').addEventListener('click', logout);
 
-    document.getElementById('member-search').addEventListener('input', applyMemberFilters);
+    document.querySelectorAll('.member-tab').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const tab = btn.dataset.tab;
+        switchTab(tab);
+        if (tab === 'discover') renderDiscoverMembers();
+        if (tab === 'members') renderYourMembers();
+        if (tab === 'member-projects') await loadMemberProjects();
+      });
+    });
 
-    function setTypeFilter(type) {
-      activeTypeFilter = type;
-      const map = {
-        all: document.getElementById('filter-all'),
-        vendor: document.getElementById('filter-vendor'),
-        owner: document.getElementById('filter-owner')
-      };
+    document.getElementById('member-search').addEventListener('input', renderDiscoverMembers);
+    document.querySelectorAll('.role-pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        setRoleFilter(btn.dataset.role || 'all');
+        renderDiscoverMembers();
+      });
+    });
 
-      Object.entries(map).forEach(([key, btn]) => {
-        if (!btn) return;
-        if (key === type) {
-          btn.classList.add('bg-gray-900', 'text-white');
-          btn.classList.remove('text-gray-700', 'hover:bg-white');
-        } else {
-          btn.classList.remove('bg-gray-900', 'text-white');
-          btn.classList.add('text-gray-700', 'hover:bg-white');
-        }
+    document.getElementById('member-clear-filters').addEventListener('click', () => {
+      document.getElementById('member-search').value = '';
+      setRoleFilter('all');
+      renderDiscoverMembers();
+    });
+
+    function switchTab(tab) {
+      state.activeTab = tab;
+      ['discover', 'members', 'member-projects'].forEach(name => {
+        document.getElementById(`tab-${name}`).classList.toggle('hidden', name !== tab);
       });
 
-      applyMemberFilters();
+      document.querySelectorAll('.member-tab').forEach(btn => {
+        const active = btn.dataset.tab === tab;
+        btn.classList.toggle('border-gray-900', active);
+        btn.classList.toggle('text-gray-900', active);
+        btn.classList.toggle('border-transparent', !active);
+        btn.classList.toggle('text-gray-600', !active);
+      });
     }
 
-    document.getElementById('filter-all').addEventListener('click', () => setTypeFilter('all'));
-    document.getElementById('filter-vendor').addEventListener('click', () => setTypeFilter('vendor'));
-    document.getElementById('filter-owner').addEventListener('click', () => setTypeFilter('owner'));
+    function setRoleFilter(role) {
+      state.activeRole = role;
+      document.querySelectorAll('.role-pill').forEach(btn => {
+        const active = btn.dataset.role === role;
+        btn.classList.toggle('bg-gray-900', active);
+        btn.classList.toggle('text-white', active);
+        btn.classList.toggle('text-gray-700', !active);
+        btn.classList.toggle('hover:bg-gray-100', !active);
+      });
+    }
 
-    function renderMembers(list) {
-      const host = document.getElementById('people-list');
+    function getRoleBadge(member) {
+      const role = (member.role || member.accountType || member.userType || member.companyRole || 'member').toString().toLowerCase();
+      if (role.includes('owner')) return { text: 'OWNER', cls: 'bg-amber-100 text-amber-700' };
+      if (role.includes('vendor')) return { text: 'VENDOR', cls: 'bg-emerald-100 text-emerald-700' };
+      return { text: 'MEMBER', cls: 'bg-gray-100 text-gray-700' };
+    }
 
+    function renderMemberCards(hostId, list, emptyText) {
+      const host = document.getElementById(hostId);
       if (!list.length) {
-        document.getElementById('member-count').textContent = '0 members';
-        host.innerHTML = '<div class="bg-white border border-gray-200 rounded-lg p-4 text-gray-500">No members match the selected filters.</div>';
+        host.innerHTML = `<p class="text-gray-500">${esc(emptyText)}</p>`;
         return;
       }
 
-      document.getElementById('member-count').textContent = `${list.length} ${list.length === 1 ? 'member' : 'members'}`;
+      host.innerHTML = list.map(member => {
+        const fullName = `${member.firstName || ''} ${member.lastName || ''}`.trim() || 'Member';
+        const roleBadge = getRoleBadge(member);
+        const location = member.location || [member.city, member.state].filter(Boolean).join(', ') || 'Location not set';
+        const skills = (member.skills || []).slice(0, 3);
+        const profileUrl = `/profile.html?id=${encodeURIComponent(member._id || '')}`;
+        const isSelf = String(member._id || '') === currentUserId;
 
-      host.innerHTML = list.map(m => {
-        const name = `${m.firstName || ''} ${m.lastName || ''}`.trim() || 'Member';
-        const roleRaw = (m.companyRole || m.role || 'member').toString().toLowerCase();
-        const role = roleRaw.toUpperCase();
-        const email = (m.email || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        const isCurrent = (m._id || '').toString() === (currentUser.id || currentUser._id || '').toString();
-        return `<article class="bg-white border border-gray-200 rounded-lg p-4"><h2 class="font-semibold text-gray-900">${name}</h2><p class="text-xs text-gray-500 mt-1">${role}</p><p class="text-sm text-gray-700 mt-2">${email}</p>${!isCurrent ? `<a href="/community-messages.html?memberId=${encodeURIComponent(m._id || '')}" class="inline-block mt-3 text-xs font-medium text-blue-600 hover:text-blue-700">Message member</a>` : ''}</article>`;
+        return `
+          <article class="border border-gray-200 rounded-xl p-4 bg-white hover:shadow-md transition">
+            <div class="flex items-start gap-3">
+              <div>${getAvatarHTML(member, 'w-12 h-12')}</div>
+              <div class="min-w-0 flex-1">
+                <h3 class="font-semibold text-gray-900 truncate">${esc(fullName)}</h3>
+                <p class="text-sm text-gray-600 truncate">${esc(member.title || member.company || 'Community member')}</p>
+                <p class="text-xs text-gray-500 truncate mt-0.5">${esc(location)}</p>
+              </div>
+            </div>
+
+            <p class="text-sm text-gray-700 mt-3 line-clamp-2">${esc(member.bio || 'No bio added yet.')}</p>
+
+            <div class="mt-3 text-xs text-gray-500 flex flex-wrap gap-2">
+              <span class="px-2 py-1 rounded-full ${roleBadge.cls}">${esc(roleBadge.text)}</span>
+              ${member.yearsExperience ? `<span class="px-2 py-1 bg-gray-100 rounded-full">${esc(member.yearsExperience)} yrs exp</span>` : ''}
+            </div>
+
+            <div class="mt-3 flex flex-wrap gap-2">
+              ${skills.map(s => `<span class="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded-full">${esc(s)}</span>`).join('')}
+            </div>
+
+            <div class="mt-4 flex gap-2">
+              <a href="${profileUrl}" class="flex-1 px-3 py-2 text-xs font-semibold text-center rounded-lg bg-gray-900 text-white hover:bg-gray-800">View profile</a>
+              ${!isSelf ? `<a href="/community-messages.html?memberId=${encodeURIComponent(member._id || '')}" class="px-3 py-2 text-xs font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">Message</a>` : ''}
+            </div>
+          </article>
+        `;
       }).join('');
     }
 
-    function applyMemberFilters() {
+    function renderDiscoverMembers() {
       const search = document.getElementById('member-search').value.trim().toLowerCase();
 
-      const filtered = allMembers.filter(member => {
-        const name = `${member.firstName || ''} ${member.lastName || ''}`.trim().toLowerCase();
-        const email = (member.email || '').toLowerCase();
-        const role = [
-          member.role,
-          member.accountType,
-          member.userType,
-          member.companyRole
-        ].map(v => (v || '').toString().toLowerCase()).join(' ');
+      let list = [...state.allMembers];
+      if (state.activeRole !== 'all') {
+        list = list.filter(member => {
+          const role = [member.role, member.accountType, member.userType, member.companyRole]
+            .map(v => (v || '').toString().toLowerCase())
+            .join(' ');
+          return role.includes(state.activeRole);
+        });
+      }
 
-        const searchMatch = !search || name.includes(search) || email.includes(search);
-        const typeMatch = activeTypeFilter === 'all' || role.includes(activeTypeFilter);
-        return searchMatch && typeMatch;
-      });
+      if (search) {
+        const terms = search.split(/\s+/).filter(Boolean);
+        list = list.filter(member => {
+          const fullName = `${member.firstName || ''} ${member.lastName || ''}`;
+          const location = member.location || [member.city, member.state].filter(Boolean).join(', ');
+          const haystack = [
+            fullName,
+            member.email,
+            member.company,
+            member.title,
+            member.bio,
+            location,
+            member.role,
+            ...(member.skills || []),
+            ...(member.services || [])
+          ].filter(Boolean).join(' ').toLowerCase();
+          return terms.every(term => haystack.includes(term));
+        });
+      }
 
-      renderMembers(filtered);
+      state.filteredMembers = list;
+      document.getElementById('member-results-summary').textContent = `${list.length} of ${state.allMembers.length} members shown`;
+      renderMemberCards('discover-members-list', list, 'No members match your filters.');
+    }
+
+    function renderYourMembers() {
+      renderMemberCards('your-members-list', state.allMembers, 'No members in this community yet.');
     }
 
     async function loadMembers() {
       const communityId = getPrimaryCommunityId();
       if (!communityId) {
-        document.getElementById('people-list').innerHTML = '<div class="text-gray-500">No active community selected.</div>';
+        document.getElementById('discover-members-list').innerHTML = '<p class="text-gray-500">No active community selected.</p>';
+        document.getElementById('your-members-list').innerHTML = '<p class="text-gray-500">No active community selected.</p>';
         return;
       }
+
       try {
         const res = await authFetch(`/api/companies/${communityId}/members`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Failed to load members');
-        allMembers = data.members || [];
-        if (!allMembers.length) {
-          document.getElementById('people-list').innerHTML = '<div class="bg-white border border-gray-200 rounded-lg p-4 text-gray-500">No members found.</div>';
-          return;
-        }
-        applyMemberFilters();
-      } catch (e) {
-        document.getElementById('people-list').innerHTML = `<div class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">${e.message}</div>`;
+
+        state.allMembers = data.members || [];
+        state.memberIdSet = new Set(state.allMembers.map(m => String(m._id || '')));
+        state.memberById = new Map(state.allMembers.map(m => [String(m._id || ''), m]));
+
+        renderDiscoverMembers();
+        renderYourMembers();
+      } catch (error) {
+        const message = esc(error.message || 'Failed to load members');
+        document.getElementById('discover-members-list').innerHTML = `<p class="text-red-600">${message}</p>`;
+        document.getElementById('your-members-list').innerHTML = `<p class="text-red-600">${message}</p>`;
       }
     }
 
-    loadMembers();
+    async function loadMemberProjects() {
+      const host = document.getElementById('member-projects-list');
+      if (!state.memberIdSet.size) {
+        host.innerHTML = '<p class="text-gray-500">No member projects available yet.</p>';
+        return;
+      }
+
+      try {
+        const res = await authFetch('/api/projects?communityOnly=true');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to load projects');
+
+        const projects = (data.projects || []).filter(project => {
+          const ownerId = String(project?.owner?._id || project?.owner || '');
+          return state.memberIdSet.has(ownerId) && project.status !== 'completed';
+        });
+
+        if (!projects.length) {
+          host.innerHTML = '<p class="text-gray-500">No active member projects in this community.</p>';
+          return;
+        }
+
+        host.innerHTML = projects.map(project => {
+          const ownerId = String(project?.owner?._id || project?.owner || '');
+          const owner = project.owner || state.memberById.get(ownerId) || {};
+          const ownerName = owner.company || `${owner.firstName || ''} ${owner.lastName || ''}`.trim() || 'Member';
+          const budgetMin = Number(project?.budget?.min || 0);
+          const budgetMax = Number(project?.budget?.max || 0);
+          const status = project.status === 'in_progress' ? 'In Progress' : (project.status || 'open').replace('_', ' ');
+
+          return `
+            <article class="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-all duration-200">
+              <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 border-b border-gray-200">
+                <div class="flex items-start justify-between gap-3 mb-2">
+                  <h3 class="text-base font-bold text-gray-900 line-clamp-2 flex-1">${esc(project.title || 'Untitled Project')}</h3>
+                  <span class="px-3 py-1 bg-gray-100 text-gray-700 text-xs font-bold rounded uppercase whitespace-nowrap">${esc(status)}</span>
+                </div>
+                <p class="text-xs text-gray-700">Owner: ${esc(ownerName)}</p>
+              </div>
+              <div class="p-4">
+                <p class="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">${esc(project.description || '')}</p>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase mb-0.5">Budget</p>
+                    <p class="font-bold text-gray-900">$${budgetMin.toLocaleString()} - $${budgetMax.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p class="text-xs font-semibold text-gray-500 uppercase mb-0.5">Location</p>
+                    <p class="font-bold text-gray-900">${esc(project.location || 'Not specified')}</p>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <a href="/project-detail.html?id=${encodeURIComponent(project._id)}" class="inline-flex px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-semibold hover:bg-gray-800">View Project</a>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join('');
+      } catch (error) {
+        host.innerHTML = `<p class="text-red-600">${esc(error.message || 'Failed to load member projects')}</p>`;
+      }
+    }
+
+    (async () => {
+      await loadMembers();
+      switchTab('discover');
+    })();
   </script>
 </body>
 </html>
