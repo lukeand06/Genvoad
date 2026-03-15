@@ -73,23 +73,35 @@
       <div id="community-cards" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         <p class="text-gray-500">No communities joined yet.</p>
       </div>
+
+      <div class="mt-6 pt-6 border-t border-gray-200">
+        <div class="flex items-center justify-between gap-3 mb-3">
+          <h3 class="text-base font-semibold text-gray-900">Invite inbox</h3>
+          <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full">Pending: <span id="invite-count">0</span></span>
+        </div>
+        <div id="invite-inbox" class="space-y-3 text-sm text-gray-600">
+          <p>Loading invitations...</p>
+        </div>
+      </div>
       </div>
     </section>
 
-    <section class="bg-white border border-gray-200 rounded-xl p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-3">Create new community</h2>
-      <p class="text-sm text-gray-600 mb-4">Start your own community and invite members to collaborate.</p>
-      <div class="space-y-3">
-        <a href="/create-community.html" class="w-full inline-flex items-center justify-center bg-gray-900 text-white py-2 rounded-lg font-medium hover:bg-gray-800">Create new community</a>
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="bg-white border border-gray-200 rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">Create new community</h2>
+        <p class="text-sm text-gray-600 mb-4">Start your own community and invite members to collaborate.</p>
+        <div class="space-y-3">
+          <a href="/create-community.html" class="w-full inline-flex items-center justify-center bg-gray-900 text-white py-2 rounded-lg font-medium hover:bg-gray-800">Create new community</a>
+        </div>
       </div>
-    </section>
 
-    <section class="bg-white border border-gray-200 rounded-xl p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-3">Join by access code</h2>
-      <p class="text-sm text-gray-600 mb-4">Have a code from an owner? Enter it here.</p>
-      <div class="space-y-3">
-        <input id="access-code-input" type="text" placeholder="GV-XXXXXX" class="w-full uppercase px-3 py-2 border border-gray-300 rounded-lg" />
-        <button id="join-code-btn" class="w-full bg-gray-900 text-white py-2 rounded-lg font-medium hover:bg-gray-800">Join community</button>
+      <div class="bg-white border border-gray-200 rounded-xl p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">Join by access code</h2>
+        <p class="text-sm text-gray-600 mb-4">Have a code from an owner? Enter it here.</p>
+        <div class="space-y-3">
+          <input id="access-code-input" type="text" placeholder="GV-XXXXXX" class="w-full uppercase px-3 py-2 border border-gray-300 rounded-lg" />
+          <button id="join-code-btn" class="w-full bg-gray-900 text-white py-2 rounded-lg font-medium hover:bg-gray-800">Join community</button>
+        </div>
       </div>
     </section>
   </main>
@@ -149,7 +161,8 @@
       }
 
       await Promise.all([
-        loadCommunities()
+        loadCommunities(),
+        loadInviteInbox()
       ]);
     }
 
