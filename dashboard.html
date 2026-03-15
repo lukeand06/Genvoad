@@ -236,165 +236,74 @@
         <section id="explore-summary-card" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-5">
             <div class="flex items-start justify-between gap-4">
                 <div class="min-w-0">
-                    <p class="text-xs uppercase tracking-wide text-gray-500">Global Explore</p>
+                    <p class="text-xs uppercase tracking-wide text-gray-500">Genovad Global Explore</p>
                     <h1 id="explore-user-name" class="text-lg sm:text-xl font-semibold text-gray-900 truncate">Welcome back</h1>
                     <p id="explore-user-meta" class="text-sm text-gray-600 mt-1 mobile-secondary"></p>
-                    <p class="text-sm text-gray-700 mt-2 mobile-secondary">This is your global activity stream, personalized to your profile, partners, and network relevance.</p>
+                    <p class="text-sm text-gray-700 mt-2 mobile-secondary">Your Genovad-wide activity stream: projects, people, and opportunities personalized to your role, partners, and network relevance.</p>
                 </div>
             </div>
         </section>
 
-        <section class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 sm:p-5">
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-                <div class="md:col-span-2">
-                    <label for="feed-keyword-filter" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">What</label>
-                    <input id="feed-keyword-filter" type="text" placeholder="Job type, topic, company, or skill" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm" />
+        <div id="stats-grid" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <button onclick="handleStatClick('active-projects-modal')" class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition cursor-pointer text-left">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Outstanding Projects</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-1" id="active-projects">0</p>
+                    </div>
+                    <div class="w-11 h-11 bg-blue-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                        </svg>
+                    </div>
                 </div>
-                <div class="md:col-span-2">
-                    <label for="feed-location-filter" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Where</label>
-                    <input id="feed-location-filter" type="text" placeholder="City, state, or region" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm" />
+            </button>
+
+            <button onclick="handleStatClick('completed-modal')" class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition cursor-pointer text-left">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Completed Projects</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-1" id="completed-projects">0</p>
+                    </div>
+                    <div class="w-11 h-11 bg-green-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
                 </div>
-                <div>
-                    <label for="feed-type-filter" class="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1">Type</label>
-                    <select id="feed-type-filter" class="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white">
-                        <option value="">All</option>
-                        <option value="post">Posts</option>
-                        <option value="article">Articles</option>
-                        <option value="news">News</option>
-                    </select>
+            </button>
+
+            <button onclick="handleStatClick('messages-modal')" class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition cursor-pointer text-left">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Unread Messages</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-1" id="unread-messages">0</p>
+                    </div>
+                    <div class="w-11 h-11 bg-indigo-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                        </svg>
+                    </div>
                 </div>
-            </div>
-            <div class="mt-3 flex flex-wrap gap-2">
-                <button onclick="applyFeedFilters()" class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">Explore</button>
-                <button onclick="clearFeedFilters()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">Clear</button>
-            </div>
-        </section>
+            </button>
 
-        <!-- Stats Grid intentionally disabled on feed page -->
-        <!-- <div class="mb-8" id="stats-grid">
-            <!-- For Owners -->
-            <div id="owner-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                <button onclick="handleStatClick('active-projects-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Active Projects</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1" id="active-projects">0</p>
-                        </div>
-                        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                            </svg>
-                        </div>
+            <button onclick="handleStatClick('new-bids-modal')" class="bg-white rounded-lg border border-gray-200 p-5 hover:shadow-md transition cursor-pointer text-left">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Pending Bids</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-1" id="new-bids">0</p>
                     </div>
-                </button>
-
-                <button onclick="handleStatClick('new-bids-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Pending Bids</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1" id="new-bids">0</p>
-                        </div>
-                        <div class="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
+                    <div class="w-11 h-11 bg-amber-50 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2"/>
+                        </svg>
                     </div>
-                </button>
-
-                <button onclick="handleStatClick('messages-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Unread Messages</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1" id="unread-messages">0</p>
-                        </div>
-                        <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                            </svg>
-                        </div>
-                    </div>
-                </button>
-
-                <button onclick="handleStatClick('completed-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Completed</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1" id="completed-projects">0</p>
-                        </div>
-                        <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                    </div>
-                </button>
-            </div>
-
-            <!-- For Vendors -->
-            <div id="vendor-stats" class="hidden grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-                <button onclick="location.href='/browse.html'" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Projects Available</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1" id="vendor-available-projects">0</p>
-                        </div>
-                        <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </div>
-                    </div>
-                </button>
-
-                <button onclick="openModal('my-bids-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Active Bids</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1" id="vendor-active-bids">0</p>
-                        </div>
-                        <div class="w-12 h-12 bg-amber-50 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                            </svg>
-                        </div>
-                    </div>
-                </button>
-
-                <button onclick="openModal('vendor-active-projects-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Work In Progress</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1" id="vendor-active-work">0</p>
-                        </div>
-                        <div class="w-12 h-12 bg-purple-50 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-                            </svg>
-                        </div>
-                    </div>
-                </button>
-
-                <button onclick="openModal('vendor-completed-modal')" class="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-lg transition cursor-pointer text-left">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-sm text-gray-600">Completed Projects</p>
-                            <p class="text-3xl font-bold text-gray-900 mt-1" id="vendor-completed-projects">0</p>
-                        </div>
-                        <div class="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                        </div>
-                    </div>
-                </button>
-            </div>
+                </div>
+            </button>
         </div>
 
-        <!-- Centered Feed Layout -->
-        <div class="grid grid-cols-1 gap-6">
-            <!-- Activity Feed (LinkedIn-style) -->
-            <div id="activity-feed-section" class="w-full">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+            <div id="activity-feed-section" class="xl:col-span-8 w-full">
                 <!-- Create Post Card -->
                 <div class="bg-white rounded-lg border border-gray-200 mb-6 shadow-sm">
                     <div class="p-4 border-b border-gray-200">
@@ -450,7 +359,35 @@
                     </div>
                 </div>
             </div>
+            <aside class="xl:col-span-4 space-y-6 xl:sticky xl:top-24 h-fit">
+                <section class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
+                        <a href="/notifications.html" class="text-xs text-gray-600 hover:text-gray-900">View all</a>
+                    </div>
+                    <div id="recent-notifications" class="divide-y divide-gray-100">
+                        <div class="p-4 text-sm text-gray-500">Loading notifications...</div>
+                    </div>
+                </section>
 
+                <section class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-900">Trending on Explore</h3>
+                    </div>
+                    <div id="trending-posts" class="divide-y divide-gray-100">
+                        <div class="p-4 text-sm text-gray-500">Loading trending posts...</div>
+                    </div>
+                </section>
+
+                <section class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="px-4 py-3 border-b border-gray-200">
+                        <h3 class="text-sm font-semibold text-gray-900">Recommended Projects</h3>
+                    </div>
+                    <div id="recommendations" class="divide-y divide-gray-100">
+                        <div class="p-4 text-sm text-gray-500">Loading recommendations...</div>
+                    </div>
+                </section>
+            </aside>
         </div>
     </main>
 
@@ -467,8 +404,7 @@
     </div>
 
     <!-- Modals -->
-    <!-- Active Projects Modal intentionally disabled on feed page -->
-    <!-- <div id="active-projects-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="active-projects-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-scrollable">
             <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
                 <h2 class="text-xl font-semibold text-gray-900">Active Projects</h2>
@@ -482,10 +418,9 @@
                 <p class="text-gray-500">Loading...</p>
             </div>
         </div>
-    </div> -->
+    </div>
 
-    <!-- New Bids Modal intentionally disabled on feed page -->
-    <!-- <div id="new-bids-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="new-bids-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
                 <h2 class="text-xl font-semibold text-gray-900">New Bids</h2>
@@ -499,7 +434,7 @@
                 <p class="text-gray-500">Loading...</p>
             </div>
         </div>
-    </div> -->
+    </div>
 
     <!-- Messages Modal -->
     <div id="messages-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -551,8 +486,7 @@
         </div>
     </div>
 
-    <!-- Completed Projects Modal intentionally disabled on feed page -->
-    <!-- <div id="completed-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div id="completed-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             <div class="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white">
                 <h2 class="text-xl font-semibold text-gray-900">Completed Projects</h2>
@@ -566,7 +500,7 @@
                 <p class="text-gray-500">Loading...</p>
             </div>
         </div>
-    </div> -->
+    </div>
 
     <!-- Vendor Completed Projects Modal intentionally disabled on feed page -->
     <!-- <div id="vendor-completed-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
@@ -633,7 +567,7 @@
                 const roleLabel = (getUserRole() || 'member').toUpperCase();
                 const companyLabel = user.company ? ` • ${user.company}` : '';
                 const locationLabel = (user.location || [user.city, user.state].filter(Boolean).join(', '));
-                exploreMetaEl.textContent = `${roleLabel}${companyLabel}${locationLabel ? ` • ${locationLabel}` : ''}`;
+                exploreMetaEl.textContent = `${roleLabel}${companyLabel}${locationLabel ? ` • ${locationLabel}` : ''} • Genovad`;
             }
         }
 
@@ -977,11 +911,58 @@
         // Load dashboard data
         async function loadDashboard() {
             try {
-                // Project/bid dashboard widgets are intentionally disabled on the feed page.
-                userProjects = [];
-                messagesData = [];
+                const role = getUserRole();
+
+                const [projectsRes, conversationsRes] = await Promise.all([
+                    authFetch('/api/my-projects'),
+                    authFetch('/api/messages/conversations')
+                ]);
+
+                if (projectsRes.ok) {
+                    const projectData = await projectsRes.json();
+                    userProjects = projectData.projects || projectData.items || [];
+                } else {
+                    userProjects = [];
+                }
+
+                if (conversationsRes.ok) {
+                    const conversationData = await conversationsRes.json();
+                    messagesData = conversationData.conversations || [];
+                } else {
+                    messagesData = [];
+                }
+
+                const outstandingProjects = userProjects.filter(p => ['open', 'in_progress'].includes(p.status)).length;
+                const completedProjects = userProjects.filter(p => p.status === 'completed').length;
+                const unreadMessages = messagesData.reduce((sum, conv) => sum + Number(conv.unread || conv.unreadCount || 0), 0);
+
+                let pendingBids = 0;
+                if (role === 'vendor') {
+                    pendingBids = userProjects.filter(p => {
+                        const bidStatus = (p.myBid?.status || '').toLowerCase();
+                        return Boolean(p.myBid) && bidStatus !== 'accepted' && bidStatus !== 'rejected' && p.status !== 'completed';
+                    }).length;
+                } else {
+                    pendingBids = userProjects.reduce((sum, p) => {
+                        const bids = Array.isArray(p.bids) ? p.bids : [];
+                        const openBids = bids.filter(b => {
+                            const status = (b.status || '').toLowerCase();
+                            return status === 'pending' || status === 'submitted' || status === '';
+                        }).length;
+                        return sum + openBids;
+                    }, 0);
+                }
+
+                document.getElementById('active-projects').textContent = String(outstandingProjects);
+                document.getElementById('completed-projects').textContent = String(completedProjects);
+                document.getElementById('unread-messages').textContent = String(unreadMessages);
+                document.getElementById('new-bids').textContent = String(pendingBids);
             } catch (error) {
                 console.error('Error loading dashboard:', error);
+                document.getElementById('active-projects').textContent = '0';
+                document.getElementById('completed-projects').textContent = '0';
+                document.getElementById('unread-messages').textContent = '0';
+                document.getElementById('new-bids').textContent = '0';
             }
         }
 
@@ -1079,6 +1060,8 @@
 
             await loadDashboard();
             await loadFeed();
+            await loadRecentNotifications();
+            await loadRecommendations();
 
             if (sharedPostId) {
                 setTimeout(() => {
@@ -1094,7 +1077,6 @@
                 window.history.replaceState({}, document.title, cleanUrl);
             }
 
-            // await loadRecentNotifications();
             // startNotificationPolling();
             
             // Company nav intentionally kept disabled for now.
